@@ -70,6 +70,35 @@ $ mau deploy
 
 With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
 
+## Database Migrations
+
+This project uses TypeORM for database management. Below are the commands to handle migrations:
+
+### 1. Generate a Migration
+Run this when you have made changes to your entities (in `src/entities/*.entity.ts`) and want to generate a new migration file.
+```bash
+# Replace <MigrationName> with a descriptive name (e.g., AddUserRole)
+npm run migration:generate -- src/migrations/<MigrationName>
+```
+
+### 2. Run Pending Migrations
+Apply all pending migrations to the database.
+```bash
+npm run migration:run
+```
+
+### 3. Revert Last Migration
+Undo the last applied migration.
+```bash
+npm run migration:revert
+```
+
+### 4. Create an Empty Migration
+Create a blank migration file for manual SQL or custom logic.
+```bash
+npm run migration:create -- src/migrations/<MigrationName>
+```
+
 ## Resources
 
 Check out a few resources that may come in handy when working with NestJS:

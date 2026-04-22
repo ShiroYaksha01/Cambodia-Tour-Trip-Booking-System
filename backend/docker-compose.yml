@@ -1,0 +1,35 @@
+# backend/docker-compose.yml
+services:
+  postgres:
+    image: postgres:17
+    container_name: tour_booking_db
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: tour_booking
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - tour_booking_network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: tour_booking_pgadmin
+    restart: always
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@tourbook.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    networks:
+      - tour_booking_network
+
+volumes:
+  postgres_data:
+
+networks:
+  tour_booking_network:
+    driver: bridge
