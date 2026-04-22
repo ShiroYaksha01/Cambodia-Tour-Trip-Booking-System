@@ -1,13 +1,18 @@
 import { createRouter, createWebHistory } from "vue-router";
-import welcome_page from '../views/welcome_page.vue'
-import register_page from '../views/register_page.vue'
+import WelcomePage from "../views/welcome_page.vue";
+import RegisterPage from "../views/register_page.vue";
+import VerifyEmailPage from "../views/verify_email_page.vue";
 
 const routes = [
-    {path: '/welcome', component: welcome_page},
-    {path: '/register', component: register_page},
-]
+  { path: "/", redirect: "/welcome" },
+  { path: "/welcome", component: WelcomePage },
+  { path: "/register", component: RegisterPage },
+  { path: "/verify-email", component: VerifyEmailPage },
+];
 
-export default createRouter({
-    history: createWebHistory(),
-    routes
-})
+const router = createRouter({
+  history: createWebHistory(),
+  routes,
+});
+
+export default router;
