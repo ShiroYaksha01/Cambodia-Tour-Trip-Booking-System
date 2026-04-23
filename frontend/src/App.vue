@@ -1,47 +1,56 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { clearCurrentUserRole, getCurrentUserRole } from './utils/auth'
+
+const router = useRouter()
+const role = computed(() => getCurrentUserRole())
+
+function logout() {
+  clearCurrentUserRole()
+  void router.push('/login')
+}
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
+  <div class="layout">
+    <header class="topbar">
+      <h1>Cambodia Tour Trip Booking</h1>
+      <nav class="actions">
+        <RouterLink to="/dashboard">Dashboard</RouterLink>
+        <RouterLink to="/login">Login</RouterLink>
+        <button v-if="role" type="button" @click="logout">Logout ({{ role }})</button>
+      </nav>
+    </header>
 
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
-  </header>
-
-  <main>
-    <TheWelcome />
-  </main>
+    <main>
+      <RouterView />
+    </main>
+  </div>
 </template>
 
 <style scoped>
-header {
-  line-height: 1.5;
+.layout {
+  min-height: 100vh;
+  padding: 1rem;
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 0.75rem;
 }
 
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
 
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
+button {
+  padding: 0.25rem 0.6rem;
 }
 </style>
