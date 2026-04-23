@@ -1,32 +1,19 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory } from "vue-router";
 
-import AuthSignInView from '../views/AuthSignInView.vue'
-import AuthSignUpView from '../views/AuthSignUpView.vue'
-import AuthVerificationView from '../views/AuthVerificationView.vue'
+import welcome_page from '../views/welcome_page.vue';
+import register_page from '../views/register_page.vue';
+import VerifyEmailPage from "../views/verify_email_page.vue";
+import AuthSignInView from '../views/AuthSignInView.vue';
 
-const router = createRouter({
-  history: createWebHistory(),
-  routes: [
-    {
-      path: '/',
-      redirect: '/auth/sign-in',
-    },
-    {
-      path: '/auth/sign-in',
-      name: 'auth-sign-in',
-      component: AuthSignInView,
-    },
-    {
-      path: '/auth/sign-up',
-      name: 'auth-sign-up',
-      component: AuthSignUpView,
-    },
-    {
-      path: '/auth/verification',
-      name: 'auth-verification',
-      component: AuthVerificationView,
-    },
-  ],
+const routes = [
+    {path: '/', redirect: '/welcome',component: welcome_page},
+    {path: '/sign-in', name: 'auth-sign-in', component: AuthSignInView,},
+    {path: '/register', component: register_page},
+    { path: "/verify-email", component: VerifyEmailPage },
+];
+
+
+export default createRouter({
+    history: createWebHistory(),
+    routes
 })
-
-export default router

@@ -78,7 +78,7 @@
 
           <p class="signup-row">
             Don't have an account yet?
-            <RouterLink to="/auth/sign-up">Curate your Journey →</RouterLink>
+            <RouterLink to="/register">Curate your Journey →</RouterLink>
           </p>
 
           <footer class="footer-links">
