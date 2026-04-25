@@ -45,7 +45,7 @@
             <label class="field password-field">
               <div class="field-row">
                 <span>Password</span>
-                <a href="#">Forgot Password?</a>
+                <RouterLink to="/forgot-password">Forgot Password?</RouterLink>
               </div>
               <div class="input-wrap">
                 <span class="input-icon" aria-hidden="true">⌁</span>

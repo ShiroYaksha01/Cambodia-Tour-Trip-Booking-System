@@ -27,6 +27,12 @@ const routes: RouteRecordRaw[] = [
     meta: { guestOnly: true },
   },
   {
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: () => import('../views/auth/ForgotPassword.vue'),
+    meta: { guestOnly: true },
+  },
+  {
     path: '/dashboard',
     name: 'dashboard',
     redirect: () => {
