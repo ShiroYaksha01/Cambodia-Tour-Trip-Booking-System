@@ -33,27 +33,12 @@
             <p>Please enter your details to access your curator dashboard.</p>
           </header>
 
-          <div class="social-row">
-            <button class="social-button" type="button">
-              <span class="social-dot facebook">f</span>
-              Facebook
-            </button>
-            <button class="social-button" type="button">
-              <span class="social-dot telegram">✈</span>
-              Telegram
-            </button>
-          </div>
-
-          <div class="separator">
-            <span>OR CONTINUE WITH EMAIL</span>
-          </div>
-
           <form class="auth-form">
             <label class="field">
               <span>Email Address</span>
               <div class="input-wrap">
                 <span class="input-icon" aria-hidden="true">✉</span>
-                <input type="email" value="curator@heritage.kh" autocomplete="email" />
+                <input type="email" placeholder="curator@heritage.kh" autocomplete="email" />
               </div>
             </label>
 
@@ -64,7 +49,7 @@
               </div>
               <div class="input-wrap">
                 <span class="input-icon" aria-hidden="true">⌁</span>
-                <input type="password" value="password" autocomplete="current-password" />
+                <input type="password" placeholder="••••••••" autocomplete="current-password" />
               </div>
             </label>
 

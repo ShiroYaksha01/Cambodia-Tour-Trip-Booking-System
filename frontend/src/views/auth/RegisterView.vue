@@ -3,7 +3,7 @@
 
     <!-- Hero Panel -->
     <div class="hero-panel">
-      <img src="../assets/apsara.png" alt="Apsara dancer" class="hero-bg" />
+      <img src="/apsara.png" alt="Apsara dancer" class="hero-bg" />
       <div class="hero-overlay" />
     </div>
 

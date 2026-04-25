@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { getCurrentUserRole } from '../utils/auth'
-import AuthSignInView from '../views/AuthSignInView.vue';
+
 
 const routes: RouteRecordRaw[] = [
   {
@@ -9,21 +9,21 @@ const routes: RouteRecordRaw[] = [
     redirect: '/dashboard',
   },
   {
+    path: '/login',
+    name: 'login',
+    component: () => import('../views/auth/LoginView.vue'),
+    meta: { guestOnly: true },
+  },
+  {
     path: '/verify-email',
     name: 'verify-email',
-    component: () => import('../views/verify_email_page.vue'),
+    component: () => import('../views/auth/VerifyEmailPage.vue'),
     meta: { guestOnly: true },
   },
   {
     path: '/register', 
     name: 'register',
-    component: () => import('../views/register_page.vue'),
-    meta: { guestOnly: true },
-  },
-  {
-    path: '/register', 
-    name: 'register',
-    component: () => import('../views/register_page.vue'),
+    component: () => import('../views/auth/RegisterView.vue'),
     meta: { guestOnly: true },
   },
   {
