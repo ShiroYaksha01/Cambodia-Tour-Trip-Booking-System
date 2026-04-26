@@ -9,7 +9,6 @@ import {
   OneToMany,
 } from 'typeorm';
 import { User } from './user.entity';
-import { ProviderContact } from './provider-contact.entity';
 
 @Entity('providers')
 export class Provider {
@@ -65,6 +64,4 @@ export class Provider {
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;
 
-  @OneToMany(() => ProviderContact, (contact) => contact.provider)
-  contacts: ProviderContact[];
 }
