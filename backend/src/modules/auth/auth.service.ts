@@ -65,6 +65,7 @@ export class AuthService {
       username,
       email,
       passwordHash: hash,
+      role: 'customer' as any, // Default role
     });
   }
 
