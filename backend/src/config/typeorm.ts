@@ -12,9 +12,10 @@ const config = {
     password: `${process.env.DATABASE_PASSWORD}`,
     database: `${process.env.DATABASE_NAME}`,
     entities: ["dist/**/*.entity{.ts,.js}"],
-    migrations: ["dist/migrations/*{.ts,.js}"],
+    migrations: ["dist/db/migrations/*{.ts,.js}"],
     autoLoadEntities: true,
-    synchronize: false,
+    synchronize: true,
+    // synchronize: false,
 }
 
 export default registerAs('typeorm', () => config)

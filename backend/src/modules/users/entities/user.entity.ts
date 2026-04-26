@@ -1,16 +1,68 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+ 
+import {
+  Entity, PrimaryGeneratedColumn, Column,
+  CreateDateColumn, UpdateDateColumn, OneToOne
+} from 'typeorm';
+import { Provider } from '../../providers/entities/provider.entity';
+
+export enum UserRole {
+  ADMIN = 'admin',
+  PROVIDER = 'provider',
+  CUSTOMER = 'customer',
+}
+
+export enum AccountStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  SUSPENDED = 'suspended',
+}
 
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-  @Column()
-  name: string;
+  @Column({
+    type: 'enum',
+    enum: UserRole,
+    default: UserRole.CUSTOMER,
+  })
+  role: UserRole;
 
-  @Column({ unique: true })
+  @Column({ length: 60, unique: true })
+  username: string;
+
+  @Column({ length: 150, unique: true })
   email: string;
 
-  @Column()
-  password: string;
+  @Column({ name: 'phone_number', length: 20, nullable: true })
+  phoneNumber: string;
+
+  @Column({ name: 'password_hash', type: 'text', select: false })
+  passwordHash: string;
+
+  @Column({ name: 'profile_picture', type: 'text', nullable: true })
+  profilePicture: string;
+
+  @Column({
+    type: 'enum',
+    enum: AccountStatus,
+    default: AccountStatus.ACTIVE,
+  })
+  status: AccountStatus;
+
+  @Column({ name: 'email_verified_at', nullable: true })
+  emailVerifiedAt: Date;
+
+  @Column({ name: 'last_login_at', nullable: true })
+  lastLoginAt: Date;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  @OneToOne(() => Provider, (provider) => provider.user)
+  provider: Provider;
 }
