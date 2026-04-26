@@ -28,7 +28,7 @@ A full-stack application for managing tour bookings in Cambodia. Built with **Ne
     DATABASE_PORT=5432
     DATABASE_USER=your_user
     DATABASE_PASSWORD=your_password
-    DATABASE_NAME=test_bro_vath
+    DATABASE_NAME=tour_booking
     PORT=3000
     ```
 
