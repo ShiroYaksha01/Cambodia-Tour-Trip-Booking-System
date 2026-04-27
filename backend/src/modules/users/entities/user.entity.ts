@@ -32,7 +32,7 @@ export class User {
   })
   role: UserRole;
 
-  @Column({ length: 60, unique: true })
+  @Column({ length: 60 })
   username: string;
 
   @Column({ length: 150, unique: true })
