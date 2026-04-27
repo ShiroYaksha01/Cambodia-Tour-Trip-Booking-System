@@ -9,6 +9,7 @@ import typeorm from './config/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { ProvidersModule } from './modules/providers/providers.module';
+import { BookingsModule } from './modules/bookings/bookings.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ProvidersModule } from './modules/providers/providers.module';
     AuthModule,
     UsersModule,
     ProvidersModule,
+    BookingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

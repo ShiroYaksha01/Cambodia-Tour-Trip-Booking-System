@@ -28,7 +28,7 @@ export function getCurrentUserRole(): UserRole | null {
     }
   } catch {
     return null
-  }
+  } 
 
   return null
 }

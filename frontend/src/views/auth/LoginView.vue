@@ -33,15 +33,15 @@
             <p>Please enter your details to access your curator dashboard.</p>
           </header>
 
-          <form class="auth-form">
+<form class="auth-form" @submit.prevent="handleLogin">
             <label class="field">
               <span>Email Address</span>
               <div class="input-wrap">
                 <span class="input-icon" aria-hidden="true">✉</span>
-                <input type="email" placeholder="curator@heritage.kh" autocomplete="email" />
+                <input v-model="email" type="email" placeholder="curator@heritage.kh" autocomplete="email" />
               </div>
             </label>
-
+            
             <label class="field password-field">
               <div class="field-row">
                 <span>Password</span>
@@ -49,7 +49,7 @@
               </div>
               <div class="input-wrap">
                 <span class="input-icon" aria-hidden="true">⌁</span>
-                <input type="password" placeholder="••••••••" autocomplete="current-password" />
+                <input v-model="password" type="password" placeholder="••••••••" autocomplete="current-password" />
               </div>
             </label>
 
@@ -66,6 +66,10 @@
             <RouterLink to="/register">Curate your Journey →</RouterLink>
           </p>
 
+          <p class="signup-row text-sm text-[#9ca2a7] mt-4">
+            Tip: this demo stores a customer role in localStorage so you can continue to booking.
+          </p>
+
           <footer class="footer-links">
             <span>© 2024 THE HERITAGE CURATOR. ALL RIGHTS RESERVED.</span>
             <nav>
@@ -79,6 +83,23 @@
     </section>
   </main>
 </template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { setCurrentUserRole } from '../../utils/auth'
+
+const router = useRouter()
+const email = ref('')
+const password = ref('')
+
+const handleLogin = () => {
+  setCurrentUserRole('customer')
+  localStorage.setItem('user', JSON.stringify({ email: email.value, role: 'customer' }))
+  localStorage.setItem('auth_role', 'customer')
+  router.push({ name: 'dashboard' })
+}
+</script>
 
 <style scoped>
 .auth-page {
