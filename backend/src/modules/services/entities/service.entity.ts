@@ -19,8 +19,10 @@ import type { TourPackage } from './tour-package.entity';
 import type { Accommodation } from './accommodation.entity';
 import type { Transportation } from './transportation.entity';
 
+
 @Entity('services')
 export class Service {
+  
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -30,8 +32,7 @@ export class Service {
   @Column({
     name: 'service_type',
     type: 'enum',
-    enum: ServiceType,
-    enumName: 'services_service_type_enum',
+    enum: ServiceType
   })
   serviceType: ServiceType;
 
