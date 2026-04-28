@@ -8,7 +8,7 @@ import {
   JoinColumn,
   OneToMany,
 } from 'typeorm';
-import { User } from './user.entity';
+import { User } from '../../users/entities/user.entity';
 import { ProviderContact } from './provider-contact.entity';
 
 @Entity('providers')
@@ -68,3 +68,5 @@ export class Provider {
   @OneToMany(() => ProviderContact, (contact) => contact.provider)
   contacts: ProviderContact[];
 }
+export { ProviderContact };
+

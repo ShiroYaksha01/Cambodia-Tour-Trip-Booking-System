@@ -1,9 +1,11 @@
+/* eslint-disable prettier/prettier */
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import typeorm from './config/typeorm';
+import { ServicesModule } from './modules/services/services.module';
 
 @Module({
   imports: [
@@ -15,6 +17,7 @@ import typeorm from './config/typeorm';
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => configService.get('typeorm')!
     }),
+    ServicesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

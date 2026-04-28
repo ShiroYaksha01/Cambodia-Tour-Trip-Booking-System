@@ -6,7 +6,7 @@ import {
   UpdateDateColumn,
   OneToOne,
 } from 'typeorm';
-import { Provider } from './provider.entity';
+import { Provider } from '../../provider/entities/provider.entity';
 
 export enum UserRole {
   ADMIN = 'admin',
