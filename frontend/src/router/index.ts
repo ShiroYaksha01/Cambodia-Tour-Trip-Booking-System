@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { getCurrentUserRole } from '../utils/auth'
 
-
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
@@ -31,6 +30,11 @@ const routes: RouteRecordRaw[] = [
     name: 'forgot-password',
     component: () => import('../views/auth/ForgotPassword.vue'),
     meta: { guestOnly: true },
+  },
+  {
+    path: '/choose-role',
+    name: 'choose-role',
+    component: () => import('../views/auth/RoleSelectorView.vue'),
   },
   {
     path: '/dashboard',
@@ -117,7 +121,4 @@ router.beforeEach((to) => {
   return true
 })
 
-export default createRouter({
-    history: createWebHistory(),
-    routes
-})
+export default router
