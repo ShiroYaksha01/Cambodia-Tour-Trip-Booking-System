@@ -65,12 +65,36 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: "/provider",
+    name: "provider",
+    component: () => import("../views/dashboards/ProviderDashboardView.vue"),
+    meta: {
+      requiresAuth: false,
+      roles: ["provider"],
+    },
+  },
+  {
     path: "/provider/dashboard",
     name: "provider-dashboard",
     component: () => import("../views/dashboards/ProviderDashboardView.vue"),
     meta: {
-      requiresAuth: true,
-      roles: ["provider"],
+      requiresAuth: false,
+    },
+  },
+  {
+    path: "/provider/service",
+    name: "provider-service",
+    component: () => import("../views/dashboards/ServiceManagerView.vue"),
+    meta: {
+      requiresAuth: false,
+    },
+  },
+  {
+    path: "/provider/inventory",
+    name: "provider-inventory",
+    component: () => import("../views/dashboards/InventoryView.vue"),
+    meta: {
+      requiresAuth: false,
     },
   },
   {
