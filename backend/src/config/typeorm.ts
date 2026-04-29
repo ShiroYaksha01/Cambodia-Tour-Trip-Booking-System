@@ -4,18 +4,27 @@ import { DataSource, DataSourceOptions } from "typeorm";
 
 dotenvConfig({ path: '.env' });
 
-const config = {
-    type: 'postgres',
-    host: `${process.env.DATABASE_HOST}`,
-    port: `${process.env.DATABASE_PORT}`,
-    username: `${process.env.DATABASE_USER}`,
-    password: `${process.env.DATABASE_PASSWORD}`,
-    database: `${process.env.DATABASE_NAME}`,
+const commonConfig = {
+    type: 'postgres' as const,
     entities: ["dist/**/*.entity{.ts,.js}"],
     migrations: ["dist/migrations/*{.ts,.js}"],
     autoLoadEntities: true,
     synchronize: false,
 }
 
+const config: DataSourceOptions = process.env.DATABASE_URL
+    ? {
+        ...commonConfig,
+        url: process.env.DATABASE_URL,
+    }
+    : {
+        ...commonConfig,
+        host: process.env.DATABASE_HOST,
+        port: Number(process.env.DATABASE_PORT ?? 5432),
+        username: process.env.DATABASE_USER,
+        password: process.env.DATABASE_PASSWORD,
+        database: process.env.DATABASE_NAME,
+    }
+
 export default registerAs('typeorm', () => config)
-export const connectionSource = new DataSource(config as DataSourceOptions);
+export const connectionSource = new DataSource(config);
