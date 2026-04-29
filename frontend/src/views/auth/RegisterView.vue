@@ -39,7 +39,7 @@ const handleRegister = async () => {
     message.value = res.data.message;
     console.log("REGISTER SUCCESS:", res.data);
 
-    router.push("/"); // back to login
+    router.push("/login");
   } catch (err) {
     message.value = "Register failed";
     console.log(err);

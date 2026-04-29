@@ -21,14 +21,13 @@ const handleLogin = async () => {
     console.log("LOGIN SUCCESS:", res.data);
 
     if (res.data.success) {
-      // 🔥 SAVE USER ROLE
       localStorage.setItem("auth_role", res.data.user.role);
 
       // optional: save token
       localStorage.setItem("token", res.data.token);
 
       // redirect based on role OR dashboard
-      router.push("/dashboard");
+      router.push("/");
     }
   } catch (err) {
     message.value = "Login failed";

@@ -36,17 +36,32 @@ export class AuthService {
 }
 
   async login(email: string, password: string) {
-    const user = await this.usersService.findByEmail(email);
-    if (!user) throw new BadRequestException('Invalid credentials');
+  const user = await this.usersService.findByEmail(email);
 
-    const match = await bcrypt.compare(password, user.passwordHash);
-    if (!match) throw new BadRequestException('Invalid credentials');
-
-    const token = this.jwtService.sign({
-      sub: user.id,
-      role: user.role,
-    });
-
-    return { access_token: token };
+  if (!user) {
+    throw new BadRequestException('Invalid credentials');
   }
+
+  const match = await bcrypt.compare(password, user.passwordHash);
+
+  if (!match) {
+    throw new BadRequestException('Invalid credentials');
+  }
+
+  const token = this.jwtService.sign({
+    sub: user.id,
+    role: user.role,
+  });
+
+  return {
+    success: true,
+    user: {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      username: user.username,
+    },
+    token,
+  };
+}
 }
