@@ -1,23 +1,16 @@
-// import { Controller, Put, Param, Body } from '@nestjs/common';
-// import { UserService } from './users.service';
-// import { UpdateUserDto } from '../auth/dto/update-user.dto';
-// import { UseGuards } from '@nestjs/common';
-// import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import {
+  Controller,
+  Put,
+  Param,
+  Body,
+  UseGuards,
+  Get,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
 
-// @Controller('users')
-// export class UserController {
-//   constructor(private readonly userService: UserService) {}
-//   @UseGuards(JwtAuthGuard)
-//   @Put(':id')
-//   updateUser(
-//     @Param('id') id: string,
-//     @Body() updateUserDto: UpdateUserDto,
-//   ) {
-//     return this.userService.updateUser(Number(id), updateUserDto);
-//   }
-// }
-
-import { Controller, Put, Param, Body, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UpdateUserDto } from '../users/dto/update-user.dto';
@@ -25,13 +18,42 @@ import { UpdateUserDto } from '../users/dto/update-user.dto';
 @Controller('/users')
 export class UsersController {
   constructor(private usersService: UsersService) {}
-
+ 
   @UseGuards(JwtAuthGuard)
   @Put(':id')
+  @UseInterceptors(
+    FileInterceptor('profilePicture', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, cb) => {
+          const name = Date.now() + '-' + file.originalname;
+          cb(null, name);
+        },
+      }),
+    }),
+  )
   updateUser(
     @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
     @Body() dto: UpdateUserDto,
   ) {
-    return this.usersService.updateUser(id, dto);
+    return this.usersService.updateUser(id, {
+      ...dto,
+      profilePicture: file?.filename,  
+    });
+  }
+
+   
+  @UseGuards(JwtAuthGuard)
+  @Get()
+  findAll() {
+    return this.usersService.findAll();
+  }
+
+  
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  findById(@Param('id') id: string) {
+    return this.usersService.findById(id);
   }
 }

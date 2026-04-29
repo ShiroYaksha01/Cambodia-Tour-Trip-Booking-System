@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   OneToOne,
 } from 'typeorm';
+
 import { Provider } from '../../providers/entities/provider.entity';
 
 export enum UserRole {
@@ -32,7 +33,7 @@ export class User {
   })
   role: UserRole;
 
-  @Column({ length: 60, unique: true })
+  @Column({ length: 60 })
   username: string;
 
   @Column({ length: 150, unique: true })
@@ -54,6 +55,9 @@ export class User {
   })
   status: AccountStatus;
 
+  @Column({ name: 'is_email_verified', type: 'boolean', default: false })
+  isEmailVerified: boolean;
+  
   @Column({ name: 'email_verified_at', type: 'timestamptz', nullable: true })
   emailVerifiedAt: Date;
 

@@ -1,46 +1,51 @@
-export type UserRole = 'admin' | 'provider' | 'customer'
+export type UserRole = "admin" | "provider" | "customer";
 
-const AUTH_ROLE_KEY = 'auth_role'
+const AUTH_ROLE_KEY = "auth_role";
 
 export function getCurrentUserRole(): UserRole | null {
-  const directRole = localStorage.getItem(AUTH_ROLE_KEY)
+  const directRole = localStorage.getItem(AUTH_ROLE_KEY);
   if (isUserRole(directRole)) {
-    return directRole
+    return directRole;
   }
 
-  const commonRoleKeys = ['role', 'userRole']
+  const commonRoleKeys = ["role", "userRole"];
   for (const key of commonRoleKeys) {
-    const role = localStorage.getItem(key)
+    const role = localStorage.getItem(key);
     if (isUserRole(role)) {
-      return role
+      return role;
     }
   }
 
-  const rawUser = localStorage.getItem('user')
+  const rawUser = localStorage.getItem("user");
   if (!rawUser) {
-    return null
+    return null;
   }
 
   try {
-    const parsed = JSON.parse(rawUser) as { role?: unknown }
+    const parsed = JSON.parse(rawUser) as { role?: unknown };
     if (isUserRole(parsed.role)) {
-      return parsed.role
+      return parsed.role;
     }
   } catch {
-    return null
-  } 
+    return null;
+  }
 
-  return null
+  return null;
 }
 
 export function setCurrentUserRole(role: UserRole): void {
-  localStorage.setItem(AUTH_ROLE_KEY, role)
+  localStorage.setItem(AUTH_ROLE_KEY, role);
 }
 
 export function clearCurrentUserRole(): void {
-  localStorage.removeItem(AUTH_ROLE_KEY)
+  localStorage.removeItem(AUTH_ROLE_KEY);
+}
+
+export function clearAuthData(): void {
+  clearCurrentUserRole();
+  localStorage.removeItem("user");
 }
 
 function isUserRole(value: unknown): value is UserRole {
-  return value === 'admin' || value === 'provider' || value === 'customer'
+  return value === "admin" || value === "provider" || value === "customer";
 }

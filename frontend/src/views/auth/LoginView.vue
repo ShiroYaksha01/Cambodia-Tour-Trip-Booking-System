@@ -1,3 +1,41 @@
+<script setup>
+import { ref } from "vue";
+import api from "../../services/api.js";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+
+const email = ref("");
+const password = ref("");
+const message = ref("");
+
+const handleLogin = async () => {
+  try {
+    const res = await api.post("/auth/login", {
+      email: email.value,
+      password: password.value,
+    });
+
+    message.value = res.data.message;
+
+    console.log("LOGIN SUCCESS:", res.data);
+
+    if (res.data.success) {
+      localStorage.setItem("auth_role", res.data.user.role);
+
+      // optional: save token
+      localStorage.setItem("token", res.data.token);
+
+      // redirect based on role OR dashboard
+      router.push("/");
+    }
+  } catch (err) {
+    message.value = "Login failed";
+    console.log(err);
+  }
+};
+</script>
+
 <template>
   <main class="auth-page">
     <section class="auth-shell">
@@ -11,8 +49,8 @@
           <div class="hero-accent"></div>
           <h1>Experience the Timeless Splendor of Cambodia.</h1>
           <p>
-            Access your private concierge and curated heritage experiences. Your journey into the
-            heart of the Khmer Empire begins here.
+            Access your private concierge and curated heritage experiences. Your
+            journey into the heart of the Khmer Empire begins here.
           </p>
         </div>
 
@@ -37,8 +75,12 @@
             <label class="field">
               <span>Email Address</span>
               <div class="input-wrap">
-                <span class="input-icon" aria-hidden="true">✉</span>
-                <input v-model="email" type="email" placeholder="curator@heritage.kh" autocomplete="email" />
+                <input
+                  v-model="email"
+                  type="email"
+                  placeholder="curator@heritage.kh"
+                  autocomplete="email"
+                />
               </div>
             </label>
             
@@ -47,18 +89,24 @@
                 <span>Password</span>
                 <RouterLink to="/forgot-password">Forgot Password?</RouterLink>
               </div>
-              <div class="input-wrap">
                 <span class="input-icon" aria-hidden="true">⌁</span>
-                <input v-model="password" type="password" placeholder="••••••••" autocomplete="current-password" />
+                <input
+                  v-model="password"
+                  type="password"
+                  placeholder="••••••••"
+                  autocomplete="current-password"
+                />
               </div>
             </label>
-
+            <p>{{ message }}</p>
             <label class="remember-row">
               <input type="checkbox" checked />
               <span>Remember me for 30 days</span>
             </label>
 
-            <button class="primary-button" type="submit">Sign In to Dashboard →</button>
+            <button class="primary-button" type="button" @click="handleLogin">
+              Sign In to Dashboard →
+            </button>
           </form>
 
           <p class="signup-row">
@@ -84,33 +132,30 @@
   </main>
 </template>
 
-<script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { setCurrentUserRole } from '../../utils/auth'
-
-const router = useRouter()
-const email = ref('')
-const password = ref('')
-
-const handleLogin = () => {
-  setCurrentUserRole('customer')
-  localStorage.setItem('user', JSON.stringify({ email: email.value, role: 'customer' }))
-  localStorage.setItem('auth_role', 'customer')
-  router.push({ name: 'dashboard' })
-}
-</script>
-
 <style scoped>
 .auth-page {
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(0, 157, 121, 0.25), transparent 28%),
-    radial-gradient(circle at bottom left, rgba(0, 107, 95, 0.45), transparent 34%),
+    radial-gradient(
+      circle at top left,
+      rgba(0, 157, 121, 0.25),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at bottom left,
+      rgba(0, 107, 95, 0.45),
+      transparent 34%
+    ),
     linear-gradient(180deg, #083538 0%, #0a4b47 56%, #06282c 100%);
   padding: 0;
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   color: #f8faf7;
 }
 
@@ -129,14 +174,22 @@ const handleLogin = () => {
   justify-content: space-between;
   background:
     linear-gradient(180deg, rgba(6, 25, 30, 0.28), rgba(6, 25, 30, 0.54)),
-    radial-gradient(circle at 30% 18%, rgba(17, 125, 88, 0.58), transparent 18%),
-    radial-gradient(circle at 68% 12%, rgba(6, 161, 111, 0.26), transparent 20%),
+    radial-gradient(
+      circle at 30% 18%,
+      rgba(17, 125, 88, 0.58),
+      transparent 18%
+    ),
+    radial-gradient(
+      circle at 68% 12%,
+      rgba(6, 161, 111, 0.26),
+      transparent 20%
+    ),
     linear-gradient(180deg, rgba(1, 33, 39, 0.35), rgba(1, 33, 39, 0.05)),
     linear-gradient(180deg, #0a3237 0%, #0d4a4f 58%, #061f22 100%);
 }
 
 .hero-panel::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background:
@@ -153,21 +206,54 @@ const handleLogin = () => {
 }
 
 .hero-panel::after {
-  content: '';
+  content: "";
   position: absolute;
   left: -6%;
   right: -6%;
   bottom: -2%;
   height: 34%;
   background:
-    radial-gradient(circle at 12% 55%, rgba(5, 33, 34, 0.95) 0 6px, transparent 7px),
-    radial-gradient(circle at 20% 40%, rgba(4, 24, 26, 0.98) 0 18px, transparent 19px),
-    radial-gradient(circle at 36% 58%, rgba(5, 33, 34, 0.96) 0 10px, transparent 11px),
-    radial-gradient(circle at 48% 44%, rgba(5, 33, 34, 0.96) 0 24px, transparent 25px),
-    radial-gradient(circle at 60% 63%, rgba(5, 33, 34, 0.96) 0 12px, transparent 13px),
-    radial-gradient(circle at 74% 48%, rgba(5, 33, 34, 0.96) 0 26px, transparent 27px),
-    radial-gradient(circle at 86% 57%, rgba(5, 33, 34, 0.96) 0 10px, transparent 11px),
-    linear-gradient(180deg, transparent, rgba(4, 19, 21, 0.94) 45%, rgba(4, 19, 21, 0.98));
+    radial-gradient(
+      circle at 12% 55%,
+      rgba(5, 33, 34, 0.95) 0 6px,
+      transparent 7px
+    ),
+    radial-gradient(
+      circle at 20% 40%,
+      rgba(4, 24, 26, 0.98) 0 18px,
+      transparent 19px
+    ),
+    radial-gradient(
+      circle at 36% 58%,
+      rgba(5, 33, 34, 0.96) 0 10px,
+      transparent 11px
+    ),
+    radial-gradient(
+      circle at 48% 44%,
+      rgba(5, 33, 34, 0.96) 0 24px,
+      transparent 25px
+    ),
+    radial-gradient(
+      circle at 60% 63%,
+      rgba(5, 33, 34, 0.96) 0 12px,
+      transparent 13px
+    ),
+    radial-gradient(
+      circle at 74% 48%,
+      rgba(5, 33, 34, 0.96) 0 26px,
+      transparent 27px
+    ),
+    radial-gradient(
+      circle at 86% 57%,
+      rgba(5, 33, 34, 0.96) 0 10px,
+      transparent 11px
+    ),
+    linear-gradient(
+      180deg,
+      transparent,
+      rgba(4, 19, 21, 0.94) 45%,
+      rgba(4, 19, 21, 0.98)
+    );
   filter: saturate(0.8);
 }
 
@@ -288,8 +374,16 @@ const handleLogin = () => {
   width: 100%;
   padding: 78px 28px 26px;
   background:
-    radial-gradient(circle at top right, rgba(245, 164, 28, 0.12), transparent 20%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(246, 247, 244, 0.98));
+    radial-gradient(
+      circle at top right,
+      rgba(245, 164, 28, 0.12),
+      transparent 20%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.88),
+      rgba(246, 247, 244, 0.98)
+    );
   backdrop-filter: blur(6px);
   display: flex;
   flex-direction: column;
@@ -335,7 +429,9 @@ const handleLogin = () => {
   gap: 10px;
   color: #2b3135;
   font-weight: 500;
-  box-shadow: 0 1px 0 rgba(17, 24, 39, 0.04), 0 0 0 1px rgba(17, 24, 39, 0.05) inset;
+  box-shadow:
+    0 1px 0 rgba(17, 24, 39, 0.04),
+    0 0 0 1px rgba(17, 24, 39, 0.05) inset;
 }
 
 .social-dot {
@@ -365,7 +461,7 @@ const handleLogin = () => {
 
 .separator::before,
 .separator::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   width: calc(50% - 90px);

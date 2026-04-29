@@ -1,30 +1,85 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-import { Provider } from '../../providers/entities/provider.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToOne,
+  OneToMany,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+
+import { ServiceType } from '../../../shared/enums';
+
+import type { Provider } from '../../providers/entities/provider.entity';
+import type { ServiceImage } from './service-image.entity';
+import type { ServiceInventory } from './service-inventory.entity';
+import type { TourPackage } from './tour-package.entity';
+import type { Accommodation } from './accommodation.entity';
+import type { Transportation } from './transportation.entity';
+
 
 @Entity('services')
 export class Service {
+  
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ length: 200 })
+  @Column({ name: 'provider_id', type: 'uuid' })
+  providerId: string;
+
+  @Column({
+    name: 'service_type',
+    type: 'enum',
+    enum: ServiceType
+  })
+  serviceType: ServiceType;
+
+  @Column({ type: 'varchar', length: 200 })
   title: string;
 
-  @Column('text')
+  @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column('decimal', { precision: 10, scale: 2 })
+  @Column({
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string) => parseFloat(value),
+    },
+  })
   price: number;
 
-  @ManyToOne(() => Provider)
+  @Column({ name: 'is_active', type: 'boolean', default: true })
+  isActive: boolean;
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
+
+  // Relations
+
+  @ManyToOne('Provider', 'services')
   @JoinColumn({ name: 'provider_id' })
   provider: Provider;
 
-  @Column({ name: 'provider_id' })
-  providerId: string;
+  @OneToMany('ServiceImage', 'service', { cascade: true })
+  images: ServiceImage[];
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
-  createdAt: Date;
+  @OneToOne('ServiceInventory', 'service', { cascade: true })
+  inventory: ServiceInventory;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
-  updatedAt: Date;
+  @OneToOne('TourPackage', 'service', { cascade: true })
+  tourPackage: TourPackage;
+
+  @OneToOne('Accommodation', 'service', { cascade: true })
+  accommodation: Accommodation;
+
+  @OneToOne('Transportation', 'service', { cascade: true })
+  transportation: Transportation;
 }
