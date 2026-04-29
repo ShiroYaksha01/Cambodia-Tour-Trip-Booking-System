@@ -13,7 +13,7 @@ export class ServiceImage {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'service_id' })
+  @Column({ name: 'service_id', type: 'uuid' })
   serviceId: string;
 
   @Column({ name: 'image_url', type: 'text' })

@@ -13,7 +13,7 @@ export class ServiceInventory {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'service_id' })
+  @Column({ name: 'service_id', type: 'uuid' })
   serviceId: string;
 
   @Column({ name: 'total_capacity', type: 'smallint' })

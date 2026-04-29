@@ -12,7 +12,7 @@ import {
 
 import { ServiceType } from '../../../shared/enums';
 
-import type { Provider } from '../../provider/entities/provider.entity';
+import type { Provider } from '../../providers/entities/provider.entity';
 import type { ServiceImage } from './service-image.entity';
 import type { ServiceInventory } from './service-inventory.entity';
 import type { TourPackage } from './tour-package.entity';
@@ -23,8 +23,8 @@ import type { Transportation } from './transportation.entity';
 @Entity('services')
 export class Service {
   
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ name: 'provider_id', type: 'uuid' })
   providerId: string;
