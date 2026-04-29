@@ -6,7 +6,10 @@ import {
   UpdateDateColumn,
   OneToOne,
 } from 'typeorm';
+<<<<<<< HEAD
 import { Provider } from '../../provider/entities/provider.entity';
+=======
+>>>>>>> development
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -28,10 +31,11 @@ export class User {
   @Column({
     type: 'enum',
     enum: UserRole,
+    default: UserRole.CUSTOMER,
   })
   role: UserRole;
 
-  @Column({ length: 60, unique: true })
+  @Column({ length: 60 })
   username: string;
 
   @Column({ length: 150, unique: true })
@@ -40,7 +44,7 @@ export class User {
   @Column({ name: 'phone_number', length: 20, nullable: true })
   phoneNumber: string;
 
-  @Column({ name: 'password_hash', type: 'text' })
+  @Column({ name: 'password_hash', type: 'text', select: false })
   passwordHash: string;
 
   @Column({ name: 'profile_picture', type: 'text', nullable: true })
