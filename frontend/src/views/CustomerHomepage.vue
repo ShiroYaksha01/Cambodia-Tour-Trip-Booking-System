@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import CustomerNavbar from '../components/customer/CustomerNavbar.vue'
 import CustomerHomePageSearch from '../components/customer/CustomerHomePageSearch.vue'
-import CustomerServiceCart from '../components/customer/CustomerServiceCart.vue'
+import CustomerServiceCard from '../components/customer/CustomerServiceCard.vue'
 import CustomerFooter from '../components/customer/CustomerFooter.vue'
 
 const tours = [
@@ -134,7 +134,7 @@ const tours = [
         <div
           class="grid grid-cols-1 gap-8 sm:grid-cols-2 xl:grid-cols-3"
         >
-          <CustomerServiceCart
+          <CustomerServiceCard
             v-for="tour in tours"
             :key="tour.id"
             :tour="tour"
