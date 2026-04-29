@@ -6,10 +6,8 @@ import {
   UpdateDateColumn,
   OneToOne,
 } from 'typeorm';
-<<<<<<< HEAD
-import { Provider } from '../../provider/entities/provider.entity';
-=======
->>>>>>> development
+
+import { Provider } from '../../providers/entities/provider.entity';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -57,6 +55,9 @@ export class User {
   })
   status: AccountStatus;
 
+  @Column({ name: 'is_email_verified', type: 'boolean', default: false })
+  isEmailVerified: boolean;
+  
   @Column({ name: 'email_verified_at', type: 'timestamptz', nullable: true })
   emailVerifiedAt: Date;
 
