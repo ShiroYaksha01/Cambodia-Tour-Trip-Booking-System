@@ -2,17 +2,8 @@
   <section id="search" class="search-engine">
     <div class="search-hero">
       <div>
-        <p class="eyebrow">Search engine</p>
-        <h1>Find the right Cambodia trip in minutes</h1>
-        <p class="intro-copy">
-          Compare destinations, duration, budget, and style in one view. The trip finder updates
-          instantly as you refine your search.
-        </p>
-      </div>
-
-      <div class="hero-badge">
-        <strong>{{ filteredTrips.length }}</strong>
-        <span>trips match your filters</span>
+        <h1></h1>
+        <p class="intro-copy"><br><br></p>
       </div>
     </div>
 
