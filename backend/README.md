@@ -78,7 +78,7 @@ This project uses TypeORM for database management. Below are the commands to han
 Run this when you have made changes to your entities (in `src/entities/*.entity.ts`) and want to generate a new migration file.
 ```bash
 # Replace <MigrationName> with a descriptive name (e.g., AddUserRole)
-npm run migration:generate -- src/migrations/<MigrationName>
+npm run migration:generate -- src/database/migrations/<MigrationName>
 ```
 
 ### 2. Run Pending Migrations

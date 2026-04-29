@@ -4,31 +4,33 @@ import { getCurrentUserRole } from '../utils/auth'
 
 const routes: RouteRecordRaw[] = [
   {
-    path: '/',
-    redirect: '/dashboard',
+    path: "/",
+    redirect: "/dashboard",
+    // name: "home",
+    // component: HomePage,
   },
   {
-    path: '/login',
-    name: 'login',
-    component: () => import('../views/auth/LoginView.vue'),
+    path: "/login",
+    name: "login",
+    component: () => import("../views/auth/LoginView.vue"),
     meta: { guestOnly: true },
   },
   {
-    path: '/verify-email',
-    name: 'verify-email',
-    component: () => import('../views/auth/VerifyEmailPage.vue'),
+    path: "/verify-email",
+    name: "verify-email",
+    component: () => import("../views/auth/VerifyEmailPage.vue"),
     meta: { guestOnly: true },
   },
   {
-    path: '/register', 
-    name: 'register',
-    component: () => import('../views/auth/RegisterView.vue'),
+    path: "/register",
+    name: "register",
+    component: () => import("../views/auth/RegisterView.vue"),
     meta: { guestOnly: true },
   },
   {
-    path: '/forgot-password',
-    name: 'forgot-password',
-    component: () => import('../views/auth/ForgotPassword.vue'),
+    path: "/forgot-password",
+    name: "forgot-password",
+    component: () => import("../views/auth/ForgotPassword.vue"),
     meta: { guestOnly: true },
   },
   {
@@ -37,88 +39,93 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/auth/RoleSelectorView.vue'),
   },
   {
+    path: '/choose-role',
+    name: 'choose-role',
+    component: () => import('../views/auth/RoleSelectorView.vue'),
+  },
+  {
     path: '/dashboard',
-    name: 'dashboard',
+    name: "dashboard",
     redirect: () => {
-      const role = getCurrentUserRole()
+      const role = getCurrentUserRole();
 
       if (!role) {
-        return { name: 'login' }
+        return { name: "login" };
       }
 
-      if (role === 'admin') {
-        return { name: 'admin-dashboard' }
+      if (role === "admin") {
+        return { name: "admin-dashboard" };
       }
 
-      if (role === 'provider') {
-        return { name: 'provider-dashboard' }
+      if (role === "provider") {
+        return { name: "provider-dashboard" };
       }
 
-      return { name: 'customer-dashboard' }
+      return { name: "customer-dashboard" };
     },
   },
   {
-    path: '/admin/dashboard',
-    name: 'admin-dashboard',
-    component: () => import('../views/dashboards/AdminDashboardView.vue'),
+    path: "/admin/dashboard",
+    name: "admin-dashboard",
+    component: () => import("../views/dashboards/AdminDashboardView.vue"),
     meta: {
       requiresAuth: true,
-      roles: ['admin'],
+      roles: ["admin"],
     },
   },
   {
-    path: '/provider/dashboard',
-    name: 'provider-dashboard',
-    component: () => import('../views/dashboards/ProviderDashboardView.vue'),
+    path: "/provider/dashboard",
+    name: "provider-dashboard",
+    component: () => import("../views/dashboards/ProviderDashboardView.vue"),
     meta: {
       requiresAuth: true,
-      roles: ['provider'],
+      roles: ["provider"],
     },
   },
   {
-    path: '/customer/dashboard',
-    name: 'customer-dashboard',
-    component: () => import('../views/dashboards/CustomerDashboardView.vue'),
+    path: "/customer/dashboard",
+    name: "customer-dashboard",
+    component: () => import("../views/dashboards/CustomerDashboardView.vue"),
     meta: {
       requiresAuth: true,
-      roles: ['customer'],
+      roles: ["customer"],
     },
   },
   {
-    path: '/unauthorized',
-    name: 'unauthorized',
-    component: () => import('../views/UnauthorizedView.vue'),
+    path: "/unauthorized",
+    name: "unauthorized",
+    component: () => import("../views/UnauthorizedView.vue"),
   },
   {
-    path: '/:pathMatch(.*)*',
-    redirect: '/dashboard',
+    path: "/:pathMatch(.*)*",
+    redirect: "/dashboard",
   },
-]
+];
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
-})
+});
 
 router.beforeEach((to) => {
-  const role = getCurrentUserRole()
-  const requiresAuth = Boolean(to.meta.requiresAuth)
-  const guestOnly = Boolean(to.meta.guestOnly)
-  const allowedRoles = (to.meta.roles as string[] | undefined) ?? []
+  const role = getCurrentUserRole();
+  const requiresAuth = Boolean(to.meta.requiresAuth);
+  const guestOnly = Boolean(to.meta.guestOnly);
+  const allowedRoles = (to.meta.roles as string[] | undefined) ?? [];
 
   if (requiresAuth && !role) {
-    return { name: 'login', query: { redirect: to.fullPath } }
+    return { name: "login", query: { redirect: to.fullPath } };
   }
 
   if (guestOnly && role) {
-    return { name: 'dashboard' }
+    return { name: "dashboard" };
   }
 
   if (allowedRoles.length > 0 && role && !allowedRoles.includes(role)) {
-    return { name: 'unauthorized' }
+    return { name: "unauthorized" };
   }
 
-  return true
-})
+  return true;
+});
 
-export default router
+export default router;
