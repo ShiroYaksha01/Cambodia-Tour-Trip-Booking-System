@@ -14,7 +14,14 @@ async function bootstrap() {
   }));
 
    app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
-  app.enableCors();
+
+  // Enable CORS
+  app.enableCors({
+    origin: '*', // Replace '*' with your frontend URL for better security
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: 'Content-Type, Accept',
+  });
+
 
   await app.listen(process.env.PORT ?? 3000);
 }
