@@ -1,7 +1,6 @@
-import { createRouter, createWebHistory } from "vue-router";
-import type { RouteRecordRaw } from "vue-router";
-import { getCurrentUserRole } from "../utils/auth";
-// import HomePage from "../pages/HomePage.vue";
+import { createRouter, createWebHistory } from 'vue-router'
+import type { RouteRecordRaw } from 'vue-router'
+import { getCurrentUserRole } from '../utils/auth'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -35,8 +34,18 @@ const routes: RouteRecordRaw[] = [
     meta: { guestOnly: true },
   },
   {
-    path: "/dashboard",
-    name: "dashboard",
+    path: '/choose-role',
+    name: 'choose-role',
+    component: () => import('../views/auth/RoleSelectorView.vue'),
+  },
+  {
+    path: '/choose-role',
+    name: 'choose-role',
+    component: () => import('../views/auth/RoleSelectorView.vue'),
+  },
+  {
+    path: '/dashboard',
+    name: 'dashboard',
     redirect: () => {
       const role = getCurrentUserRole();
 
