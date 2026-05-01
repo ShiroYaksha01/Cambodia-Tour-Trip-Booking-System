@@ -115,6 +115,15 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/booking/:id',
+    name: 'booking-detail',
+    component: () => import('../views/booking/BookingDetailView.vue'),
+    meta: {
+      requiresAuth: true,
+      roles: ['customer'],
+    },
+  },
+  {
     path: '/unauthorized',
     name: 'unauthorized',
     component: () => import('../views/UnauthorizedView.vue'),

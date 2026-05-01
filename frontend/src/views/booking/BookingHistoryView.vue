@@ -4,7 +4,7 @@
       <div class="mb-10 flex items-center gap-4">
         <div class="w-10 h-10 rounded bg-[#f4a71d] flex items-center justify-center text-xl font-bold text-[#1b2a2a] shadow-md">✦</div>
         <div>
-          <h1 class="text-3xl font-extrabold text-[#1d2427] tracking-tight">Curator Dossier</h1>
+          <h1 class="text-3xl font-extrabold text-[#1d2427] tracking-tight">Booking History</h1>
           <p class="text-[0.95rem] text-[#69757a] mt-1">Review your scheduled heritage experiences.</p>
         </div>
       </div>
@@ -85,9 +85,15 @@
               </div>
             </div>
             
-            <div class="mt-5 text-right">
+            <div class="mt-5 text-right flex justify-end gap-4">
+              <router-link 
+                :to="{ name: 'booking-detail', params: { id: booking.id } }"
+                class="text-[0.85rem] font-bold text-[#0e7f76] hover:text-[#0a6d66] transition-colors"
+              >
+                Manage Reservation →
+              </router-link>
               <button class="text-[0.85rem] font-bold text-[#bf7d10] hover:text-[#e49b18] transition-colors">
-                View Receipt →
+                View Receipt
               </button>
             </div>
           </div>
@@ -104,7 +110,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { apiGet, getAuthToken, loadLocalBookings } from '../../utils/api'
+import { apiGet } from '../../utils/api'
 
 interface Booking {
   id: string | number
@@ -122,8 +128,8 @@ const error = ref('')
 
 const mapBooking = (raw: any): Booking => ({
   id: raw.id,
-  serviceId: raw.serviceId ?? raw.service?.id ?? raw.serviceId ?? 'unknown',
-  serviceName: raw.service?.name ?? raw.serviceName ?? 'Heritage Experience',
+  serviceId: raw.serviceId ?? raw.service?.id ?? 'unknown',
+  serviceName: raw.service?.title ?? raw.serviceName ?? 'Heritage Experience',
   date: raw.bookingDate ?? raw.date ?? '',
   quantity: raw.quantity ?? 1,
   status: raw.status ?? 'confirmed',
@@ -135,24 +141,13 @@ const fetchBookings = async () => {
   error.value = ''
 
   try {
-    const token = getAuthToken()
-
-    if (token) {
-      const response = await apiGet<{ success: boolean; data: any[] }>('/booking/user')
-      if (!response.success) {
-        throw new Error('Failed to load booking history.')
-      }
-      bookings.value = response.data.map(mapBooking)
-    } else {
-      bookings.value = loadLocalBookings().map(mapBooking)
+    const response = await apiGet<{ success: boolean; data: any[] }>('/booking/user')
+    if (!response.success) {
+      throw new Error('Failed to load booking history.')
     }
+    bookings.value = response.data.map(mapBooking)
   } catch (err: any) {
-    const fallback = loadLocalBookings()
-    if (fallback.length > 0) {
-      bookings.value = fallback.map(mapBooking)
-    } else {
-      error.value = err?.message || 'Unable to load booking history.'
-    }
+    error.value = err?.message || 'Unable to load booking history.'
   } finally {
     isLoading.value = false
   }

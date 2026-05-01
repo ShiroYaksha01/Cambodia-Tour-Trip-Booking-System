@@ -22,11 +22,11 @@ export class BookingsService {
     userId: string,
     createBookingDto: CreateBookingDto,
   ): Promise<Booking> {
-    const { serviceId, date, quantity } = createBookingDto;
+    const { serviceId, bookingDate, quantity } = createBookingDto;
 
     // Validate booking date is in the future
-    const bookingDate = new Date(date);
-    if (bookingDate <= new Date()) {
+    const dateObj = new Date(bookingDate);
+    if (Number.isNaN(dateObj.getTime()) || dateObj <= new Date()) {
       throw new BadRequestException('Booking date must be in the future');
     }
 
@@ -46,10 +46,10 @@ export class BookingsService {
       userId,
       serviceId,
       providerId: service.providerId,
-      bookingDate,
+      bookingDate: dateObj,
       quantity,
       totalPrice,
-      status: BookingStatus.CONFIRMED, // Assume auto-confirm or pending based on logic, prompt didn't specify. Using CONFIRMED to match frontend demo flow
+      status: BookingStatus.PENDING,
     });
 
     return this.bookingRepository.save(booking);

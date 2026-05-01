@@ -41,7 +41,15 @@ export class Booking {
   @Column('int')
   quantity: number;
 
-  @Column('decimal', { precision: 10, scale: 2, name: 'total_price' })
+  @Column('decimal', {
+    precision: 10,
+    scale: 2,
+    name: 'total_price',
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string) => parseFloat(value),
+    },
+  })
   totalPrice: number;
 
   @Column({

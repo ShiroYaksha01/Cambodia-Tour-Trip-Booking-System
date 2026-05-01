@@ -30,6 +30,7 @@ import { BookingsModule } from './modules/bookings/bookings.module';
     UsersModule,
     ProvidersModule,
     BookingsModule,
+    ServicesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

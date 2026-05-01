@@ -1,6 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from "vue";
-import api from "../../services/api.js";
+import api from "../../services/api";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -22,12 +22,14 @@ const handleLogin = async () => {
 
     if (res.data.success) {
       localStorage.setItem("auth_role", res.data.user.role);
-
-      // optional: save token
       localStorage.setItem("token", res.data.token);
 
-      // redirect based on role OR dashboard
-      router.push("/");
+      const redirectPath = router.currentRoute.value.query.redirect as string;
+      if (redirectPath) {
+        router.push(redirectPath);
+      } else {
+        router.push("/");
+      }
     }
   } catch (err) {
     message.value = "Login failed";
@@ -89,6 +91,7 @@ const handleLogin = async () => {
                 <span>Password</span>
                 <RouterLink to="/forgot-password">Forgot Password?</RouterLink>
               </div>
+              <div class="input-wrap">
                 <span class="input-icon" aria-hidden="true">⌁</span>
                 <input
                   v-model="password"
