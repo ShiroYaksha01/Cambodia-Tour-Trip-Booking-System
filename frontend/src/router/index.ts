@@ -39,11 +39,6 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/auth/RoleSelectorView.vue'),
   },
   {
-    path: '/choose-role',
-    name: 'choose-role',
-    component: () => import('../views/auth/RoleSelectorView.vue'),
-  },
-  {
     path: '/dashboard',
     name: "dashboard",
     redirect: () => {
@@ -61,7 +56,11 @@ const routes: RouteRecordRaw[] = [
         return { name: "provider-dashboard" };
       }
 
-      return { name: "customer-dashboard" };
+      if (role === "customer") {
+        return { name: "customer-homepage" };
+      }
+
+      return { name: "unauthorized" };
     },
   },
   {
@@ -83,9 +82,9 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
-    path: "/customer/dashboard",
-    name: "customer-dashboard",
-    component: () => import("../views/dashboards/CustomerDashboardView.vue"),
+    path: "/customer/homepage",
+    name: "customer-homepage",
+    component: () => import("../views/CustomerHomepage.vue"),
     meta: {
       requiresAuth: true,
       roles: ["customer"],
@@ -129,3 +128,5 @@ router.beforeEach((to) => {
 });
 
 export default router;
+
+
