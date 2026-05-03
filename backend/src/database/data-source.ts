@@ -4,17 +4,26 @@ import { join } from 'path';
 
 dotenvConfig({ path: '.env' });
 
-export const dataSourceOptions: DataSourceOptions = {
-  type: 'postgres',
-  host: process.env.DATABASE_HOST,
-  port: parseInt(process.env.DATABASE_PORT || '5432', 10),
-  username: process.env.DATABASE_USER,
-  password: process.env.DATABASE_PASSWORD,
-  database: process.env.DATABASE_NAME,
-  entities: [join(__dirname, '/../**/*.entity{.ts,.js}')],
-  migrations: [join(__dirname, '/migrations/*{.ts,.js}')],
+const commonOptions = {
+  type: 'postgres' as const,
+  entities: ['src/**/*.entity{.ts,.js}'],
+  migrations: ['src/migrations/*{.ts,.js}'],
   synchronize: false,
 };
+
+export const dataSourceOptions: DataSourceOptions = process.env.DATABASE_URL
+  ? {
+      ...commonOptions,
+      url: process.env.DATABASE_URL,
+    }
+  : {
+      ...commonOptions,
+      host: process.env.DATABASE_HOST,
+      port: parseInt(process.env.DATABASE_PORT || '5432', 10),
+      username: process.env.DATABASE_USER,
+      password: process.env.DATABASE_PASSWORD,
+      database: process.env.DATABASE_NAME,
+    };
 
 const dataSource = new DataSource(dataSourceOptions);
 export default dataSource;
