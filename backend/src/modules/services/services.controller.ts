@@ -8,7 +8,6 @@ import {
   Param,
   Query,
   Body,
-  ParseIntPipe,
 } from '@nestjs/common';
 import { ServicesService } from './services.service';
 import { FilterServicesDto } from './dto/filter-services.dto';
