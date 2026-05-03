@@ -28,7 +28,6 @@ import { ProvidersModule } from './modules/providers/providers.module';
     AuthModule,
     UsersModule,
     ProvidersModule,
-    ServicesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

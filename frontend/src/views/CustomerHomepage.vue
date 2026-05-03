@@ -1,20 +1,48 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-
 import CustomerNavbar from '../components/customer/CustomerNavbar.vue'
 import CustomerHomePageSearch from '../components/customer/CustomerHomePageSearch.vue'
 import CustomerServiceCard from '../components/customer/CustomerServiceCard.vue'
 import CustomerFooter from '../components/customer/CustomerFooter.vue'
 
-import { fetchServices } from '../services/api'
-
-const tours = ref([])
-
-onMounted(async () => {
-  tours.value = await fetchServices()
-})
+const tours = [
+  {
+    id: 1,
+    title: 'Angkor Wat Sunrise Tour',
+    location: 'Siem Reap, Cambodia',
+    image:
+      'https://images.unsplash.com/photo-1602002418082-a4443e081dd1?q=80&w=1200&auto=format&fit=crop',
+    rating: 4.9,
+    duration: '2 Days',
+    price: 120,
+    description:
+      'Experience the magical sunrise at Angkor Wat and explore ancient Khmer temples.',
+  },
+  {
+    id: 2,
+    title: 'Koh Rong Island Escape',
+    location: 'Sihanoukville, Cambodia',
+    image:
+      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop',
+    rating: 4.8,
+    duration: '3 Days',
+    price: 180,
+    description:
+      'Relax on white sand beaches and enjoy crystal-clear waters in Koh Rong.',
+  },
+  {
+    id: 3,
+    title: 'Phnom Penh City Tour',
+    location: 'Phnom Penh, Cambodia',
+    image:
+      'https://images.unsplash.com/photo-1548013146-72479768bada?q=80&w=1200&auto=format&fit=crop',
+    rating: 4.7,
+    duration: '1 Day',
+    price: 75,
+    description:
+      'Discover the capital city with royal palaces, museums, and local food.',
+  },
+]
 </script>
-
 
 <template>
   <div class="bg-gray-50 min-h-screen">
