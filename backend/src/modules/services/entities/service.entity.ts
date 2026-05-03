@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -23,8 +24,8 @@ import type { Transportation } from './transportation.entity';
 @Entity('services')
 export class Service {
   
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
   @Column({ name: 'provider_id', type: 'uuid' })
   providerId: string;

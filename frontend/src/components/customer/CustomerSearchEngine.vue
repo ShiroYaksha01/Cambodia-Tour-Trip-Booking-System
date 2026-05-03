@@ -49,7 +49,7 @@
       </label>
 
       <label>
-        <span>Month</span>
+        <span></span>
         <input v-model="form.month" type="month" />
       </label>
 
@@ -315,11 +315,10 @@ h1 {
   padding: 0 18px;
   border: 0;
   border-radius: 16px;
-  background: linear-gradient(135deg, #0d4b45, #f3c85f);
-  color: #08353a;
-  font-weight: 800;
+  background: #006566;
+  color: white;
+  font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 18px 28px rgba(13, 75, 69, 0.18);
 }
 
 .search-results {
