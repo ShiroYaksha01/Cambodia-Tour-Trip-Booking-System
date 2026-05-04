@@ -24,8 +24,8 @@ import type { Transportation } from './transportation.entity';
 @Entity('services')
 export class Service {
   
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ name: 'provider_id', type: 'uuid' })
   providerId: string;
