@@ -20,7 +20,7 @@ async function bootstrap() {
   app.enableCors({
     origin: '*', // Replace '*' with your frontend URL for better security
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    allowedHeaders: 'Content-Type, Accept',
+    allowedHeaders: 'Content-Type, Accept, Authorization',
   });
 
 

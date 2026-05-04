@@ -1,6 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from "vue";
-import api from "../../services/api.js";
+import api from "../../services/api";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -22,12 +22,14 @@ const handleLogin = async () => {
 
     if (res.data.success) {
       localStorage.setItem("auth_role", res.data.user.role);
-
-      // optional: save token
       localStorage.setItem("token", res.data.token);
 
-      // redirect based on role OR dashboard
-      router.push("/");
+      const redirectPath = router.currentRoute.value.query.redirect as string;
+      if (redirectPath) {
+        router.push(redirectPath);
+      } else {
+        router.push("/");
+      }
     }
   } catch (err) {
     message.value = "Login failed";
@@ -71,11 +73,10 @@ const handleLogin = async () => {
             <p>Please enter your details to access your curator dashboard.</p>
           </header>
 
-          <form class="auth-form">
+<form class="auth-form" @submit.prevent="handleLogin">
             <label class="field">
               <span>Email Address</span>
               <div class="input-wrap">
-                <span class="input-icon" aria-hidden="true">✉</span>
                 <input
                   v-model="email"
                   type="email"
@@ -84,14 +85,14 @@ const handleLogin = async () => {
                 />
               </div>
             </label>
-
+            
             <label class="field password-field">
               <div class="field-row">
                 <span>Password</span>
                 <RouterLink to="/forgot-password">Forgot Password?</RouterLink>
               </div>
               <div class="input-wrap">
-                <span class="input-icon" aria-hidden="true">⌁~</span>
+                <span class="input-icon" aria-hidden="true">⌁</span>
                 <input
                   v-model="password"
                   type="password"
@@ -114,6 +115,10 @@ const handleLogin = async () => {
           <p class="signup-row">
             Don't have an account yet?
             <RouterLink to="/register">Curate your Journey →</RouterLink>
+          </p>
+
+          <p class="signup-row text-sm text-[#9ca2a7] mt-4">
+            Tip: this demo stores a customer role in localStorage so you can continue to booking.
           </p>
 
           <footer class="footer-links">

@@ -44,6 +44,9 @@ export function clearCurrentUserRole(): void {
 export function clearAuthData(): void {
   clearCurrentUserRole();
   localStorage.removeItem("user");
+  localStorage.removeItem("token");
+  localStorage.removeItem("auth_token");
+  localStorage.removeItem("jwt");
 }
 
 function isUserRole(value: unknown): value is UserRole {
