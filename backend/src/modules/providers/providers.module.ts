@@ -4,9 +4,11 @@ import { Provider } from './entities/provider.entity';
 import { ProviderController } from './provider.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Provider, ProviderContact])],
+  imports: [TypeOrmModule.forFeature([Provider])],
   controllers: [ProviderController],
   providers: [],
   exports: [TypeOrmModule],
 })
 export class ProvidersModule {}
+
+

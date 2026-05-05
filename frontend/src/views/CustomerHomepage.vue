@@ -5,6 +5,7 @@ import CustomerServiceCard from '../components/customer/CustomerServiceCard.vue'
 import CustomerFooter from '../components/customer/CustomerFooter.vue'
 
 import { fetchServices } from '../services/api'
+import { onMounted, ref } from 'vue'
 
 const tours = ref([])
 
