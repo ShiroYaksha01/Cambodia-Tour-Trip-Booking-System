@@ -20,10 +20,11 @@ async function bootstrap() {
   app.enableCors({
     origin: '*', // Replace '*' with your frontend URL for better security
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    allowedHeaders: 'Content-Type, Accept',
+    allowedHeaders: 'Content-Type, Accept, Authorization',
   });
 
 
-  await app.listen(process.env.PORT ?? 3000);
+  const port = Number(process.env.PORT ?? 3000);
+  await app.listen(port);
 }
 bootstrap();

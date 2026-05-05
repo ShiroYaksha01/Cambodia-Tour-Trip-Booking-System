@@ -1,5 +1,7 @@
 <template>
-  <button class="logout-button" @click="logout">Logout</button>
+  <button class="logout-button" @click="logout">
+    <span class="mr-2">🚪</span> Sign Out
+  </button>
 </template>
 
 <script setup lang="ts">
@@ -19,24 +21,23 @@ function logout() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.75rem 1.25rem;
-  border: none;
-  border-radius: 0.375rem;
-  background: #2563eb;
-  color: #ffffff;
+  padding: 0.6rem 1.25rem;
+  border: 1px solid #5f6d74/20;
+  border-radius: 0.75rem;
+  background: white;
+  color: #69757a;
   font-weight: 700;
-  min-width: 110px;
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.18);
+  font-size: 0.85rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
   cursor: pointer;
-  transition:
-    background-color 0.2s ease,
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .logout-button:hover {
-  background: #1d4ed8;
+  background: #fdfdfd;
+  color: #1d2427;
+  border-color: #0e7f76/30;
   transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.24);
+  box-shadow: 0 8px 20px rgba(10, 109, 102, 0.08);
 }
 </style>

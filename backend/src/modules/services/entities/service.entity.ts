@@ -19,20 +19,19 @@ import type { TourPackage } from './tour-package.entity';
 import type { Accommodation } from './accommodation.entity';
 import type { Transportation } from './transportation.entity';
 
-
 @Entity('services')
 export class Service {
-  
+
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'provider_id', type: 'uuid' })
+  @Column({ name: 'provider_id', type: 'uuid', nullable: true })
   providerId: string;
 
   @Column({
     name: 'service_type',
     type: 'enum',
-    enum: ServiceType
+    enum: ServiceType,
   })
   serviceType: ServiceType;
 
@@ -55,6 +54,27 @@ export class Service {
 
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
+
+  @Column({ type: 'text', nullable: true })
+  image: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  location: string;
+
+  @Column({
+    type: 'decimal',
+    precision: 3,
+    scale: 2,
+    nullable: true,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string) => parseFloat(value),
+    },
+  })
+  rating: number;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  duration: string;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

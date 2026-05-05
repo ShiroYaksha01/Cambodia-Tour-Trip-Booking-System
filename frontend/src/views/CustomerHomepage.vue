@@ -4,44 +4,22 @@ import CustomerHomePageSearch from '../components/customer/CustomerHomePageSearc
 import CustomerServiceCard from '../components/customer/CustomerServiceCard.vue'
 import CustomerFooter from '../components/customer/CustomerFooter.vue'
 
-const tours = [
-  {
-    id: 1,
-    title: 'Angkor Wat Sunrise Tour',
-    location: 'Siem Reap, Cambodia',
-    image:
-      'https://images.unsplash.com/photo-1602002418082-a4443e081dd1?q=80&w=1200&auto=format&fit=crop',
-    rating: 4.9,
-    duration: '2 Days',
-    price: 120,
-    description:
-      'Experience the magical sunrise at Angkor Wat and explore ancient Khmer temples.',
-  },
-  {
-    id: 2,
-    title: 'Koh Rong Island Escape',
-    location: 'Sihanoukville, Cambodia',
-    image:
-      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop',
-    rating: 4.8,
-    duration: '3 Days',
-    price: 180,
-    description:
-      'Relax on white sand beaches and enjoy crystal-clear waters in Koh Rong.',
-  },
-  {
-    id: 3,
-    title: 'Phnom Penh City Tour',
-    location: 'Phnom Penh, Cambodia',
-    image:
-      'https://images.unsplash.com/photo-1548013146-72479768bada?q=80&w=1200&auto=format&fit=crop',
-    rating: 4.7,
-    duration: '1 Day',
-    price: 75,
-    description:
-      'Discover the capital city with royal palaces, museums, and local food.',
-  },
-]
+import { fetchServices } from '../services/api'
+
+const tours = ref([])
+
+//use try-catch to handle errors when fetching data from the API
+onMounted(async () => {
+  try {
+    const data = await fetchServices()
+    console.log("API data:", data)
+
+    tours.value = Array.isArray(data) ? data : []
+  } catch (error) {
+    console.error("Failed to fetch services:", error)
+    tours.value = []
+  }
+})
 </script>
 
 <template>

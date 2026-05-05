@@ -75,9 +75,9 @@ With Mau, you can deploy your application in just a few clicks, allowing you to 
 This project uses TypeORM for database management. Below are the commands to handle migrations:
 
 ### 1. Generate a Migration
-Run this when you have made changes to your entities (in `src/entities/*.entity.ts`) and want to generate a new migration file.
+Run this when you have made changes to your entities (in `src/modules/**/entities/*.entity.ts`) and want to generate a new migration file.
 ```bash
-# Replace <MigrationName> with a descriptive name (e.g., AddUserRole)
+# Replace <MigrationName> with a descriptive name (e.g., UpdateServiceIdToUuid)
 npm run migration:generate -- src/database/migrations/<MigrationName>
 ```
 

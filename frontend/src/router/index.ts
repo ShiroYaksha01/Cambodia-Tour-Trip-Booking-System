@@ -39,8 +39,13 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/auth/RoleSelectorView.vue'),
   },
   {
+    path: '/choose-role',
+    name: 'choose-role',
+    component: () => import('../views/auth/RoleSelectorView.vue'),
+  },
+  {
     path: '/dashboard',
-    name: "dashboard",
+    name: 'dashboard',
     redirect: () => {
       const role = getCurrentUserRole();
 
@@ -91,9 +96,50 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
-    path: "/unauthorized",
-    name: "unauthorized",
-    component: () => import("../views/UnauthorizedView.vue"),
+    path: '/service/:id',
+    name: 'service-detail',
+    component: () => import('../views/services/ServiceDetailView.vue'),
+  },
+  {
+    path: '/service/:id/book',
+    name: 'booking-form',
+    component: () => import('../views/booking/BookingFormView.vue'),
+    meta: {
+      requiresAuth: true,
+      roles: ['customer'],
+    },
+  },
+  {
+    path: '/booking/success',
+    name: 'booking-success',
+    component: () => import('../views/booking/BookingSuccessView.vue'),
+    meta: {
+      requiresAuth: true,
+      roles: ['customer'],
+    },
+  },
+  {
+    path: '/booking/history',
+    name: 'booking-history',
+    component: () => import('../views/booking/BookingHistoryView.vue'),
+    meta: {
+      requiresAuth: true,
+      roles: ['customer'],
+    },
+  },
+  {
+    path: '/booking/:id',
+    name: 'booking-detail',
+    component: () => import('../views/booking/BookingDetailView.vue'),
+    meta: {
+      requiresAuth: true,
+      roles: ['customer'],
+    },
+  },
+  {
+    path: '/unauthorized',
+    name: 'unauthorized',
+    component: () => import('../views/UnauthorizedView.vue'),
   },
   {
     path: "/:pathMatch(.*)*",
@@ -128,5 +174,3 @@ router.beforeEach((to) => {
 });
 
 export default router;
-
-

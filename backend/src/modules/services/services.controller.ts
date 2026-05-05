@@ -8,7 +8,6 @@ import {
   Param,
   Query,
   Body,
-  ParseIntPipe,
 } from '@nestjs/common';
 import { ServicesService } from './services.service';
 import { FilterServicesDto } from './dto/filter-services.dto';
@@ -26,7 +25,7 @@ export class ServicesController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id') id: string) {
     return this.servicesService.findOne(id);
   }
 
@@ -37,20 +36,20 @@ export class ServicesController {
 
   @Patch(':id')
   patch(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() patchServiceDto: UpdateServiceDto,
   ) {
     return this.servicesService.patch(id, patchServiceDto);
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
+  remove(@Param('id') id: string) {
     return this.servicesService.remove(id);
   }
 
   @Get(':id/availability')
   checkAvailability(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Query() query: AvailabilityQueryDto,
   ) {
     return this.servicesService.checkAvailability(id, query);
