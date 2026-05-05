@@ -34,7 +34,7 @@ export class UsersController {
   )
   updateUser(
     @Param('id') id: string,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: any,
     @Body() dto: UpdateUserDto,
   ) {
     return this.usersService.updateUser(id, {

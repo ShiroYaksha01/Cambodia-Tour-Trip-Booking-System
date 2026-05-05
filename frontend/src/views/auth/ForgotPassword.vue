@@ -196,9 +196,7 @@ const goBack = () => {
             <form class="auth-form" @submit.prevent="handleVerifyCode">
               <div class="code-container" @paste="handleCodePaste">
                 <input
-                  v-for="(digit, index) in code"
-                  :key="index"
-                  type="text"
+                  v-for="(_, index) in code"
                   inputmode="numeric"
                   maxlength="1"
                   v-model="code[index]"
