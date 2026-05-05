@@ -1,7 +1,15 @@
-import { IsString, IsNumber, IsEnum, IsBoolean, IsOptional } from 'class-validator';
+import { IsString, IsNumber, IsEnum, IsBoolean, IsOptional, IsUUID } from 'class-validator';
 import { ServiceType } from '../../../shared/enums';
 
 export class UpdateServiceDto {
+  @IsOptional()
+  @IsUUID()
+  providerId?: string;
+
+  @IsOptional()
+  @IsEnum(ServiceType, { message: 'Invalid service type' })
+  serviceType?: ServiceType;
+
   @IsOptional()
   @IsString({ message: 'Title must be a string' })
   title?: string;
@@ -15,14 +23,22 @@ export class UpdateServiceDto {
   price?: number;
 
   @IsOptional()
-  @IsEnum(ServiceType, { message: 'Invalid service type' })
-  serviceType?: ServiceType;
-
-  @IsOptional()
-  @IsString({ message: 'Destination must be a string' })
-  destination?: string;
-
-  @IsOptional()
   @IsBoolean({ message: 'isActive must be a boolean' })
   isActive?: boolean;
+
+  @IsOptional()
+  @IsString()
+  image?: string;
+
+  @IsOptional()
+  @IsString()
+  location?: string;
+
+  @IsOptional()
+  @IsNumber()
+  rating?: number;
+
+  @IsOptional()
+  @IsString()
+  duration?: string;
 }

@@ -42,7 +42,7 @@ export class ServicesService {
     return query.getMany();
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     return this.serviceRepository.findOne({ where: { id } });
   }
 
@@ -51,7 +51,7 @@ export class ServicesService {
     return this.serviceRepository.save(service);
   }
 
-  async patch(id: number, patchServiceDto: any) {
+  async patch(id: string, patchServiceDto: any) {
     await this.serviceRepository.update(id, patchServiceDto);
     return this.findOne(id);
   }

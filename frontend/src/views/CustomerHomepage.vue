@@ -10,8 +10,17 @@ import { fetchServices } from '../services/api'
 
 const tours = ref([])
 
+//use try-catch to handle errors when fetching data from the API
 onMounted(async () => {
-  tours.value = await fetchServices()
+  try {
+    const data = await fetchServices()
+    console.log("API data:", data)
+
+    tours.value = Array.isArray(data) ? data : []
+  } catch (error) {
+    console.error("Failed to fetch services:", error)
+    tours.value = []
+  }
 })
 </script>
 

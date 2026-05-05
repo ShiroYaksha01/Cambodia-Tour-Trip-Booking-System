@@ -25,7 +25,7 @@ export class ServicesController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: number) {
+  findOne(@Param('id') id: string) {
     return this.servicesService.findOne(id);
   }
 
@@ -36,7 +36,7 @@ export class ServicesController {
 
   @Patch(':id')
   patch(
-    @Param('id') id: number,
+    @Param('id') id: string,
     @Body() patchServiceDto: UpdateServiceDto,
   ) {
     return this.servicesService.patch(id, patchServiceDto);
