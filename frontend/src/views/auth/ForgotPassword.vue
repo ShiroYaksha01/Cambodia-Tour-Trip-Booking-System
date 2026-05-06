@@ -288,7 +288,7 @@ const goBack = () => {
           </div>
 
           <footer class="footer-links">
-            <span>© 2024 THE HERITAGE CURATOR. ALL RIGHTS RESERVED.</span>
+            <span>© 2026 THE HERITAGE CURATOR. ALL RIGHTS RESERVED.</span>
             <nav>
               <a href="#">PRIVACY POLICY</a>
               <a href="#">TERMS OF SERVICE</a>

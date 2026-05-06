@@ -66,36 +66,40 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: "/provider",
-    name: "provider",
-    component: () => import("../views/dashboards/ProviderDashboardView.vue"),
+    component: () => import("../views/dashboards/ProviderShellView.vue"),
     meta: {
       requiresAuth: false,
       roles: ["provider"],
     },
+    children: [
+      {
+        path: "",
+        name: "provider-dashboard",
+        component: () => import("../views/dashboards/ProviderDashboardView.vue"),
+      },
+      {
+        path: "service",
+        name: "provider-service",
+        component: () => import("../views/dashboards/ServiceManagerView.vue"),
+      },
+      {
+        path: "inventory",
+        name: "provider-inventory",
+        component: () => import("../views/dashboards/InventoryView.vue"),
+      },
+    ],
   },
   {
     path: "/provider/dashboard",
-    name: "provider-dashboard",
-    component: () => import("../views/dashboards/ProviderDashboardView.vue"),
-    meta: {
-      requiresAuth: false,
-    },
+    redirect: { name: "provider-dashboard" },
   },
   {
     path: "/provider/service",
-    name: "provider-service",
-    component: () => import("../views/dashboards/ServiceManagerView.vue"),
-    meta: {
-      requiresAuth: false,
-    },
+    redirect: { name: "provider-service" },
   },
   {
     path: "/provider/inventory",
-    name: "provider-inventory",
-    component: () => import("../views/dashboards/InventoryView.vue"),
-    meta: {
-      requiresAuth: false,
-    },
+    redirect: { name: "provider-inventory" },
   },
   {
     path: "/customer/dashboard",
