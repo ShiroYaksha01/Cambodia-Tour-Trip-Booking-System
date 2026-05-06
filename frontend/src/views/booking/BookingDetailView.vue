@@ -67,6 +67,13 @@
           </div>
 
           <div class="mt-12 pt-8 border-t border-[#5f6d74]/5 flex gap-4">
+             <button 
+                v-if="booking.status === 'pending'"
+                @click="router.push({ name: 'payment', params: { id: booking.id } })"
+                class="flex-1 py-3.5 px-6 rounded-lg bg-[#0e7f76] text-white text-[0.9rem] font-bold shadow-lg hover:shadow-[#0e7f76]/30 transition-all transform hover:-translate-y-1"
+             >
+                Pay Now
+             </button>
              <button class="flex-1 py-3.5 px-6 rounded-lg bg-[#142125] text-white text-[0.9rem] font-bold shadow-lg hover:bg-black transition-all">
                 Download Receipt
              </button>

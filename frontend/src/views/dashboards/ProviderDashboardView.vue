@@ -15,8 +15,7 @@
             <strong>The Heritage Curator</strong>
             <span>Master Admin</span>
           </div>
-          <div class="provider-avatar">AT</div>
-        </div>
+          <div class="provider-avatar">AT</div>          <LogoutButton />        </div>
       </header>
 
       <section class="summary-grid" id="overview">
@@ -201,6 +200,7 @@
 
 <script setup lang="ts">
 import DashboardSidebar from '../../components/dashboard/DashboardSidebar.vue'
+import LogoutButton from '../../components/LogoutButton.vue'
 </script>
 
 <style scoped>

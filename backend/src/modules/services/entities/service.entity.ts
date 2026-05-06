@@ -55,9 +55,6 @@ export class Service {
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 
-  @Column({ type: 'text', nullable: true })
-  image: string;
-
   @Column({ type: 'varchar', length: 255, nullable: true })
   location: string;
 

@@ -193,7 +193,7 @@ const submitBooking = async () => {
     if (!response.success) {
        throw new Error('Server declined the reservation.')
     }
-    router.push({ name: 'booking-success', query: { id: response.data.id } })
+    router.push({ name: 'payment', params: { id: response.data.id } })
   } catch (error: any) {
     apiError.value = error.message || 'Network error. Please try again.'
   } finally {

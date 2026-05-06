@@ -25,6 +25,7 @@
             </div>
             <div class="avatar">AK</div>
           </div>
+          <LogoutButton />
         </div>
       </header>
 
@@ -217,6 +218,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import DashboardSidebar from '../../components/dashboard/DashboardSidebar.vue'
+import LogoutButton from '../../components/LogoutButton.vue'
 
 type ProviderItem = {
   name: string
