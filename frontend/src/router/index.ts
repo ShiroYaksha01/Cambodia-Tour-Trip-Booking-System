@@ -137,6 +137,15 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/payment/:id',
+    name: 'payment',
+    component: () => import('../views/payment/PaymentView.vue'),
+    meta: {
+      requiresAuth: true,
+      roles: ['customer'],
+    },
+  },
+  {
     path: '/unauthorized',
     name: 'unauthorized',
     component: () => import('../views/UnauthorizedView.vue'),

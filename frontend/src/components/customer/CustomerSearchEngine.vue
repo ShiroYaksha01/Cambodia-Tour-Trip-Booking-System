@@ -16,7 +16,7 @@
       </div>
     </div>
 
-    <form class="search-panel" @submit.prevent="applySearch">
+     <form class="search-panel" @submit.prevent="applySearch">
       <label>
         <span>Destination</span>
         <input v-model="form.keyword" type="search" placeholder="Phnom Penh, Siem Reap, Koh Rong" />
@@ -31,7 +31,7 @@
           <option value="beach">Beach</option>
           <option value="city">City</option>
         </select>
-      </label>
+      </label> 
 
       <label>
         <span>Budget</span>
@@ -56,30 +56,7 @@
       <button type="submit">Search Trips</button>
     </form>
 
-    <div class="search-results" id="featured">
-      <article v-for="trip in filteredTrips" :key="trip.id" class="trip-card">
-        <div class="trip-card__image" :style="{ background: trip.gradient }">
-          <span>{{ trip.duration }}</span>
-        </div>
-        <div class="trip-card__body">
-          <div class="trip-card__top">
-            <div>
-              <p>{{ trip.destination }}</p>
-              <h2>{{ trip.title }}</h2>
-            </div>
-            <strong>${{ trip.price }}</strong>
-          </div>
-
-          <p>{{ trip.summary }}</p>
-
-          <div class="trip-tags">
-            <span>{{ trip.style }}</span>
-            <span>{{ trip.region }}</span>
-            <span>Up to {{ trip.capacity }} guests</span>
-          </div>
-        </div>
-      </article>
-    </div>
+    
   </section>
 </template>
 

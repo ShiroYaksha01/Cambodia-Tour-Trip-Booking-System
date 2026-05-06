@@ -52,7 +52,7 @@
         </div>
         <!-- CTA -->
         <button
-          @click="$emit('book', tour)"
+          @click.stop="$emit('book', tour)"
           class="px-5 py-2 rounded-lg border border-dark-green text-dark-green text-sm font-medium
                  hover:bg-dark-green hover:text-white transition-all active:scale-[0.97]"
         >
