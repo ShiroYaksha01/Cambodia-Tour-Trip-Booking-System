@@ -1,20 +1,27 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-
 import CustomerNavbar from '../components/customer/CustomerNavbar.vue'
 import CustomerHomePageSearch from '../components/customer/CustomerHomePageSearch.vue'
 import CustomerServiceCard from '../components/customer/CustomerServiceCard.vue'
 import CustomerFooter from '../components/customer/CustomerFooter.vue'
 
 import { fetchServices } from '../services/api'
+import { onMounted, ref } from 'vue'
 
 const tours = ref([])
 
+//use try-catch to handle errors when fetching data from the API
 onMounted(async () => {
-  tours.value = await fetchServices()
+  try {
+    const data = await fetchServices()
+    console.log("API data:", data)
+
+    tours.value = Array.isArray(data) ? data : []
+  } catch (error) {
+    console.error("Failed to fetch services:", error)
+    tours.value = []
+  }
 })
 </script>
-
 
 <template>
   <div class="bg-gray-50 min-h-screen">
