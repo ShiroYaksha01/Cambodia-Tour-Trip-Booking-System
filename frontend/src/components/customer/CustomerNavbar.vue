@@ -12,27 +12,31 @@
     </nav>
 
     <div class="toolbar-group">
-      <button type="button" class="toolbar-button" aria-label="Notifications">🔔</button>
-      <button type="button" class="toolbar-button" aria-label="Wishlist">♡</button>
-      <div class="profile-chip">
-        <span>Profile</span>
+      <button type="button" class="toolbar-button" aria-label="Notifications">
+        🔔
+      </button>
+      <button type="button" class="toolbar-button" aria-label="Wishlist">
+        ♡
+      </button>
+      <router-link :to="{ name: 'customer-profile' }" class="profile-chip">
+        <span>Profilee</span>
         <span class="avatar" aria-hidden="true">C</span>
-      </div>
+      </router-link>
       <LogoutButton />
     </div>
   </header>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
-import LogoutButton from '../LogoutButton.vue'
+import { defineComponent } from "vue";
+import LogoutButton from "../LogoutButton.vue";
 
 export default defineComponent({
-  name: 'CustomerNavbar',
+  name: "CustomerNavbar",
   components: {
     LogoutButton,
   },
-})
+});
 </script>
 
 <style scoped>
@@ -86,7 +90,7 @@ export default defineComponent({
 }
 
 .nav-links__active::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   right: 0;
