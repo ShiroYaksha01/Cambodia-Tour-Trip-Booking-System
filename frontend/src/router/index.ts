@@ -83,6 +83,15 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: "/provider/bookings",
+    name: "provider-bookings",
+    component: () => import("../pages/ProviderBookingsView.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["provider"],
+    },
+  },
+  {
     path: "/customer/dashboard",
     name: "customer-dashboard",
     component: () => import("../views/dashboards/CustomerDashboardView.vue"),
