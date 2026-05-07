@@ -6,8 +6,6 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/",
     redirect: "/dashboard",
-    // name: "home",
-    // component: HomePage,
   },
   {
     path: "/login",
@@ -37,11 +35,7 @@ const routes: RouteRecordRaw[] = [
     path: '/choose-role',
     name: 'choose-role',
     component: () => import('../views/auth/RoleSelectorView.vue'),
-  },
-  {
-    path: '/choose-role',
-    name: 'choose-role',
-    component: () => import('../views/auth/RoleSelectorView.vue'),
+    meta: { requiresAuth: true },
   },
   {
     path: '/dashboard',
@@ -72,6 +66,24 @@ const routes: RouteRecordRaw[] = [
     path: "/admin/dashboard",
     name: "admin-dashboard",
     component: () => import("../views/dashboards/AdminDashboardView.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["admin"],
+    },
+  },
+  {
+    path: "/admin/providers",
+    name: "admin-providers",
+    component: () => import("../views/dashboards/AdminProvidersView.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["admin"],
+    },
+  },
+  {
+    path: "/admin/bookings",
+    name: "admin-bookings",
+    component: () => import("../views/dashboards/AdminBookingsView.vue"),
     meta: {
       requiresAuth: true,
       roles: ["admin"],

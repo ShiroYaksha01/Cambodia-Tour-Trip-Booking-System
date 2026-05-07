@@ -5,9 +5,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToOne,
+  OneToMany,
   JoinColumn,
 } from 'typeorm';
-import { User } from '../../users/entities/user.entity'; 
+import { User } from '../../users/entities/user.entity';
+import { Service } from '../../services/entities/service.entity';
 
 @Entity('providers')
 export class Provider {
@@ -36,6 +38,9 @@ export class Provider {
   @Column({ type: 'text', nullable: true })
   address: string;
 
+  @Column({ name: 'service_category', type: 'varchar', length: 100, nullable: true })
+  serviceCategory: string;
+
   @Column({ name: 'facebook_url', type: 'text', nullable: true })
   facebookUrl: string;
 
@@ -50,6 +55,15 @@ export class Provider {
     default: 10.0,
   })
   commissionRate: number;
+
+  @Column({ name: 'is_verified', type: 'boolean', default: false })
+  isVerified: boolean;
+
+  @Column({ name: 'verified_at', type: 'timestamptz', nullable: true })
+  verifiedAt: Date;
+
+  @OneToMany(() => Service, (service) => service.provider)
+  services: Service[];
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;

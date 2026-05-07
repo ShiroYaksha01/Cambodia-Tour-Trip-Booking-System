@@ -10,10 +10,10 @@
       </div>
 
       <nav class="provider-nav" aria-label="Provider navigation">
-        <a v-for="item in providerNavItems" :key="item.label" :href="item.href" class="provider-nav__item">
+        <router-link v-for="item in providerNavItems" :key="item.label" :to="item.href" class="provider-nav__item">
           <span class="provider-nav__icon" aria-hidden="true">{{ item.icon }}</span>
           <span>{{ item.label }}</span>
-        </a>
+        </router-link>
       </nav>
 
       <button class="provider-cta" type="button">New Booking</button>
@@ -35,13 +35,13 @@
       </div>
 
       <nav class="nav-list" aria-label="Dashboard navigation">
-        <a v-for="item in navItems" :key="item.label" :href="item.href" class="nav-item">
+        <router-link v-for="item in navItems" :key="item.label" :to="item.href" class="nav-item">
           <span class="nav-item__icon" aria-hidden="true">{{ item.icon }}</span>
           <span>
             <strong>{{ item.label }}</strong>
             <small>{{ item.description }}</small>
           </span>
-        </a>
+        </router-link>
       </nav>
 
       <section class="sidebar-card">
@@ -76,11 +76,11 @@ type NavItem = {
 
 const navMap: Record<DashboardRole, NavItem[]> = {
   admin: [
-    { label: 'Dashboard', description: 'Financial overview', href: '#overview', icon: '◌' },
+    { label: 'Dashboard', description: 'Financial overview', href: '/admin/dashboard', icon: '◌' },
     { label: 'Clients', description: 'Manage customer accounts', href: '#bookings', icon: '👤' },
-    { label: 'Providers', description: 'Vendors and partners', href: '#providers', icon: '▣' },
+    { label: 'Providers', description: 'Vendors and partners', href: '/admin/providers', icon: '▣' },
     { label: 'Package Oversight', description: 'Trip quality review', href: '#reports', icon: '⌁' },
-    { label: 'Booking Ledger', description: 'Settlement activity', href: '#reports', icon: '⌕' },
+    { label: 'Booking Ledger', description: 'Settlement activity', href: '/admin/bookings', icon: '⌕' },
     { label: 'Finance & Escrow', description: 'Transactions and holds', href: '#reports', icon: '◫' },
     { label: 'Payment Logs', description: 'Recent payment records', href: '#reports', icon: '≡' },
     { label: 'Review Moderation', description: 'Content and ratings', href: '#reports', icon: '✦' },

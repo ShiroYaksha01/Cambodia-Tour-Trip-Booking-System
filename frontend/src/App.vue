@@ -1,12 +1,10 @@
-<!-- <template>
-  <router-view />
-</template> -->
-
-
 <template>
-  <CustomerHomepage />
+  <router-view />
 </template>
 
 <script setup lang="ts">
-import CustomerHomepage from './views/CustomerHomepage.vue'
 </script>
+
+<style>
+/* Global styles are in style.css */
+</style>
