@@ -4,7 +4,7 @@ const api = axios.create({
   baseURL: "http://localhost:3000",
 });
 
-// Attach JWT from localStorage if present. Key candidates: 'token', 'access_token', 'jwt'
+// Attach JWT from localStorage if present.
 api.interceptors.request.use((config) => {
   try {
     const token = localStorage.getItem('token') || localStorage.getItem('access_token') || localStorage.getItem('jwt')
@@ -20,7 +20,13 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-export const getProviderBookings = (params) => api.get(`/provider/bookings`, { params }).catch(async (err) => {
+// Export service api
+export const fetchServices = async () => {
+  const res = await api.get("/services");
+  return res.data;
+};
+
+export const getProviderBookings = (params?: any) => api.get(`/provider/bookings`, { params }).catch(async (err) => {
   // If the request fails (network error, auth missing, or server error), return a local mock for quick preview
   const isAuthError = err && err.response && (err.response.status === 401 || err.response.status === 403)
   const isNetworkError = err && !err.response

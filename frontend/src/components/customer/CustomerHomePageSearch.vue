@@ -2,21 +2,12 @@
   <section id="search" class="search-engine">
     <div class="search-hero">
       <div>
-        <p class="eyebrow">Search engine</p>
-        <h1>Find the right Cambodia trip in minutes</h1>
-        <p class="intro-copy">
-          Compare destinations, duration, budget, and style in one view. The trip finder updates
-          instantly as you refine your search.
-        </p>
-      </div>
-
-      <div class="hero-badge">
-        <strong>{{ filteredTrips.length }}</strong>
-        <span>trips match your filters</span>
+        <h1></h1>
+        <p class="intro-copy"><br><br></p>
       </div>
     </div>
 
-     <form class="search-panel" @submit.prevent="applySearch">
+    <form class="search-panel" @submit.prevent="applySearch">
       <label>
         <span>Destination</span>
         <input v-model="form.keyword" type="search" placeholder="Phnom Penh, Siem Reap, Koh Rong" />
@@ -31,7 +22,7 @@
           <option value="beach">Beach</option>
           <option value="city">City</option>
         </select>
-      </label> 
+      </label>
 
       <label>
         <span>Budget</span>
@@ -56,7 +47,30 @@
       <button type="submit">Search Trips</button>
     </form>
 
-    
+    <!-- <div class="search-results" id="featured">
+      <article v-for="trip in filteredTrips" :key="trip.id" class="trip-card">
+        <div class="trip-card__image" :style="{ background: trip.gradient }">
+          <span>{{ trip.duration }}</span>
+        </div>
+        <div class="trip-card__body">
+          <div class="trip-card__top">
+            <div>
+              <p>{{ trip.destination }}</p>
+              <h2>{{ trip.title }}</h2>
+            </div>
+            <strong>${{ trip.price }}</strong>
+          </div>
+
+          <p>{{ trip.summary }}</p>
+
+          <div class="trip-tags">
+            <span>{{ trip.style }}</span>
+            <span>{{ trip.region }}</span>
+            <span>Up to {{ trip.capacity }} guests</span>
+          </div>
+        </div>
+      </article>
+    </div> -->
   </section>
 </template>
 

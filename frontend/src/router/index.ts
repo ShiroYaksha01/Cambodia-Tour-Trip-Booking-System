@@ -6,8 +6,6 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/",
     redirect: "/dashboard",
-    // name: "home",
-    // component: HomePage,
   },
   {
     path: "/login",
@@ -39,11 +37,6 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/auth/RoleSelectorView.vue'),
   },
   {
-    path: '/choose-role',
-    name: 'choose-role',
-    component: () => import('../views/auth/RoleSelectorView.vue'),
-  },
-  {
     path: '/dashboard',
     name: 'dashboard',
     redirect: () => {
@@ -61,7 +54,11 @@ const routes: RouteRecordRaw[] = [
         return { name: "provider-dashboard" };
       }
 
-      return { name: "customer-dashboard" };
+      if (role === "customer") {
+        return { name: "customer-homepage" };
+      }
+
+      return { name: "unauthorized" };
     },
   },
   {
@@ -101,9 +98,68 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
-    path: "/unauthorized",
-    name: "unauthorized",
-    component: () => import("../views/UnauthorizedView.vue"),
+    path: "/customer/homepage",
+    name: "customer-homepage",
+    component: () => import("../views/CustomerHomepage.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["customer"],
+    },
+  },
+  {
+    path: '/service/:id',
+    name: 'service-detail',
+    component: () => import('../views/services/ServiceDetailView.vue'),
+  },
+  {
+    path: '/service/:id/book',
+    name: 'booking-form',
+    component: () => import('../views/booking/BookingFormView.vue'),
+    meta: {
+      requiresAuth: true,
+      roles: ['customer'],
+    },
+  },
+  {
+    path: '/booking/success',
+    name: 'booking-success',
+    component: () => import('../views/booking/BookingSuccessView.vue'),
+    meta: {
+      requiresAuth: true,
+      roles: ['customer'],
+    },
+  },
+  {
+    path: '/booking/history',
+    name: 'booking-history',
+    component: () => import('../views/booking/BookingHistoryView.vue'),
+    meta: {
+      requiresAuth: true,
+      roles: ['customer'],
+    },
+  },
+  {
+    path: '/booking/:id',
+    name: 'booking-detail',
+    component: () => import('../views/booking/BookingDetailView.vue'),
+    meta: {
+      requiresAuth: true,
+      roles: ['customer'],
+    },
+  },
+  {
+    path: '/payment/:id',
+    name: 'payment',
+    component: () => import('../views/payment/PaymentView.vue'),
+    meta: {
+      requiresAuth: true,
+      roles: ['customer'],
+    },
+  },
+  {
+    path: '/unauthorized',
+    name: 'unauthorized',
+    component: () => import('../views/UnauthorizedView.vue'),
   },
   {
     path: "/:pathMatch(.*)*",

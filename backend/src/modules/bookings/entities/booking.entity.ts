@@ -9,8 +9,9 @@ import {
 } from 'typeorm';
 
 import { BookingStatus, PaymentStatus } from '../../../shared/enums';
-import type { Service } from '../../services/entities/service.entity';
-import type { User } from '../../users/entities/user.entity';
+import { Service } from '../../services/entities/service.entity';
+import { User } from '../../users/entities/user.entity';
+import { Provider } from '../../providers/entities/provider.entity';
 
 @Entity('bookings')
 export class Booking {
@@ -20,16 +21,23 @@ export class Booking {
   @Column({ name: 'service_id', type: 'uuid' })
   serviceId: string;
 
-  @ManyToOne('Service', 'bookings', { onDelete: 'CASCADE' })
+  @ManyToOne(() => Service, (service) => service.bookings, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'service_id' })
   service: Service;
 
   @Column({ name: 'user_id', type: 'uuid' })
   userId: string;
 
-  @ManyToOne('User', { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
+
+  @Column({ name: 'provider_id', type: 'uuid' })
+  providerId: string;
+
+  @ManyToOne(() => Provider, { onDelete: 'RESTRICT' })
+  @JoinColumn({ name: 'provider_id' })
+  provider: Provider;
 
   @Column({ type: 'smallint' })
   quantity: number;

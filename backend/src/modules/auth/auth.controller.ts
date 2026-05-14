@@ -29,10 +29,10 @@ export class AuthController {
       }),
     }),
   )
- register(
-  @UploadedFile() file: Express.Multer.File,
-  @Body() dto: RegisterDto,
-) {
+  register(
+    @UploadedFile() file: any,
+    @Body() dto: RegisterDto,
+  ) {
   console.log('FILE:', file);
   console.log('BODY:', dto);
 

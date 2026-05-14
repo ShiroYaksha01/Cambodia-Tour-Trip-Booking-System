@@ -18,15 +18,20 @@
         <span>Profile</span>
         <span class="avatar" aria-hidden="true">C</span>
       </div>
+      <LogoutButton />
     </div>
   </header>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue'
+import LogoutButton from '../LogoutButton.vue'
 
 export default defineComponent({
   name: 'CustomerNavbar',
+  components: {
+    LogoutButton,
+  },
 })
 </script>
 
