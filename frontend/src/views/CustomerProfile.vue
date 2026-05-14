@@ -823,8 +823,8 @@ function cardBrand(type: string) {
                     class="bk-btn"
                     @click="
                       router.push({
-                        path: '/booking/booking-detail',
-                        query: { id: b.id },
+                        name: 'booking-detail',
+                        params: { id: b.id },
                       })
                     "
                   >
