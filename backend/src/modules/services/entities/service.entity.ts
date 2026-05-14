@@ -18,6 +18,7 @@ import type { ServiceInventory } from './service-inventory.entity';
 import type { TourPackage } from './tour-package.entity';
 import type { Accommodation } from './accommodation.entity';
 import type { Transportation } from './transportation.entity';
+import type { Booking } from '../../bookings/entities/booking.entity';
 
 @Entity('services')
 export class Service {
@@ -99,4 +100,7 @@ export class Service {
 
   @OneToOne('Transportation', 'service', { cascade: true })
   transportation: Transportation;
+
+  @OneToMany('Booking', 'service')
+  bookings: Booking[];
 }

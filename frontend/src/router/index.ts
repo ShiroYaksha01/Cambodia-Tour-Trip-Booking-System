@@ -6,8 +6,6 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/",
     redirect: "/dashboard",
-    // name: "home",
-    // component: HomePage,
   },
   {
     path: "/login",
@@ -32,11 +30,6 @@ const routes: RouteRecordRaw[] = [
     name: "forgot-password",
     component: () => import("../views/auth/ForgotPassword.vue"),
     meta: { guestOnly: true },
-  },
-  {
-    path: "/choose-role",
-    name: "choose-role",
-    component: () => import("../views/auth/RoleSelectorView.vue"),
   },
   {
     path: "/choose-role",
@@ -84,6 +77,24 @@ const routes: RouteRecordRaw[] = [
     meta: {
       requiresAuth: true,
       roles: ["provider"],
+    },
+  },
+  {
+    path: "/provider/bookings",
+    name: "provider-bookings",
+    component: () => import("../pages/ProviderBookingsView.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["provider"],
+    },
+  },
+  {
+    path: "/customer/dashboard",
+    name: "customer-dashboard",
+    component: () => import("../views/dashboards/CustomerDashboardView.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["customer"],
     },
   },
   {
