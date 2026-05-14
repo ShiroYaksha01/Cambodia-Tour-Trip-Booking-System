@@ -116,15 +116,6 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
-    path: "/customer/profile/booking/booking-detail",
-    name: "customer-booking-detail",
-    component: () => import("../views/customer/ViewDetailBooking.vue"),
-    meta: {
-      requiresAuth: true,
-      roles: ["customer"],
-    },
-  },
-  {
     path: "/service/:id",
     name: "service-detail",
     component: () => import("../views/services/ServiceDetailView.vue"),
