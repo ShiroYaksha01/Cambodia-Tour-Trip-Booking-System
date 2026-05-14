@@ -205,38 +205,41 @@ import LogoutButton from '../../components/LogoutButton.vue'
 
 <style scoped>
 .provider-shell {
-  min-height: 100vh;
+  height: 100vh;
   display: grid;
   grid-template-columns: 245px minmax(0, 1fr);
   background: #202020;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .provider-content {
-  display: grid;
-  gap: 16px;
-  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
   background: linear-gradient(180deg, #f7f7f6 0%, #f9faf9 100%);
+  overflow-y: auto;
 }
 
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 8px 8px 10px;
+  gap: 12px;
+  padding: 4px 8px;
 }
 
 .topbar__left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .topbar h1 {
   margin: 0;
   color: #143b3f;
-  font-size: 1.6rem;
+  font-size: 1.3rem;
   font-weight: 800;
 }
 
@@ -244,11 +247,11 @@ import LogoutButton from '../../components/LogoutButton.vue'
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 10px;
+  padding: 3px 8px;
   border-radius: 999px;
   background: #f0f2f1;
   color: #606f6b;
-  font-size: 0.72rem;
+  font-size: 0.65rem;
 }
 
 .provider-profile {
@@ -258,8 +261,8 @@ import LogoutButton from '../../components/LogoutButton.vue'
 }
 
 .icon-button {
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   border: 0;
   border-radius: 999px;
   background: transparent;
@@ -273,34 +276,34 @@ import LogoutButton from '../../components/LogoutButton.vue'
 
 .provider-profile__text strong {
   color: #173f42;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
 }
 
 .provider-profile__text span {
   color: #73827d;
-  font-size: 0.68rem;
+  font-size: 0.64rem;
 }
 
 .provider-avatar {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 999px;
   display: grid;
   place-items: center;
   background: linear-gradient(135deg, #0f6e70, #efb34f);
   color: #fff;
-  font-size: 0.68rem;
+  font-size: 0.64rem;
   font-weight: 800;
 }
 
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
+  gap: 12px;
 }
 
 .summary-card {
-  padding: 18px 16px 16px;
+  padding: 12px 14px;
   border-radius: 10px;
   background: #fff;
   box-shadow: 0 12px 28px rgba(20, 31, 31, 0.07);
@@ -309,24 +312,24 @@ import LogoutButton from '../../components/LogoutButton.vue'
 
 .summary-card span {
   display: block;
-  font-size: 0.68rem;
+  font-size: 0.6rem;
   letter-spacing: 0.08em;
   color: #7f8b88;
 }
 
 .summary-card strong {
   display: block;
-  margin-top: 10px;
+  margin-top: 6px;
   color: #173f42;
-  font-size: 2rem;
+  font-size: 1.5rem;
   line-height: 1;
 }
 
 .summary-card small {
   display: block;
-  margin-top: 6px;
+  margin-top: 4px;
   color: #6c7b77;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
 }
 
 .summary-card--teal { border-top-color: #1b8d90; }
@@ -337,44 +340,49 @@ import LogoutButton from '../../components/LogoutButton.vue'
 .workspace-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) 284px;
-  gap: 14px;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
 }
 
 .matrix-panel {
   background: #fff;
   border-radius: 10px;
-  padding: 14px;
+  padding: 12px;
   box-shadow: 0 12px 28px rgba(20, 31, 31, 0.07);
+  display: flex;
+  flex-direction: column;
 }
 
 .matrix-toolbar {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 0 12px;
+  padding: 4px 0 10px;
 }
 
 .matrix-toolbar h2 {
   margin: 0;
   color: #2c4042;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
 }
 
 .date-nav {
   border: 0;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border-radius: 999px;
   background: #f2f4f3;
   color: #556866;
+  font-size: 0.8rem;
 }
 
 .matrix-toggle {
   margin-left: auto;
   display: inline-flex;
   gap: 4px;
-  padding: 4px;
+  padding: 3px;
   background: #f0f0f0;
   border-radius: 6px;
 }
@@ -382,10 +390,10 @@ import LogoutButton from '../../components/LogoutButton.vue'
 .matrix-toggle button {
   border: 0;
   background: transparent;
-  padding: 5px 10px;
+  padding: 4px 8px;
   border-radius: 4px;
   color: #5f6f6d;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
 }
 
 .matrix-toggle__active {
@@ -397,6 +405,8 @@ import LogoutButton from '../../components/LogoutButton.vue'
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid #edf0ef;
+  flex: 1;
+  overflow-y: auto;
 }
 
 .pricing-table__head,
@@ -408,11 +418,14 @@ import LogoutButton from '../../components/LogoutButton.vue'
 .pricing-table__head {
   background: #fafafa;
   border-bottom: 1px solid #eef0ef;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .pricing-table__head span {
-  padding: 10px;
-  font-size: 0.68rem;
+  padding: 8px;
+  font-size: 0.6rem;
   font-weight: 800;
   color: #5c6d6a;
   text-align: center;
@@ -431,25 +444,26 @@ import LogoutButton from '../../components/LogoutButton.vue'
 }
 
 .pricing-row > div {
-  padding: 15px 12px;
+  padding: 10px 12px;
 }
 
 .pricing-row > div strong {
   display: block;
   color: #1b3031;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
 }
 
 .pricing-row > div small {
   display: block;
-  margin-top: 5px;
+  margin-top: 3px;
   color: #7b8b88;
+  font-size: 0.7rem;
 }
 
 .slot {
-  padding: 10px 8px;
+  padding: 8px 6px;
   text-align: center;
-  font-size: 0.74rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: #1e5457;
   border-left: 1px solid #f2f4f3;
@@ -457,9 +471,9 @@ import LogoutButton from '../../components/LogoutButton.vue'
 
 .slot small {
   display: block;
-  margin-top: 4px;
+  margin-top: 2px;
   color: #6c7b77;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
 }
 
 .slot--teal { color: #1e6567; }
@@ -470,16 +484,16 @@ import LogoutButton from '../../components/LogoutButton.vue'
 .legend-row {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px 4px 2px;
+  gap: 12px;
+  padding: 10px 4px 0;
   color: #60706d;
-  font-size: 0.78rem;
+  font-size: 0.7rem;
 }
 
 .legend-item {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .legend-row a {
@@ -489,8 +503,8 @@ import LogoutButton from '../../components/LogoutButton.vue'
 }
 
 .dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 999px;
 }
 
@@ -499,39 +513,44 @@ import LogoutButton from '../../components/LogoutButton.vue'
 .dot--gold { background: #efb34f; }
 
 .side-rail {
-  display: grid;
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .panel-card {
   background: #fff;
   border-radius: 8px;
-  padding: 14px;
+  padding: 12px;
   box-shadow: 0 12px 28px rgba(20, 31, 31, 0.07);
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .card-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .card-header h3 {
   margin: 0;
   color: #263f41;
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 .card-icon {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   display: grid;
   place-items: center;
   border-radius: 4px;
   background: #f4f0dc;
   color: #b08724;
-  font-size: 0.74rem;
+  font-size: 0.7rem;
 }
 
 .card-icon--soft {
@@ -541,13 +560,15 @@ import LogoutButton from '../../components/LogoutButton.vue'
 
 .field {
   display: grid;
-  gap: 6px;
-  margin-top: 10px;
+  gap: 4px;
+  margin-top: 8px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .field span,
 .section-kicker {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   letter-spacing: 0.12em;
   color: #7a8784;
 }
@@ -555,13 +576,16 @@ import LogoutButton from '../../components/LogoutButton.vue'
 .field select,
 .field input,
 .value-box {
-  min-height: 36px;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 32px;
   border: 1px solid #edf0ef;
   border-radius: 4px;
   background: #f7f8f8;
-  padding: 0 10px;
+  padding: 0 8px;
   font: inherit;
   color: #345054;
+  font-size: 0.8rem;
 }
 
 .value-box {
@@ -571,14 +595,14 @@ import LogoutButton from '../../components/LogoutButton.vue'
 }
 
 .value-box strong {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   color: #3a4648;
 }
 
 .switch-row {
   display: grid;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 6px;
+  margin-top: 8px;
 }
 
 .switch-row small,
@@ -586,20 +610,20 @@ import LogoutButton from '../../components/LogoutButton.vue'
 .notice-box p,
 .change-item small {
   color: #778784;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
 }
 
 .switch {
-  width: 42px;
-  height: 22px;
+  width: 36px;
+  height: 18px;
   border-radius: 999px;
   background: #1b8d90;
   position: relative;
 }
 
 .switch__knob {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   border-radius: 999px;
   background: #fff;
   position: absolute;
@@ -610,12 +634,13 @@ import LogoutButton from '../../components/LogoutButton.vue'
 .primary-button,
 .outline-button {
   width: 100%;
-  min-height: 40px;
-  margin-top: 12px;
+  min-height: 34px;
+  margin-top: 10px;
   border: 0;
   border-radius: 3px;
   font: inherit;
   font-weight: 700;
+  font-size: 0.8rem;
 }
 
 .primary-button {
@@ -630,16 +655,16 @@ import LogoutButton from '../../components/LogoutButton.vue'
 }
 
 .notice-box {
-  padding: 12px;
+  padding: 10px;
   border-left: 3px solid #e9b25e;
   background: #fbf4e8;
   border-radius: 4px;
-  margin: 10px 0 12px;
+  margin: 8px 0 10px;
 }
 
 .notice-box strong {
   color: #4b3a14;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
 }
 
 .date-grid {
@@ -650,31 +675,27 @@ import LogoutButton from '../../components/LogoutButton.vue'
 
 .helper-text {
   display: block;
-  margin-top: 8px;
-}
-
-.recent-changes {
-  display: grid;
-  gap: 10px;
+  margin-top: 6px;
 }
 
 .change-item {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: start;
+  margin-top: 6px;
 }
 
 .change-item strong {
   display: block;
   color: #2b3f41;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
 }
 
 .change-dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 999px;
-  margin-top: 5px;
+  margin-top: 4px;
 }
 
 .change-dot--teal { background: #0f6e70; }
@@ -683,9 +704,12 @@ import LogoutButton from '../../components/LogoutButton.vue'
 @media (max-width: 1280px) {
   .provider-shell {
     grid-template-columns: 1fr;
+    height: auto;
+    overflow: auto;
   }
 
   .provider-content {
+    height: auto;
     padding: 16px;
   }
 
@@ -695,24 +719,12 @@ import LogoutButton from '../../components/LogoutButton.vue'
   }
 }
 
-@media (max-width: 960px) {
-  .topbar,
-  .provider-profile,
-  .legend-row,
-  .matrix-toolbar,
-  .topbar__left {
-    flex-direction: column;
-    align-items: stretch;
+@media (max-height: 800px) {
+  .summary-card strong {
+    font-size: 1.2rem;
   }
-
-  .pricing-table__head,
-  .pricing-row {
-    grid-template-columns: 1.3fr repeat(3, 1fr);
-  }
-
-  .pricing-table__head span:nth-child(n + 5),
-  .pricing-row .slot:nth-child(n + 5) {
-    display: none;
+  .pricing-row > div {
+    padding: 6px 12px;
   }
 }
 </style>
