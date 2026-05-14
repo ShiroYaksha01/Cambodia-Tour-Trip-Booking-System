@@ -5,10 +5,10 @@
     </div>
 
     <nav class="nav-links" aria-label="Customer navigation">
-      <a href="#destinations">Destinations</a>
-      <a href="#tours">Tours</a>
-      <a href="#experiences" class="nav-links__active">Experiences</a>
-      <a href="#curations">Curations</a>
+      <router-link :to="{ name: 'customer-homepage' }">Destinations</router-link>
+      <router-link :to="{ name: 'customer-homepage' }">Tours</router-link>
+      <router-link :to="{ name: 'customer-homepage' }">Experiences</router-link>
+      <router-link :to="{ name: 'customer-homepage' }">Curations</router-link>
     </nav>
 
     <div class="toolbar-group">
@@ -19,23 +19,34 @@
         ♡
       </button>
       <router-link :to="{ name: 'customer-profile' }" class="profile-chip">
-        <span>Profilee</span>
-        <span class="avatar" aria-hidden="true">C</span>
+        <span>{{ userName }}</span>
+        <span class="avatar" aria-hidden="true">{{ userInitial }}</span>
       </router-link>
       <LogoutButton />
     </div>
   </header>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { ref, onMounted, computed } from "vue";
 import LogoutButton from "../LogoutButton.vue";
 
-export default defineComponent({
-  name: "CustomerNavbar",
-  components: {
-    LogoutButton,
-  },
+const userName = ref("Profile");
+const userInitial = ref("U");
+
+onMounted(() => {
+  const rawUser = localStorage.getItem("user");
+  if (rawUser) {
+    try {
+      const user = JSON.parse(rawUser);
+      if (user.name) {
+        userName.value = user.name;
+        userInitial.value = user.name.charAt(0).toUpperCase();
+      }
+    } catch (e) {
+      console.error("Failed to parse user data", e);
+    }
+  }
 });
 </script>
 
@@ -84,12 +95,12 @@ export default defineComponent({
   transition: color 180ms ease;
 }
 
-.nav-links__active,
+.router-link-active,
 .nav-links a:hover {
   color: #0f6e70;
 }
 
-.nav-links__active::after {
+.router-link-active::after {
   content: "";
   position: absolute;
   left: 0;
