@@ -1,63 +1,82 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-import { User } from '../../users/entities/user.entity';
-import { Service } from '../../services/entities/service.entity';
-import { Provider } from '../../providers/entities/provider.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
-export enum BookingStatus {
-  PENDING = 'pending',
-  CONFIRMED = 'confirmed',
-  CANCELLED = 'cancelled',
-}
+import { BookingStatus, PaymentStatus } from '../../../shared/enums';
+import { Service } from '../../services/entities/service.entity';
+import { User } from '../../users/entities/user.entity';
+import { Provider } from '../../providers/entities/provider.entity';
 
 @Entity('bookings')
 export class Booking {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => User)
-  @JoinColumn({ name: 'user_id' })
-  user: User;
+  @Column({ name: 'service_id', type: 'uuid' })
+  serviceId: string;
 
-  @Column({ name: 'user_id' })
-  userId: string;
-
-  @ManyToOne(() => Service)
+  @ManyToOne(() => Service, (service) => service.bookings, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'service_id' })
   service: Service;
 
-  @Column({ name: 'service_id' })
-  serviceId: string;
+  @Column({ name: 'user_id', type: 'uuid' })
+  userId: string;
 
-  @ManyToOne(() => Provider)
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_id' })
+  user: User;
+
+  @Column({ name: 'provider_id', type: 'uuid' })
+  providerId: string;
+
+  @ManyToOne(() => Provider, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'provider_id' })
   provider: Provider;
 
-  @Column({ name: 'provider_id' })
-  providerId: string;
-
-  @Column({ type: 'date', name: 'booking_date' })
-  bookingDate: Date;
-
-  @Column('int')
+  @Column({ type: 'smallint' })
   quantity: number;
 
-  @Column('decimal', {
-    precision: 10,
-    scale: 2,
-    name: 'total_price',
-    transformer: {
-      to: (value: number) => value,
-      from: (value: string) => parseFloat(value),
-    },
-  })
-  totalPrice: number;
-
   @Column({
+    name: 'booking_status',
     type: 'enum',
     enum: BookingStatus,
     default: BookingStatus.PENDING,
   })
-  status: BookingStatus;
+  bookingStatus: BookingStatus;
+
+  @Column({
+    name: 'payment_status',
+    type: 'enum',
+    enum: PaymentStatus,
+    default: PaymentStatus.PENDING,
+  })
+  paymentStatus: PaymentStatus;
+
+  @Column({
+    name: 'booking_date',
+    type: 'timestamptz',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  bookingDate: Date;
+
+  @Column({
+    name: 'total_amount',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: true,
+    transformer: {
+      to: (value: number | null) => value,
+      from: (value: string | null) => (value ? parseFloat(value) : null),
+    },
+  })
+  totalAmount: number | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
