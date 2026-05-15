@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/
 import { ProvidersService } from './providers.service'
 import { CreateProviderDto } from './dto/create-provider.dto'
 import { UpdateProviderDto } from './dto/update-provider.dto'
+import { AccountStatus } from '../users/entities/user.entity'
 
 @Controller('admin/providers')
 export class ProviderController {
@@ -12,7 +13,7 @@ export class ProviderController {
     @Query('q') q?: string,
     @Query('status') status?: string,
   ) {
-    const providers = await this.providersService.getProviders(q, status)
+    const providers = await this.providersService.getProviders(q, status as AccountStatus)
     return { success: true, data: providers }
   }
 

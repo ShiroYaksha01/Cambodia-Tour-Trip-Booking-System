@@ -15,7 +15,7 @@ export class CreateProviderDto {
   @IsEmail()
   email: string
 
-  @IsPhoneNumber('ZZ')
+  @IsPhoneNumber()
   phoneNumber: string
 
   @IsString()
