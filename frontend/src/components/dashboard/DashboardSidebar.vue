@@ -79,9 +79,9 @@ const navMap: Record<DashboardRole, NavItem[]> = {
   admin: [
     { label: 'Dashboard', description: 'Financial overview', href: '/admin/dashboard', icon: '◌' },
     { label: 'Clients', description: 'Manage customer accounts', href: '#bookings', icon: '👤' },
-    { label: 'Providers', description: 'Vendors and partners', href: '#providers', icon: '▣' },
+    { label: 'Providers', description: 'Vendors and partners', href: '/admin/providers', icon: '▣' },
     { label: 'Package Oversight', description: 'Trip quality review', href: '#reports', icon: '⌁' },
-    { label: 'Booking Ledger', description: 'Settlement activity', href: '#reports', icon: '⌕' },
+    { label: 'Booking Ledger', description: 'Settlement activity', href: '/admin/bookings', icon: '⌕' },
     { label: 'Finance & Escrow', description: 'Transactions and holds', href: '#reports', icon: '◫' },
     { label: 'Payment Logs', description: 'Recent payment records', href: '#reports', icon: '≡' },
     { label: 'Review Moderation', description: 'Content and ratings', href: '#reports', icon: '✦' },

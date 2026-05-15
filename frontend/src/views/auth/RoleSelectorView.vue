@@ -52,15 +52,20 @@ import { setCurrentUserRole } from '../../utils/auth'
 const router = useRouter()
 
 function selectRole(role: 'admin' | 'provider' | 'customer') {
+  // Save role to localStorage
   setCurrentUserRole(role)
+  console.log('Role set to:', role, 'Stored as:', localStorage.getItem('auth_role'))
 
-  if (role === 'admin') {
-    router.push('/admin/dashboard')
-  } else if (role === 'provider') {
-    router.push('/provider/dashboard')
-  } else {
-    router.push('/customer/dashboard')
-  }
+  // Small delay to ensure localStorage is written
+  setTimeout(() => {
+    if (role === 'admin') {
+      router.push('/admin/dashboard')
+    } else if (role === 'provider') {
+      router.push('/provider/dashboard')
+    } else {
+      router.push('/customer/homepage')
+    }
+  }, 100)
 }
 </script>
 

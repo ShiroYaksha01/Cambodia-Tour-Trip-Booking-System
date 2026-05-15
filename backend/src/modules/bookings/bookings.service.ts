@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Booking } from './entities/booking.entity';
-import { BookingStatus } from '../../shared/enums';
+import { BookingStatus, PaymentStatus } from '../../shared/enums';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { Service } from '../services/entities/service.entity';
 
@@ -25,13 +25,11 @@ export class BookingsService {
   ): Promise<Booking> {
     const { serviceId, bookingDate, quantity } = createBookingDto;
 
-    // Validate booking date is in the future
     const dateObj = new Date(bookingDate);
     if (Number.isNaN(dateObj.getTime()) || dateObj <= new Date()) {
       throw new BadRequestException('Booking date must be in the future');
     }
 
-    // Validate service exists
     const service = await this.serviceRepository.findOne({
       where: { id: serviceId },
     });
@@ -41,8 +39,8 @@ export class BookingsService {
 
     // Calculate total price
     const totalAmount = service.price * quantity;
+    const transactionId = `TX-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
-    // Save booking
     const booking = this.bookingRepository.create({
       userId,
       serviceId,
@@ -51,16 +49,17 @@ export class BookingsService {
       quantity,
       totalAmount,
       bookingStatus: BookingStatus.PENDING,
+      paymentStatus: PaymentStatus.PENDING,
+      transactionId,
     });
 
     return this.bookingRepository.save(booking);
   }
 
   async getUserBookings(userId: string): Promise<Booking[]> {
-    // Return all bookings mapped with some useful relation data to support frontend details
     return this.bookingRepository.find({
       where: { userId },
-      relations: ['service'],
+      relations: ['service', 'provider'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -68,7 +67,47 @@ export class BookingsService {
   async getBookingById(id: string, userId: string): Promise<Booking> {
     const booking = await this.bookingRepository.findOne({
       where: { id, userId },
-      relations: ['service', 'provider'],
+      relations: ['service', 'provider', 'user'],
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+
+    return booking;
+  }
+
+  async getAdminBookings(q?: string, status?: string, paymentStatus?: string): Promise<Booking[]> {
+    const query = this.bookingRepository
+      .createQueryBuilder('booking')
+      .leftJoinAndSelect('booking.user', 'user')
+      .leftJoinAndSelect('booking.service', 'service')
+      .leftJoinAndSelect('booking.provider', 'provider')
+      .orderBy('booking.createdAt', 'DESC');
+
+    if (q) {
+      const term = `%${q.toLowerCase()}%`
+      query.andWhere(
+        '(LOWER(booking.id::text) LIKE :term OR LOWER(user.username) LIKE :term OR LOWER(user.email) LIKE :term OR LOWER(service.title) LIKE :term OR LOWER(provider.companyName) LIKE :term OR LOWER(booking.transactionId) LIKE :term)',
+        { term },
+      )
+    }
+
+    if (status) {
+      query.andWhere('booking.bookingStatus = :status', { status })
+    }
+
+    if (paymentStatus) {
+      query.andWhere('booking.paymentStatus = :paymentStatus', { paymentStatus })
+    }
+
+    return query.getMany();
+  }
+
+  async getAdminBookingById(id: string): Promise<Booking> {
+    const booking = await this.bookingRepository.findOne({
+      where: { id },
+      relations: ['user', 'service', 'provider'],
     });
 
     if (!booking) {

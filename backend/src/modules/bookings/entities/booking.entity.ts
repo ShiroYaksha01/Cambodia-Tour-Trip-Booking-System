@@ -78,6 +78,9 @@ export class Booking {
   })
   totalAmount: number | null;
 
+  @Column({ name: 'transaction_id', type: 'varchar', length: 60, nullable: true })
+  transactionId: string;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 

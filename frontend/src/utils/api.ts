@@ -47,6 +47,40 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   return payload as T
 }
 
+export async function apiPut<T>(path: string, body: unknown): Promise<T> {
+  const url = buildUrl(path)
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(body),
+  })
+
+  const payload = await parseResponse(response)
+  if (!response.ok) {
+    throw new Error(payload?.message || payload?.error || response.statusText || 'Request failed')
+  }
+  return payload as T
+}
+
+export async function apiDelete<T>(path: string): Promise<T> {
+  const url = buildUrl(path)
+  const response = await fetch(url, {
+    method: 'DELETE',
+    headers: {
+      ...getAuthHeaders(),
+    },
+  })
+
+  const payload = await parseResponse(response)
+  if (!response.ok) {
+    throw new Error(payload?.message || payload?.error || response.statusText || 'Request failed')
+  }
+  return payload as T
+}
+
 export async function apiGet<T>(path: string): Promise<T> {
   const url = buildUrl(path)
   const response = await fetch(url, {

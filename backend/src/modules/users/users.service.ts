@@ -39,6 +39,7 @@ async updateUser(id: string, data: Partial<User>) {
 
   const allowed = [
     'username',
+    'email',
     'phoneNumber',
     'profilePicture',
     'status',

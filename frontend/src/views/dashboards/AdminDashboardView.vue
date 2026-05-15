@@ -29,6 +29,11 @@
         </div>
       </header>
 
+      <div class="dashboard-actions">
+        <router-link class="primary-button" to="/admin/providers">Manage Providers</router-link>
+        <router-link class="secondary-button" to="/admin/bookings">View All Bookings</router-link>
+      </div>
+
       <section class="overview-grid">
         <article class="panel panel--hero">
           <div class="panel__header">
@@ -927,6 +932,41 @@ const hasVisibleResults = computed(
 
 .payment-row:last-child {
   border-bottom: 0;
+}
+
+.dashboard-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 0 0 14px;
+}
+
+.primary-button,
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 22px;
+  border-radius: 16px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.primary-button {
+  background: linear-gradient(180deg, #0f6e70 0%, #0a5c5d 100%);
+  color: #fff;
+}
+
+.secondary-button {
+  background: #f4f7f6;
+  color: #163d3f;
+}
+
+.primary-button:hover,
+.secondary-button:hover {
+  transform: translateY(-1px);
 }
 
 .empty-state {
