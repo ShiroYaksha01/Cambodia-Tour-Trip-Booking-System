@@ -5,7 +5,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Booking, BookingStatus, PaymentStatus } from './entities/booking.entity';
+import { Booking } from './entities/booking.entity';
+import { BookingStatus, PaymentStatus } from '../../shared/enums';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { Service } from '../services/entities/service.entity';
 
@@ -36,7 +37,8 @@ export class BookingsService {
       throw new NotFoundException('Service not found');
     }
 
-    const totalPrice = service.price * quantity;
+    // Calculate total price
+    const totalAmount = service.price * quantity;
     const transactionId = `TX-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
     const booking = this.bookingRepository.create({
@@ -45,8 +47,8 @@ export class BookingsService {
       providerId: service.providerId,
       bookingDate: dateObj,
       quantity,
-      totalPrice,
-      status: BookingStatus.PENDING,
+      totalAmount,
+      bookingStatus: BookingStatus.PENDING,
       paymentStatus: PaymentStatus.PENDING,
       transactionId,
     });
@@ -92,7 +94,7 @@ export class BookingsService {
     }
 
     if (status) {
-      query.andWhere('booking.status = :status', { status })
+      query.andWhere('booking.bookingStatus = :status', { status })
     }
 
     if (paymentStatus) {

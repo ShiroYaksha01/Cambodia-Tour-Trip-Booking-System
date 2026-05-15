@@ -20,7 +20,7 @@
 
       <footer class="provider-footer">
         <a href="#" aria-label="Support">Support</a>
-        <a href="#" aria-label="Logout">Logout</a>
+        <LogoutButton />
       </footer>
     </div>
 
@@ -54,7 +54,7 @@
         </div>
 
         <div class="sidebar-actions">
-          <a href="#" aria-label="Logout">Logout</a>
+          <LogoutButton />
           <a href="#" aria-label="Help">Help</a>
         </div>
       </section>
@@ -64,6 +64,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
+import LogoutButton from '../LogoutButton.vue'
 
 type DashboardRole = 'admin' | 'provider'
 
@@ -87,8 +88,8 @@ const navMap: Record<DashboardRole, NavItem[]> = {
     { label: 'Support Tickets', description: 'Customer escalations', href: '#reports', icon: '✉' },
   ],
   provider: [
-    { label: 'Inventory', description: 'Stock and availability', href: '#overview', icon: '◌' },
-    { label: 'Manifest', description: 'Departure schedule', href: '#matrix', icon: '▣' },
+    { label: 'Inventory', description: 'Stock and availability', href: '/provider/dashboard', icon: '◌' },
+    { label: 'Bookings', description: 'Reservation ledger', href: '/provider/bookings', icon: '▣' },
     { label: 'Finance', description: 'Pricing and markup', href: '#pricing', icon: '◫' },
     { label: 'Messages', description: 'Inbox and requests', href: '#controller', icon: '✉' },
     { label: 'Settings', description: 'Provider preferences', href: '#changes', icon: '⚙' },
@@ -97,6 +98,9 @@ const navMap: Record<DashboardRole, NavItem[]> = {
 
 export default defineComponent({
   name: 'DashboardSidebar',
+  components: {
+    LogoutButton,
+  },
   props: {
     role: {
       type: String as () => DashboardRole,

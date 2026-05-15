@@ -6,8 +6,18 @@ import CustomerFooter from '../components/customer/CustomerFooter.vue'
 
 import { fetchServices } from '../services/api'
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const tours = ref([])
+
+const handleBook = (tour: any) => {
+  router.push({ name: 'booking-form', params: { id: tour.id } })
+}
+
+const goToDetail = (id: string) => {
+  router.push({ name: 'service-detail', params: { id } })
+}
 
 //use try-catch to handle errors when fetching data from the API
 onMounted(async () => {
@@ -117,6 +127,9 @@ onMounted(async () => {
             v-for="tour in tours"
             :key="tour.id"
             :tour="tour"
+            @click="goToDetail(tour.id)"
+            @book="handleBook"
+            class="cursor-pointer"
           />
         </div>
       </div>

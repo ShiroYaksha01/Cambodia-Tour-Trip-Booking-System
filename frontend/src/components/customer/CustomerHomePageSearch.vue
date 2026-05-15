@@ -47,7 +47,7 @@
       <button type="submit">Search Trips</button>
     </form>
 
-    <div class="search-results" id="featured">
+    <!-- <div class="search-results" id="featured">
       <article v-for="trip in filteredTrips" :key="trip.id" class="trip-card">
         <div class="trip-card__image" :style="{ background: trip.gradient }">
           <span>{{ trip.duration }}</span>
@@ -70,7 +70,7 @@
           </div>
         </div>
       </article>
-    </div>
+    </div> -->
   </section>
 </template>
 

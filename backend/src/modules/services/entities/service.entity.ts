@@ -18,6 +18,7 @@ import type { ServiceInventory } from './service-inventory.entity';
 import type { TourPackage } from './tour-package.entity';
 import type { Accommodation } from './accommodation.entity';
 import type { Transportation } from './transportation.entity';
+import type { Booking } from '../../bookings/entities/booking.entity';
 
 @Entity('services')
 export class Service {
@@ -54,9 +55,6 @@ export class Service {
 
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
-
-  @Column({ type: 'text', nullable: true })
-  image: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   location: string;
@@ -102,4 +100,7 @@ export class Service {
 
   @OneToOne('Transportation', 'service', { cascade: true })
   transportation: Transportation;
+
+  @OneToMany('Booking', 'service')
+  bookings: Booking[];
 }
