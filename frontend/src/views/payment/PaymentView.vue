@@ -94,6 +94,10 @@
           </div>
 
           <!-- Action -->
+          <div v-if="paymentError" class="mb-4 p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-sm font-bold flex items-center gap-3">
+            <span class="w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center text-[10px]">!</span>
+            {{ paymentError }}
+          </div>
           <button 
             @click="handlePayment"
             :disabled="!selectedMethod || isLoading"
@@ -119,7 +123,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { apiGet } from '../../utils/api'
+import { apiGet, apiPost } from '../../utils/api'
 
 const router = useRouter()
 const route = useRoute()
@@ -128,6 +132,7 @@ const bookingId = route.params.id
 const booking = ref<any>(null)
 const isLoading = ref(false)
 const selectedMethod = ref('')
+const paymentError = ref('')
 
 const paymentMethods = [
   { id: 'aba', name: 'ABA Bank', description: 'Instant transfer via ABA Mobile', icon: '🏦' },
@@ -156,13 +161,28 @@ const formatDate = (dateString: string) => {
 }
 
 const handlePayment = async () => {
-  isLoading.value = true
+  if (!selectedMethod.value) return
   
-  // Simulated payment processing delay
-  setTimeout(() => {
+  isLoading.value = true
+  paymentError.value = ''
+  
+  try {
+    const response = await apiPost<{ success: boolean }>(`/payment`, {
+      bookingId: bookingId,
+      paymentMethod: selectedMethod.value
+    })
+    
+    if (response.success) {
+      router.push({ name: 'booking-success', query: { id: bookingId } })
+    } else {
+      paymentError.value = 'Payment processing failed. Please try again.'
+    }
+  } catch (error: any) {
+    console.error('Payment error:', error)
+    paymentError.value = error.message || 'Network error during payment.'
+  } finally {
     isLoading.value = false
-    router.push({ name: 'booking-success', query: { id: bookingId } })
-  }, 2000)
+  }
 }
 
 onMounted(fetchBooking)

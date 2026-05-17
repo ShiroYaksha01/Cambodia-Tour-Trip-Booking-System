@@ -196,7 +196,9 @@
 
       <footer class="customer-footer">
         <div>
-          <strong>Anajak Tour</strong>
+          <RouterLink to="/" class="brand-link">
+            <strong>Anajak Tour</strong>
+          </RouterLink>
           <p>© 2024 Anajak Tour. A Digital Concierge Experience.</p>
         </div>
         <nav aria-label="Footer navigation">
@@ -830,6 +832,10 @@ h1 {
   display: block;
   color: #263c40;
   font-size: 0.84rem;
+}
+
+.brand-link {
+  text-decoration: none;
 }
 
 .customer-footer p {
