@@ -4,6 +4,167 @@ A full-stack application for managing tour bookings in Cambodia. Built with **Ne
 
 ---
 
+
+# Project Overview — Anajak Tour
+
+## Introduction
+
+**Anajak Tour** is a web-based tourism platform designed to help tourists and local travelers in Cambodia discover, compare, and book tourism-related services within a single centralized system. Instead of searching for tour providers, hotels, transportation services, or accommodations individually across different platforms, users can browse and book services conveniently through one integrated platform.
+
+The platform functions similarly to how food delivery applications like GrabFood gather restaurants into one marketplace, but Anajak Tour focuses on tourism services within Cambodia. The system supports domestic travel routes such as Phnom Penh to Siem Reap, Kampot, Mondulkiri, Koh Rong, and other Cambodian destinations.
+
+Anajak Tour aims to simplify trip planning by allowing customers to search and book complete travel packages or individual tourism services directly from providers.
+
+---
+
+# System Objectives
+
+The main objectives of Anajak Tour are:
+
+- To centralize tourism-related services into a single platform
+- To simplify the process of discovering and booking tours in Cambodia
+- To provide providers with a digital platform to promote and manage their services
+- To support online booking and mock e-payment processing
+- To allow administrators to monitor bookings, providers, and platform revenue
+
+---
+
+# Main Features
+
+## Guest Features
+
+Guests can:
+- Browse the homepage
+- Search and view available services
+- View service details
+- Register and login to the system
+
+---
+
+## Customer Features
+
+Customers can:
+- Manage personal profiles
+- Browse tourism services and packages
+- Make direct bookings for services
+- Complete checkout using a simulated payment system
+- View booking history and booking details
+- View booking payment status
+- Leave reviews for services
+- Submit support tickets or report bad services
+- Download booking information and itinerary as PDF for offline access
+
+---
+
+## Provider Features
+
+Providers can:
+- Manage provider profile information
+- Create, update, and delete tourism services
+- Manage tour packages or individual services
+- View customer bookings
+- Monitor revenue and platform commission deductions
+- Manage inventory and service capacity (e.g., limited van seats or room availability)
+- View payment status of bookings
+
+---
+
+## Admin Features
+
+Administrators can:
+- Manage customers and providers
+- View all bookings within the platform
+- Monitor platform revenue and provider earnings
+- View payment information and transaction records
+- Handle reports and support tickets
+- Monitor overall system activity through the admin dashboard
+
+---
+
+# Booking and Payment Workflow
+
+The platform uses a direct booking workflow:
+
+1. Customer browses and selects a service
+2. Customer chooses quantity and booking details
+3. The system creates a pending booking
+4. Customer proceeds to the payment page
+5. The payment process is simulated (mock payment)
+6. After successful payment:
+   - Booking status becomes confirmed
+   - Payment status becomes paid
+   - Platform commission is calculated
+   - Provider earnings are recorded
+
+The system does not perform real money transfers. Instead, payment information and transaction records are simulated and stored in the database to demonstrate the business workflow of an online booking platform.
+
+---
+
+# Technology Stack
+
+## Frontend
+- Vue.js
+- TypeScript
+- Vue Router
+- Pinia
+
+---
+
+## Backend
+- NestJS
+- TypeScript
+- PostgreSQL
+- TypeORM
+
+---
+
+## Development Tools
+- Docker
+- Postman
+- GitHub
+- Figma
+
+---
+
+# System Roles
+
+The system contains three main authenticated roles:
+
+| Role | Purpose |
+|---|---|
+| Customer | Browse and book tourism services |
+| Provider | Manage services and bookings |
+| Admin | Monitor and manage the platform |
+
+Guests can also browse public pages without authentication.
+
+---
+
+# Scope Limitation
+
+To keep the project manageable within the academic development timeline, several advanced features are simplified or excluded:
+
+
+- Real payment gateway integration is replaced with mock payment simulation
+- Real-time chat functionality is excluded
+- Seasonal pricing is excluded
+- International flight booking is not included
+- The platform focuses only on tourism services within Cambodia
+
+---
+
+# Expected Outcome
+
+By the end of development, Anajak Tour will provide:
+- A centralized tourism booking platform
+- Role-based management system
+- Booking and mock payment workflow
+- Provider business management features
+- Administrative monitoring dashboard
+
+The project demonstrates full-stack web development concepts including authentication, role-based authorization, database management, booking workflows, payment simulation, and RESTful API integration.
+
+
 ## Getting Started
 
 ### 1. Prerequisites
