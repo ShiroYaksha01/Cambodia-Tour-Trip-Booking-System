@@ -1,3 +1,44 @@
+<script setup lang="ts">
+import { ref } from "vue";
+import api from "../../services/api";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+
+const email = ref("");
+const password = ref("");
+const message = ref("");
+
+const handleLogin = async () => {
+  try {
+    const res = await api.post("/auth/login", {
+      email: email.value,
+      password: password.value,
+    });
+
+    message.value = res.data.message;
+
+    console.log("LOGIN SUCCESS:", res.data);
+
+    if (res.data.success) {
+      localStorage.setItem("auth_role", res.data.user.role);
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+
+      const redirectPath = router.currentRoute.value.query.redirect as string;
+      if (redirectPath) {
+        router.push(redirectPath);
+      } else {
+        router.push("/");
+      }
+    }
+  } catch (err) {
+    message.value = "Login failed";
+    console.log(err);
+  }
+};
+</script>
+
 <template>
   <main class="auth-page">
     <section class="auth-shell">
@@ -11,8 +52,8 @@
           <div class="hero-accent"></div>
           <h1>Experience the Timeless Splendor of Cambodia.</h1>
           <p>
-            Access your private concierge and curated heritage experiences. Your journey into the
-            heart of the Khmer Empire begins here.
+            Access your private concierge and curated heritage experiences. Your
+            journey into the heart of the Khmer Empire begins here.
           </p>
         </div>
 
@@ -33,15 +74,19 @@
             <p>Please enter your details to access your curator dashboard.</p>
           </header>
 
-          <form class="auth-form">
+          <form class="auth-form" @submit.prevent="handleLogin">
             <label class="field">
               <span>Email Address</span>
               <div class="input-wrap">
-                <span class="input-icon" aria-hidden="true">✉</span>
-                <input type="email" placeholder="curator@heritage.kh" autocomplete="email" />
+                <input
+                  v-model="email"
+                  type="email"
+                  placeholder="curator@heritage.kh"
+                  autocomplete="email"
+                />
               </div>
             </label>
-
+            
             <label class="field password-field">
               <div class="field-row">
                 <span>Password</span>
@@ -49,21 +94,32 @@
               </div>
               <div class="input-wrap">
                 <span class="input-icon" aria-hidden="true">⌁</span>
-                <input type="password" placeholder="••••••••" autocomplete="current-password" />
+                <input
+                  v-model="password"
+                  type="password"
+                  placeholder="••••••••"
+                  autocomplete="current-password"
+                />
               </div>
             </label>
-
+            <p class="error-msg" v-if="message">{{ message }}</p>
             <label class="remember-row">
               <input type="checkbox" checked />
               <span>Remember me for 30 days</span>
             </label>
 
-            <button class="primary-button" type="submit">Sign In to Dashboard →</button>
+            <button class="primary-button" type="submit">
+              Sign In to Dashboard →
+            </button>
           </form>
 
           <p class="signup-row">
             Don't have an account yet?
             <RouterLink to="/register">Curate your Journey →</RouterLink>
+          </p>
+
+          <p class="signup-row text-sm text-[#9ca2a7] mt-4">
+            Tip: this demo stores a customer role in localStorage so you can continue to booking.
           </p>
 
           <footer class="footer-links">
@@ -84,12 +140,26 @@
 .auth-page {
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(0, 157, 121, 0.25), transparent 28%),
-    radial-gradient(circle at bottom left, rgba(0, 107, 95, 0.45), transparent 34%),
+    radial-gradient(
+      circle at top left,
+      rgba(0, 157, 121, 0.25),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at bottom left,
+      rgba(0, 107, 95, 0.45),
+      transparent 34%
+    ),
     linear-gradient(180deg, #083538 0%, #0a4b47 56%, #06282c 100%);
   padding: 0;
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   color: #f8faf7;
 }
 
@@ -108,14 +178,22 @@
   justify-content: space-between;
   background:
     linear-gradient(180deg, rgba(6, 25, 30, 0.28), rgba(6, 25, 30, 0.54)),
-    radial-gradient(circle at 30% 18%, rgba(17, 125, 88, 0.58), transparent 18%),
-    radial-gradient(circle at 68% 12%, rgba(6, 161, 111, 0.26), transparent 20%),
+    radial-gradient(
+      circle at 30% 18%,
+      rgba(17, 125, 88, 0.58),
+      transparent 18%
+    ),
+    radial-gradient(
+      circle at 68% 12%,
+      rgba(6, 161, 111, 0.26),
+      transparent 20%
+    ),
     linear-gradient(180deg, rgba(1, 33, 39, 0.35), rgba(1, 33, 39, 0.05)),
     linear-gradient(180deg, #0a3237 0%, #0d4a4f 58%, #061f22 100%);
 }
 
 .hero-panel::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background:
@@ -132,21 +210,54 @@
 }
 
 .hero-panel::after {
-  content: '';
+  content: "";
   position: absolute;
   left: -6%;
   right: -6%;
   bottom: -2%;
   height: 34%;
   background:
-    radial-gradient(circle at 12% 55%, rgba(5, 33, 34, 0.95) 0 6px, transparent 7px),
-    radial-gradient(circle at 20% 40%, rgba(4, 24, 26, 0.98) 0 18px, transparent 19px),
-    radial-gradient(circle at 36% 58%, rgba(5, 33, 34, 0.96) 0 10px, transparent 11px),
-    radial-gradient(circle at 48% 44%, rgba(5, 33, 34, 0.96) 0 24px, transparent 25px),
-    radial-gradient(circle at 60% 63%, rgba(5, 33, 34, 0.96) 0 12px, transparent 13px),
-    radial-gradient(circle at 74% 48%, rgba(5, 33, 34, 0.96) 0 26px, transparent 27px),
-    radial-gradient(circle at 86% 57%, rgba(5, 33, 34, 0.96) 0 10px, transparent 11px),
-    linear-gradient(180deg, transparent, rgba(4, 19, 21, 0.94) 45%, rgba(4, 19, 21, 0.98));
+    radial-gradient(
+      circle at 12% 55%,
+      rgba(5, 33, 34, 0.95) 0 6px,
+      transparent 7px
+    ),
+    radial-gradient(
+      circle at 20% 40%,
+      rgba(4, 24, 26, 0.98) 0 18px,
+      transparent 19px
+    ),
+    radial-gradient(
+      circle at 36% 58%,
+      rgba(5, 33, 34, 0.96) 0 10px,
+      transparent 11px
+    ),
+    radial-gradient(
+      circle at 48% 44%,
+      rgba(5, 33, 34, 0.96) 0 24px,
+      transparent 25px
+    ),
+    radial-gradient(
+      circle at 60% 63%,
+      rgba(5, 33, 34, 0.96) 0 12px,
+      transparent 13px
+    ),
+    radial-gradient(
+      circle at 74% 48%,
+      rgba(5, 33, 34, 0.96) 0 26px,
+      transparent 27px
+    ),
+    radial-gradient(
+      circle at 86% 57%,
+      rgba(5, 33, 34, 0.96) 0 10px,
+      transparent 11px
+    ),
+    linear-gradient(
+      180deg,
+      transparent,
+      rgba(4, 19, 21, 0.94) 45%,
+      rgba(4, 19, 21, 0.98)
+    );
   filter: saturate(0.8);
 }
 
@@ -267,8 +378,16 @@
   width: 100%;
   padding: 78px 28px 26px;
   background:
-    radial-gradient(circle at top right, rgba(245, 164, 28, 0.12), transparent 20%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(246, 247, 244, 0.98));
+    radial-gradient(
+      circle at top right,
+      rgba(245, 164, 28, 0.12),
+      transparent 20%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.88),
+      rgba(246, 247, 244, 0.98)
+    );
   backdrop-filter: blur(6px);
   display: flex;
   flex-direction: column;
@@ -290,157 +409,10 @@
   font-size: 0.98rem;
 }
 
-.social-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 34px;
-}
-
-.social-button,
-.primary-button {
-  border: 0;
-  border-radius: 8px;
-  font: inherit;
-  cursor: pointer;
-}
-
-.social-button {
-  background: #ffffff;
-  min-height: 40px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  color: #2b3135;
-  font-weight: 500;
-  box-shadow: 0 1px 0 rgba(17, 24, 39, 0.04), 0 0 0 1px rgba(17, 24, 39, 0.05) inset;
-}
-
-.social-dot {
-  width: 18px;
-  height: 18px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  font-size: 11px;
-  color: #ffffff;
-  font-weight: 700;
-}
-
-.facebook {
-  background: #1877f2;
-}
-
-.telegram {
-  background: #229ed9;
-}
-
-.separator {
-  position: relative;
-  margin: 28px 0 18px;
-  text-align: center;
-}
-
-.separator::before,
-.separator::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  width: calc(50% - 90px);
-  height: 1px;
-  background: rgba(97, 109, 116, 0.16);
-}
-
-.separator::before {
-  left: 0;
-}
-
-.separator::after {
-  right: 0;
-}
-
-.separator span {
-  font-size: 0.71rem;
-  letter-spacing: 0.16em;
-  font-weight: 700;
-  color: #8b9498;
-}
-
-.auth-form {
-  display: grid;
-  gap: 16px;
-}
-
-.field {
-  display: grid;
-  gap: 7px;
-}
-
-.field > span,
-.field-row {
-  font-size: 0.88rem;
+.error-msg {
+  color: #b42f2f;
+  font-size: 0.85rem;
   font-weight: 600;
-  color: #3b4548;
-}
-
-.field-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.field-row a,
-.signup-row a,
-.footer-links a {
-  color: #bf7d10;
-  text-decoration: none;
-}
-
-.input-wrap {
-  height: 42px;
-  border-radius: 8px;
-  background: #ffffff;
-  border: 1px solid rgba(95, 109, 116, 0.12);
-  display: flex;
-  align-items: center;
-  padding: 0 14px;
-  gap: 10px;
-  box-shadow: 0 1px 0 rgba(17, 24, 39, 0.02);
-}
-
-.input-icon {
-  font-size: 0.92rem;
-  color: #8b9498;
-  width: 16px;
-  text-align: center;
-}
-
-.input-wrap input {
-  border: 0;
-  outline: 0;
-  width: 100%;
-  font: inherit;
-  color: #233036;
-  background: transparent;
-}
-
-.input-wrap input::selection {
-  background: rgba(244, 167, 29, 0.22);
-}
-
-.remember-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.88rem;
-  color: #495459;
-}
-
-.remember-row input {
-  width: 14px;
-  height: 14px;
-  accent-color: #0d7e73;
 }
 
 .primary-button {
@@ -448,7 +420,11 @@
   min-height: 42px;
   background: linear-gradient(180deg, #0e7f76, #0a6d66);
   color: #ffffff;
+  font: inherit;
   font-weight: 700;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
   box-shadow: 0 12px 24px rgba(10, 109, 102, 0.25);
 }
 
@@ -457,6 +433,11 @@
   text-align: center;
   font-size: 0.95rem;
   color: #536067;
+}
+
+.signup-row a {
+  color: #bf7d10;
+  text-decoration: none;
 }
 
 .footer-links {
@@ -480,36 +461,69 @@
   gap: 12px 18px;
 }
 
+.footer-links a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.input-wrap {
+  height: 42px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid rgba(95, 109, 116, 0.12);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 10px;
+}
+
+.input-wrap input {
+  border: 0;
+  outline: 0;
+  width: 100%;
+  font: inherit;
+  color: #233036;
+  background: transparent;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+}
+
+.field span {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #3b4548;
+}
+
+.field-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #3b4548;
+}
+
+.field-row a {
+  color: #bf7d10;
+  text-decoration: none;
+}
+
+.remember-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+  color: #495459;
+}
+
 @media (max-width: 1080px) {
   .auth-shell {
     grid-template-columns: 1fr;
   }
-
   .hero-panel {
-    min-height: 56vh;
-  }
-}
-
-@media (max-width: 640px) {
-  .hero-panel {
-    padding: 32px 22px 26px;
-  }
-
-  .form-card {
-    padding: 36px 18px 20px;
-  }
-
-  .social-row {
-    grid-template-columns: 1fr;
-  }
-
-  .footer-links {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .footer-links nav {
-    justify-content: flex-start;
+    min-height: 40vh;
   }
 }
 </style>
