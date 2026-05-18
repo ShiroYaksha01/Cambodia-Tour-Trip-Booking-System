@@ -23,7 +23,7 @@ const handleLogin = async () => {
     if (res.data.success) {
       localStorage.setItem("auth_role", res.data.user.role);
       localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
+      localStorage.setItem("auth_user", JSON.stringify(res.data.user)); 
 
       const redirectPath = router.currentRoute.value.query.redirect as string;
       if (redirectPath) {
