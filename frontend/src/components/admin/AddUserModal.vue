@@ -1,27 +1,32 @@
 <script setup lang="ts">
-import { reactive, watch, ref } from 'vue'
+import { reactive, ref, watch } from 'vue'
 
-const props = defineProps({ show: Boolean, user: { type: Object, default: () => ({}) } })
+const props = defineProps({ show: Boolean })
 const emit = defineEmits(['close', 'save'])
 
-const form = reactive({ id: '', username: '', email: '', password: '', role: 'Client', status: 'Active', joined: '' })
+const form = reactive({ username: '', email: '', password: '', role: 'customer', status: 'active' })
+const errors = reactive({ username: '', email: '', password: '' })
 const showPass = ref(false)
 const isSaving = ref(false)
 
-watch(() => props.user, (u: any) => {
-  if (u) {
-    form.id       = u.id       || ''
-    form.username = u.username || ''
-    form.email    = u.email    || ''
-    form.role     = u.role     || 'Client'
-    form.status   = u.status   || 'Active'
-    form.joined   = u.joined   || ''
-    form.password = ''
+watch(() => props.show, (v) => {
+  if (v) {
+    form.username = ''; form.email = ''; form.password = ''
+    form.role = 'customer'; form.status = 'active'
+    errors.username = ''; errors.email = ''; errors.password = ''
     showPass.value = false
   }
-}, { immediate: true })
+})
+
+const validate = () => {
+  errors.username = form.username.trim() ? '' : 'Required'
+  errors.email    = form.email.trim()    ? '' : 'Required'
+  errors.password = form.password.trim() ? '' : 'Required'
+  return !errors.username && !errors.email && !errors.password
+}
 
 const save = async () => {
+  if (!validate()) return
   isSaving.value = true
   await new Promise(r => setTimeout(r, 280))
   emit('save', { ...form })
@@ -36,14 +41,10 @@ const save = async () => {
       <div class="overlay" @click="emit('close')"></div>
       <div class="modal">
 
-        <!-- Dummy inputs: tricks browser into autofilling these instead of real fields -->
-        <input type="text"     style="display:none" autocomplete="username" />
-        <input type="password" style="display:none" autocomplete="new-password" />
-
         <div class="mhead">
           <div>
             <p class="mlabel">USER MANAGEMENT</p>
-            <h2>Edit User</h2>
+            <h2>Add New User</h2>
           </div>
           <button class="xbtn" @click="emit('close')">
             <svg viewBox="0 0 14 14" fill="none" width="12" height="12">
@@ -52,59 +53,29 @@ const save = async () => {
           </button>
         </div>
 
-        <!-- Identity card (read-only display) -->
-        <div class="id-card">
-          <div class="id-av">{{ form.username?.charAt(0)?.toUpperCase() || '?' }}</div>
-          <div>
-            <p class="id-name">{{ form.username || '—' }}</p>
-            <p class="id-email">{{ form.email }}</p>
-          </div>
-        </div>
-
         <div class="grid">
-          <div class="fg">
-            <label>Username</label>
-            <input v-model="form.username" type="text" autocomplete="off" placeholder="Username" />
+          <div class="fg" :class="{ err: errors.username }">
+            <label>Username <span class="req">*</span></label>
+            <input v-model="form.username" type="text" autocomplete="off" placeholder="e.g. Sovannara" />
+            <span v-if="errors.username" class="emsg">{{ errors.username }}</span>
           </div>
 
-          <div class="fg">
-            <label>Status</label>
-            <select v-model="form.status">
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive (Disabled)</option>
-              <option value="Suspended">Suspended (Banned)</option>
-            </select>
+          <div class="fg" :class="{ err: errors.email }">
+            <label>Email <span class="req">*</span></label>
+            <input v-model="form.email" type="email" autocomplete="off" placeholder="user@email.com" />
+            <span v-if="errors.email" class="emsg">{{ errors.email }}</span>
           </div>
 
-          <div class="fg">
-            <label>Role</label>
-            <select v-model="form.role">
-              <option value="Client">Customer</option>
-              <option value="Provider">Provider</option>
-              <option value="Admin">Admin</option>
-            </select>
-          </div>
-
-          <div class="fg span2">
-            <label>Email</label>
-            <input v-model="form.email" type="text" autocomplete="off" placeholder="user@email.com" />
-          </div>
-
-          <div class="fg span2">
-            <label>
-              New Password
-              <span class="opt">leave blank to keep current</span>
-            </label>
+          <div class="fg" :class="{ err: errors.password }">
+            <label>Password <span class="req">*</span></label>
             <div class="pass-wrap">
               <input
                 v-model="form.password"
                 :type="showPass ? 'text' : 'password'"
                 autocomplete="new-password"
-                readonly
-                onfocus="this.removeAttribute('readonly')"
-                placeholder="Enter new password to change..."
+                placeholder="Set a password"
               />
-              <button class="eye" type="button" @click="showPass = !showPass" :title="showPass ? 'Hide' : 'Show'">
+              <button class="eye" type="button" @click="showPass = !showPass">
                 <svg v-if="!showPass" viewBox="0 0 24 24" fill="none" width="16" height="16">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                   <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/>
@@ -115,18 +86,32 @@ const save = async () => {
                 </svg>
               </button>
             </div>
+            <span v-if="errors.password" class="emsg">{{ errors.password }}</span>
+          </div>
+
+          <div class="fg">
+            <label>Role</label>
+            <select v-model="form.role">
+              <option value="customer">Customer</option>
+              <option value="provider">Provider</option>
+              <option value="admin">Admin</option>
+            </select>
           </div>
 
           <div class="fg span2">
-            <label>Join Date <span class="readonly-tag">read-only</span></label>
-            <input :value="form.joined" disabled class="dis" />
+            <label>Status</label>
+            <select v-model="form.status">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive (Disabled)</option>
+              <option value="suspended">Suspended (Banned)</option>
+            </select>
           </div>
         </div>
 
         <div class="foot">
           <button class="cbtn" @click="emit('close')" :disabled="isSaving">Cancel</button>
           <button class="sbtn" @click="save" :disabled="isSaving">
-            {{ isSaving ? 'Saving...' : 'Save Changes' }}
+            {{ isSaving ? 'Creating...' : 'Add User' }}
           </button>
         </div>
 
@@ -138,30 +123,25 @@ const save = async () => {
 <style scoped>
 .bd { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 100; }
 .overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.38); backdrop-filter: blur(6px); }
-.modal { position: relative; width: 560px; background: white; border-radius: 26px; padding: 34px; box-shadow: 0 20px 48px rgba(0,0,0,0.13); z-index: 101; max-height: 90vh; overflow-y: auto; animation: pop 0.26s cubic-bezier(0.34,1.56,0.64,1); }
+.modal { position: relative; width: 540px; background: white; border-radius: 26px; padding: 34px; box-shadow: 0 20px 48px rgba(0,0,0,0.13); z-index: 101; max-height: 90vh; overflow-y: auto; animation: pop 0.26s cubic-bezier(0.34,1.56,0.64,1); }
 @keyframes pop { from { opacity:0; transform:scale(0.94) translateY(16px); } to { opacity:1; transform:scale(1) translateY(0); } }
 
-.mhead { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+.mhead { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
 .mlabel { font-size: 10px; color: #006566; font-weight: 700; letter-spacing: 1.5px; margin: 0 0 4px; }
 .mhead h2 { margin: 0; font-size: 22px; color: #13211c; }
 .xbtn { width: 36px; height: 36px; border: none; background: #f4f2ee; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.18s; color: #57645d; flex-shrink: 0; }
 .xbtn:hover { background: #e8e4d9; transform: rotate(90deg); }
 
-.id-card { display: flex; align-items: center; gap: 12px; background: #f8f6f2; border-radius: 14px; padding: 14px 18px; margin-bottom: 20px; }
-.id-av { width: 48px; height: 48px; border-radius: 13px; background: #e8f5f4; color: #006566; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; flex-shrink: 0; }
-.id-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: #1d2925; }
-.id-email { margin: 0; font-size: 12px; color: #7b8781; }
-
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .span2 { grid-column: span 2; }
 .fg { display: flex; flex-direction: column; }
-.fg label { font-size: 12px; font-weight: 600; color: #57645d; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
-.opt { font-size: 11px; color: #aab0ac; font-weight: 400; }
-.readonly-tag { font-size: 11px; color: #aab0ac; font-weight: 400; background: #f0ede8; padding: 2px 8px; border-radius: 20px; }
+.fg label { font-size: 12px; font-weight: 600; color: #57645d; margin-bottom: 6px; }
+.req { color: #e74c3c; margin-left: 2px; }
 
 .fg input, .fg select { height: 46px; border: 1.5px solid #e5e0d5; background: #faf8f5; border-radius: 12px; padding: 0 13px; font-size: 14px; transition: 0.18s; color: #1d2925; outline: none; }
 .fg input:focus, .fg select:focus { border-color: #006566; background: white; box-shadow: 0 0 0 3px rgba(0,101,102,0.08); }
-.dis { color: #b0b8b4 !important; cursor: not-allowed; background: #f4f2ee !important; }
+.fg.err input, .fg.err select { border-color: #e74c3c; }
+.emsg { font-size: 11px; color: #e74c3c; margin-top: 4px; }
 
 .pass-wrap { position: relative; display: flex; }
 .pass-wrap input { flex: 1; padding-right: 42px; }
