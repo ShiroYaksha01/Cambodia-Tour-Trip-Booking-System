@@ -190,6 +190,8 @@ The project demonstrates full-stack web development concepts including authentic
     DATABASE_USER=your_user
     DATABASE_PASSWORD=your_password
     DATABASE_NAME=tour_booking
+    JWT_SECRET=your_super_secret_key
+    JWT_EXPIRATION=1d
     PORT=3000
     ```
 

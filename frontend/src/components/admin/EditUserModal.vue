@@ -4,7 +4,7 @@ import { reactive, watch, ref } from 'vue'
 const props = defineProps({ show: Boolean, user: { type: Object, default: () => ({}) } })
 const emit = defineEmits(['close', 'save'])
 
-const form = reactive({ id: '', username: '', email: '', password: '', role: 'Client', status: 'Active', joined: '' })
+const form = reactive({ id: '', username: '', email: '', password: '', role: 'Customer', status: 'Active', joined: '' })
 const showPass = ref(false)
 const isSaving = ref(false)
 
@@ -13,7 +13,7 @@ watch(() => props.user, (u: any) => {
     form.id       = u.id       || ''
     form.username = u.username || ''
     form.email    = u.email    || ''
-    form.role     = u.role     || 'Client'
+    form.role     = u.role     || 'Customer'
     form.status   = u.status   || 'Active'
     form.joined   = u.joined   || ''
     form.password = ''
@@ -79,7 +79,7 @@ const save = async () => {
           <div class="fg">
             <label>Role</label>
             <select v-model="form.role">
-              <option value="Client">Customer</option>
+              <option value="Customer">Customer</option>
               <option value="Provider">Provider</option>
               <option value="Admin">Admin</option>
             </select>

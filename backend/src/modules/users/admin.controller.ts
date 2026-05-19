@@ -7,6 +7,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { UserRole } from '../../shared/enums';
 import { UsersService } from '../users/users.service';
 import { AccountStatus } from '../users/entities/user.entity';
 
@@ -19,7 +22,8 @@ import { AccountStatus } from '../users/entities/user.entity';
  * where GET /users/:id would swallow GET /users/admin/users.
  */
 @Controller('admin')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.ADMIN)
 export class AdminController {
   constructor(private usersService: UsersService) {}
 
