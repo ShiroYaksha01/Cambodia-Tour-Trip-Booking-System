@@ -43,7 +43,6 @@ async updateUser(id: string, data: Partial<User>) {
     'phoneNumber',
     'profilePicture',
     'status',
-    'role',
   ];
 
   for (const key of allowed) {
