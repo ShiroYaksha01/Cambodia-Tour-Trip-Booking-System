@@ -116,4 +116,14 @@ export class BookingsService {
 
     return booking;
   }
+
+  async confirmPayment(bookingId: string, transactionId?: string): Promise<Booking> {
+    const booking = await this.bookingRepository.findOne({ where: { id: bookingId } });
+    if (!booking) throw new NotFoundException('Booking not found');
+
+    booking.paymentStatus = PaymentStatus.PAID;
+    if (transactionId) booking.transactionId = transactionId;
+
+    return this.bookingRepository.save(booking);
+  }
 }

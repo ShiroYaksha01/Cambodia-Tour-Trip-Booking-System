@@ -119,7 +119,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { apiGet } from '../../utils/api'
+import { apiGet, apiPost } from '../../utils/api'
 
 const router = useRouter()
 const route = useRoute()
@@ -156,13 +156,27 @@ const formatDate = (dateString: string) => {
 }
 
 const handlePayment = async () => {
+  if (!booking.value) return
   isLoading.value = true
-  
-  // Simulated payment processing delay
-  setTimeout(() => {
-    isLoading.value = false
+
+  try {
+    // In a real integration this would be done by the payment gateway webhook.
+    // Here we simulate confirming the payment with the backend.
+    const payload = {
+      bookingId: booking.value.id,
+      transactionId: booking.value.transactionId || undefined,
+    }
+
+    await apiPost<{ success: boolean; data: any }>(`/booking/payment/success`, payload)
+
+    // Navigate to success page
     router.push({ name: 'booking-success', query: { id: bookingId } })
-  }, 2000)
+  } catch (err) {
+    console.error('Payment confirmation failed', err)
+    alert('Payment could not be confirmed. Please contact support.')
+  } finally {
+    isLoading.value = false
+  }
 }
 
 onMounted(fetchBooking)
