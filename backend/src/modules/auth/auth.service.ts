@@ -19,6 +19,7 @@ export class AuthService {
   password: string,
   phoneNumber?: string,
   profilePicture?: string,
+  role?: string,
 ) {
   const exist = await this.usersService.findByEmail(email);
   if (exist) throw new BadRequestException('Email already exists');
@@ -31,7 +32,7 @@ export class AuthService {
     passwordHash: hash,
     phoneNumber,
     profilePicture,  
-    role: 'customer' as any,
+    role: (role ?? 'customer') as any,
   });
 }
 

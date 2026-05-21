@@ -7,6 +7,7 @@ const routes: RouteRecordRaw[] = [
     path: "/",
     redirect: "/dashboard",
   },
+
   {
     path: "/login",
     name: "login",
@@ -71,6 +72,19 @@ const routes: RouteRecordRaw[] = [
       roles: ["admin"],
     },
   },
+
+  //admin routes for manage users, test: http://localhost:5173/admin/manage-users
+  {
+    path: "/admin/manage-users",
+    name: "admin-manage-users",
+    component: () => import("../views/AdminManageUsers.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["admin"],
+    },
+  },
+
+
   {
     path: "/admin/providers",
     name: "admin-providers",
