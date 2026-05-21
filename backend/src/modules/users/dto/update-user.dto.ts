@@ -26,8 +26,4 @@ export class UpdateUserDto {
   @IsOptional()
   @IsEnum(AccountStatus)
   status?: AccountStatus;
-
-  @IsOptional()
-  @IsEnum(UserRole)
-  role?: UserRole;
 }
