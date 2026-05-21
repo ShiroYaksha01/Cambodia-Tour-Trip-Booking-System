@@ -78,12 +78,10 @@ async function fetchUsers() {
 
 async function handleEditSave(form: any) {
   try {
-    const roleMap: Record<string, string> = { Customer: 'customer', Provider: 'provider', Admin: 'admin' }
     const body: Record<string, any> = {
       username: form.username,
       email:    form.email,
       status:   form.status.toLowerCase(),
-      role:     roleMap[form.role] ?? form.role,
     }
     if (form.password?.trim()) body.password = form.password
 
@@ -100,7 +98,6 @@ async function handleEditSave(form: any) {
       username: form.username,
       email:    form.email,
       status:   body.status as any,
-      role:     body.role as any,
     }
     showToast('User updated successfully')
   } catch (e: any) { showToast(e.message || 'Update failed', 'error') }
