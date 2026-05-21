@@ -32,7 +32,7 @@ export class UsersService {
   async updateUser(id: string, data: Partial<User> & { password?: string }) {
     const user = await this.findById(id);
 
-    const allowed = ['username', 'email', 'phoneNumber', 'profilePicture', 'status', 'role'];
+    const allowed = ['username', 'email', 'phoneNumber', 'profilePicture', 'status'];
     for (const key of allowed) {
       if (data[key] !== undefined) {
         user[key] = data[key];
