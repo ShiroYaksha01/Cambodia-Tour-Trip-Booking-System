@@ -73,11 +73,21 @@
                 {{ booking.status }}
               </span>
             </div>
-
+            
+            <div class="mt-3 text-[0.9rem] text-[#69757a] flex items-center justify-between">
+              <div>
+                <span class="mr-2 text-[#b0b7ba]">Payment:</span>
+                <strong class="text-[#142125]">{{ booking.paymentStatus ?? 'pending' }}</strong>
+              </div>
+              <div v-if="booking.transactionId">
+                <span class="mr-2 text-[#b0b7ba]">TX:</span>
+                <strong class="text-[#142125]">{{ booking.transactionId }}</strong>
+              </div>
+            </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[0.95rem] border-t border-[#5f6d74]/5 pt-4">
               <div class="flex items-center text-[#69757a]">
                 <span class="mr-2 text-[#b0b7ba]">Date:</span>
-                <strong class="text-[#142125]">{{ formatDate(booking.date) }}</strong>
+                <strong class="text-[#142125]">{{ formatDate(booking.bookingDate || booking.date) }}</strong>
               </div>
               <div class="flex items-center text-[#69757a]">
                 <span class="mr-2 text-[#b0b7ba]">Guests:</span>
@@ -116,10 +126,13 @@ interface Booking {
   id: string | number
   serviceId: string | number
   serviceName: string
-  date: string
+  bookingDate?: string
+  date?: string
   quantity: number
   status: 'pending' | 'confirmed' | 'cancelled'
   totalPrice?: number
+  paymentStatus?: string
+  transactionId?: string
 }
 
 const bookings = ref<Booking[]>([])
@@ -130,10 +143,13 @@ const mapBooking = (raw: any): Booking => ({
   id: raw.id,
   serviceId: raw.serviceId ?? raw.service?.id ?? 'unknown',
   serviceName: raw.service?.title ?? raw.serviceName ?? 'Heritage Experience',
-  date: raw.bookingDate ?? raw.date ?? '',
+  bookingDate: raw.bookingDate ?? raw.date ?? '',
+  date: raw.date,
   quantity: raw.quantity ?? 1,
-  status: raw.status ?? 'confirmed',
-  totalPrice: raw.totalPrice,
+  status: (raw.bookingStatus ?? raw.status ?? 'pending') as 'pending' | 'confirmed' | 'cancelled',
+  totalPrice: raw.totalAmount ?? raw.totalPrice,
+  paymentStatus: raw.paymentStatus,
+  transactionId: raw.transactionId,
 })
 
 const fetchBookings = async () => {

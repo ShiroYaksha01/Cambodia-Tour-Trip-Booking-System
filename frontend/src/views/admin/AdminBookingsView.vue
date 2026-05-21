@@ -466,12 +466,14 @@ onMounted(() => {
 
 <style scoped>
 .admin-shell {
-  min-height: 100vh;
+  height: 100vh;
   display: grid;
   grid-template-columns: 264px minmax(0, 1fr);
   gap: 18px;
   padding: 16px;
   background: #262626;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .admin-content {
@@ -482,6 +484,7 @@ onMounted(() => {
   gap: 24px;
   background: linear-gradient(180deg, #f3f3f2 0%, #f8f8f6 100%);
   border-radius: 24px;
+  overflow-y: auto;
 }
 
 .page-heading {

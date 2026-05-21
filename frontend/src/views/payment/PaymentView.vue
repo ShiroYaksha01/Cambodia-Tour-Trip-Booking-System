@@ -47,7 +47,7 @@
             <div class="bg-white/5 rounded-2xl p-6 backdrop-blur-sm border border-white/10">
               <div class="flex justify-between items-baseline">
                 <span class="text-sm font-bold text-[#f4a71d] uppercase tracking-widest">Total Amount</span>
-                <span class="text-4xl font-extrabold text-white">${{ booking.totalPrice }}</span>
+                <span class="text-4xl font-extrabold text-white">${{ booking.totalAmount }}</span>
               </div>
             </div>
           </div>
@@ -161,24 +161,20 @@ const formatDate = (dateString: string) => {
 }
 
 const handlePayment = async () => {
-  if (!selectedMethod.value) return
-  
   isLoading.value = true
   paymentError.value = ''
   
   try {
-    const response = await apiPost<{ success: boolean }>(`/payment`, {
-      bookingId: bookingId,
-      paymentMethod: selectedMethod.value
+    const response = await apiPost<{ success: boolean }>('/payment', {
+      bookingId: bookingId
     })
-    
+
     if (response.success) {
       router.push({ name: 'booking-success', query: { id: bookingId } })
     } else {
       paymentError.value = 'Payment processing failed. Please try again.'
     }
   } catch (error: any) {
-    console.error('Payment error:', error)
     paymentError.value = error.message || 'Network error during payment.'
   } finally {
     isLoading.value = false
