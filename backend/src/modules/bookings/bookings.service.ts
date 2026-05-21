@@ -56,6 +56,25 @@ export class BookingsService {
     return this.bookingRepository.save(booking);
   }
 
+  async processPayment(bookingId: string, userId: string): Promise<Booking> {
+    const booking = await this.bookingRepository.findOne({
+      where: { id: bookingId, userId },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+
+    if (booking.paymentStatus === PaymentStatus.PAID) {
+      throw new BadRequestException('Booking is already paid');
+    }
+
+    booking.paymentStatus = PaymentStatus.PAID;
+    booking.bookingStatus = BookingStatus.CONFIRMED;
+
+    return this.bookingRepository.save(booking);
+  }
+
   async getUserBookings(userId: string): Promise<Booking[]> {
     return this.bookingRepository.find({
       where: { userId },

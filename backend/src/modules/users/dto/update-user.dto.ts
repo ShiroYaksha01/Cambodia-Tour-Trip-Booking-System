@@ -1,10 +1,19 @@
-import { IsOptional, IsEnum, IsString } from 'class-validator';
-import { UserRole } from '../entities/user.entity';
-import { AccountStatus } from '../entities/user.entity';
+import { IsOptional, IsEnum, IsString, IsEmail, MinLength } from 'class-validator';
+import { UserRole, AccountStatus } from '../entities/user.entity';
+
 export class UpdateUserDto {
   @IsOptional()
   @IsString()
   username?: string;
+
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(6)
+  password?: string;
 
   @IsOptional()
   @IsString()
@@ -19,6 +28,6 @@ export class UpdateUserDto {
   status?: AccountStatus;
 
   @IsOptional()
-  @IsEnum(UserRole)   
+  @IsEnum(UserRole)
   role?: UserRole;
 }

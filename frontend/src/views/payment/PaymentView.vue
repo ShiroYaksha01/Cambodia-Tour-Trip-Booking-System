@@ -47,7 +47,7 @@
             <div class="bg-white/5 rounded-2xl p-6 backdrop-blur-sm border border-white/10">
               <div class="flex justify-between items-baseline">
                 <span class="text-sm font-bold text-[#f4a71d] uppercase tracking-widest">Total Amount</span>
-                <span class="text-4xl font-extrabold text-white">${{ booking.totalPrice }}</span>
+                <span class="text-4xl font-extrabold text-white">${{ booking.totalAmount }}</span>
               </div>
             </div>
           </div>
@@ -94,6 +94,10 @@
           </div>
 
           <!-- Action -->
+          <div v-if="paymentError" class="mb-4 p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-sm font-bold flex items-center gap-3">
+            <span class="w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center text-[10px]">!</span>
+            {{ paymentError }}
+          </div>
           <button 
             @click="handlePayment"
             :disabled="!selectedMethod || isLoading"
@@ -128,6 +132,7 @@ const bookingId = route.params.id
 const booking = ref<any>(null)
 const isLoading = ref(false)
 const selectedMethod = ref('')
+const paymentError = ref('')
 
 const paymentMethods = [
   { id: 'aba', name: 'ABA Bank', description: 'Instant transfer via ABA Mobile', icon: '🏦' },
@@ -156,24 +161,21 @@ const formatDate = (dateString: string) => {
 }
 
 const handlePayment = async () => {
-  if (!booking.value) return
   isLoading.value = true
-
+  paymentError.value = ''
+  
   try {
-    // In a real integration this would be done by the payment gateway webhook.
-    // Here we simulate confirming the payment with the backend.
-    const payload = {
-      bookingId: booking.value.id,
-      transactionId: booking.value.transactionId || undefined,
+    const response = await apiPost<{ success: boolean }>('/payment', {
+      bookingId: bookingId
+    })
+
+    if (response.success) {
+      router.push({ name: 'booking-success', query: { id: bookingId } })
+    } else {
+      paymentError.value = 'Payment processing failed. Please try again.'
     }
-
-    await apiPost<{ success: boolean; data: any }>(`/booking/payment/success`, payload)
-
-    // Navigate to success page
-    router.push({ name: 'booking-success', query: { id: bookingId } })
-  } catch (err) {
-    console.error('Payment confirmation failed', err)
-    alert('Payment could not be confirmed. Please contact support.')
+  } catch (error: any) {
+    paymentError.value = error.message || 'Network error during payment.'
   } finally {
     isLoading.value = false
   }

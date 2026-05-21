@@ -1,8 +1,10 @@
 <template>
   <header class="customer-navbar">
-    <div class="brand-group">
-      <strong class="brand-name">AnajakTour</strong>
-    </div>
+    <router-link :to="{ name: 'customer-homepage' }" class="brand-link">
+      <div class="brand-group">
+        <strong class="brand-name">AnajakTour</strong>
+      </div>
+    </router-link>
 
     <nav class="nav-links" aria-label="Customer navigation">
       <router-link :to="{ name: 'customer-homepage' }">Destinations</router-link>
@@ -67,6 +69,10 @@ onMounted(() => {
   gap: 14px;
 }
 
+.brand-link {
+  text-decoration: none;
+}
+
 .brand-name {
   color: #0f3742;
   font-size: 0.95rem;
@@ -95,12 +101,12 @@ onMounted(() => {
   transition: color 180ms ease;
 }
 
-.router-link-active,
+.nav-links a.router-link-active,
 .nav-links a:hover {
   color: #0f6e70;
 }
 
-.router-link-active::after {
+.nav-links a.router-link-active::after {
   content: "";
   position: absolute;
   left: 0;

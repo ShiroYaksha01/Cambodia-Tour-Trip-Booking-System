@@ -23,7 +23,7 @@ const handleLogin = async () => {
     if (res.data.success) {
       localStorage.setItem("auth_role", res.data.user.role);
       localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
+      localStorage.setItem("auth_user", JSON.stringify(res.data.user)); 
 
       const redirectPath = router.currentRoute.value.query.redirect as string;
       if (redirectPath) {
@@ -43,10 +43,10 @@ const handleLogin = async () => {
   <main class="auth-page">
     <section class="auth-shell">
       <div class="hero-panel">
-        <div class="brand-mark">
+        <RouterLink to="/" class="brand-mark">
           <div class="brand-icon" aria-hidden="true">✦</div>
           <div class="brand-name">Anajak Tour</div>
-        </div>
+        </RouterLink>
 
         <div class="hero-copy">
           <div class="hero-accent"></div>
@@ -272,6 +272,7 @@ const handleLogin = async () => {
   display: inline-flex;
   align-items: center;
   gap: 14px;
+  text-decoration: none;
 }
 
 .brand-icon {
