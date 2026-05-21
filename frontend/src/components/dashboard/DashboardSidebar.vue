@@ -78,7 +78,7 @@ type NavItem = {
 const navMap: Record<DashboardRole, NavItem[]> = {
   admin: [
     { label: 'Dashboard', description: 'Financial overview', href: '/admin/dashboard', icon: '◌' },
-    { label: 'Clients', description: 'Manage customer accounts', href: '#bookings', icon: '👤' },
+    { label: 'Users', description: 'Manage users accounts', href: '/admin/users', icon: '👤' },
     { label: 'Providers', description: 'Vendors and partners', href: '/admin/providers', icon: '▣' },
     { label: 'Package Oversight', description: 'Trip quality review', href: '#reports', icon: '⌁' },
     { label: 'Booking Ledger', description: 'Settlement activity', href: '/admin/bookings', icon: '⌕' },

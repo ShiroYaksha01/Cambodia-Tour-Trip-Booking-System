@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import CustomerNavbar from '../components/customer/CustomerNavbar.vue'
-import CustomerHomePageSearch from '../components/customer/CustomerHomePageSearch.vue'
-import CustomerServiceCard from '../components/customer/CustomerServiceCard.vue'
-import CustomerFooter from '../components/customer/CustomerFooter.vue'
+import CustomerNavbar from '../../components/customer/CustomerNavbar.vue'
+import CustomerHomePageSearch from '../../components/customer/CustomerHomePageSearch.vue'
+import CustomerServiceCard from '../../components/customer/CustomerServiceCard.vue'
+import CustomerFooter from '../../components/customer/CustomerFooter.vue'
 
-import { fetchServices } from '../services/api'
+import { fetchServices } from '../../services/api'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 

@@ -24,9 +24,10 @@ const emit = defineEmits(['search'])
 
 .layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
   background: #f4f1ec;
   font-family: Inter, sans-serif;
+  overflow: hidden;
 }
 
 .main {
@@ -39,5 +40,6 @@ const emit = defineEmits(['search'])
 .page-content {
   flex: 1;
   padding: 34px;
+  overflow-y: auto;
 }
 </style>

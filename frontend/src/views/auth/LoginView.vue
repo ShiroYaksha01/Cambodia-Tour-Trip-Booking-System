@@ -103,14 +103,17 @@ const handleLogin = async () => {
               </div>
             </label>
             <p class="error-msg" v-if="message">{{ message }}</p>
-            <label class="remember-row">
+            <div class="form-actions">
+              <label class="remember-row">
               <input type="checkbox" checked />
               <span>Remember me for 30 days</span>
-            </label>
+              </label>
 
-            <button class="primary-button" type="submit">
-              Sign In to Dashboard →
-            </button>
+              <button class="primary-button" type="submit">
+                Sign In to Dashboard →
+              </button>
+            </div>
+            
           </form>
 
           <p class="signup-row">
@@ -422,6 +425,7 @@ const handleLogin = async () => {
   background: linear-gradient(180deg, #0e7f76, #0a6d66);
   color: #ffffff;
   font: inherit;
+  font-size: 0.95rem;
   font-weight: 700;
   border: 0;
   border-radius: 8px;
@@ -517,6 +521,13 @@ const handleLogin = async () => {
   gap: 10px;
   font-size: 0.88rem;
   color: #495459;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
 }
 
 @media (max-width: 1080px) {

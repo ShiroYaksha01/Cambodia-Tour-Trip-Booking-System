@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import AdminLayout from '../components/admin/AdminLayout.vue'
-import EditUserModal from '../components/admin/EditUserModal.vue'
-import AddUserModal from '../components/admin/AddUserModal.vue'
-import { apiGet, getAuthHeaders } from '../utils/api'
+import AdminLayout from '../../components/admin/AdminLayout.vue'
+import EditUserModal from '../../components/admin/EditUserModal.vue'
+import AddUserModal from '../../components/admin/AddUserModal.vue'
+import { apiGet, getAuthHeaders } from '../../utils/api'
 
 interface AdminUser {
   id: string
