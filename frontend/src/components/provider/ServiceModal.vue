@@ -8,31 +8,62 @@ const props = defineProps<{
 
 const emit = defineEmits(['close', 'save'])
 
-const form = ref({
+const defaultForm = () => ({
   title: '',
   description: '',
   price: 0,
   serviceType: 'tour',
   isActive: true,
+  location: '',
+  duration: '',
+  // Inventory
+  totalCapacity: 10,
+  // Tour
+  numDays: 1,
+  maxPeople: 10,
+  travelDate: '',
+  endDate: '',
+  departurePoint: '',
+  destination: '',
+  includesAccommodation: false,
+  includesTransportation: false,
+  includesMeals: false,
+  // Accommodation
+  hotelName: '',
+  address: '',
+  starRating: 3,
+  roomType: '',
+  totalRooms: 1,
+  checkInTime: '14:00',
+  checkOutTime: '12:00',
+  // Transportation
+  transportType: 'van',
+  vehicleModel: '',
+  totalSeats: 1,
+  departureTime: '',
+  arrivalTime: '',
+  pickupNotes: '',
 })
+
+const form = ref(defaultForm())
 
 watch(() => props.service, (newVal) => {
   if (newVal) {
+    // Flatten metadata for the form
+    const metadata = newVal.tourPackage || newVal.accommodation || newVal.transportation || {}
     form.value = { 
-      title: newVal.title || '',
-      description: newVal.description || '',
-      price: newVal.price || 0,
-      serviceType: newVal.serviceType || 'tour',
-      isActive: newVal.isActive !== undefined ? newVal.isActive : true
+      ...defaultForm(),
+      ...newVal,
+      ...metadata,
+      // Handle Date objects from backend
+      travelDate: newVal.tourPackage?.travelDate ? new Date(newVal.tourPackage.travelDate).toISOString().split('T')[0] : '',
+      endDate: newVal.tourPackage?.endDate ? new Date(newVal.tourPackage.endDate).toISOString().split('T')[0] : '',
+      departureTime: newVal.transportation?.departureTime ? new Date(newVal.transportation.departureTime).toISOString().slice(0, 16) : '',
+      arrivalTime: newVal.transportation?.arrivalTime ? new Date(newVal.transportation.arrivalTime).toISOString().slice(0, 16) : '',
+      totalCapacity: newVal.inventory?.totalCapacity || 10,
     }
   } else {
-    form.value = {
-      title: '',
-      description: '',
-      price: 0,
-      serviceType: 'tour',
-      isActive: true,
-    }
+    form.value = defaultForm()
   }
 }, { immediate: true })
 
@@ -51,6 +82,8 @@ function handleSave() {
         </header>
 
         <form @submit.prevent="handleSave" class="modal-body">
+          <!-- Common Fields -->
+          <div class="section-title">Basic Information</div>
           <div class="form-group">
             <label>Service Title</label>
             <input v-model="form.title" type="text" placeholder="e.g. Angkor Sunrise Premium" required />
@@ -58,14 +91,10 @@ function handleSave() {
 
           <div class="form-group">
             <label>Description</label>
-            <textarea v-model="form.description" placeholder="Describe your service..." rows="3"></textarea>
+            <textarea v-model="form.description" placeholder="Describe your service..." rows="2"></textarea>
           </div>
 
           <div class="form-row">
-            <div class="form-group">
-              <label>Base Price ($)</label>
-              <input v-model.number="form.price" type="number" step="0.01" required />
-            </div>
             <div class="form-group">
               <label>Service Type</label>
               <select v-model="form.serviceType">
@@ -74,7 +103,120 @@ function handleSave() {
                 <option value="transportation">Transportation</option>
               </select>
             </div>
+            <div class="form-group">
+              <label>Price ($)</label>
+              <input v-model.number="form.price" type="number" step="0.01" required />
+            </div>
           </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Location</label>
+              <input v-model="form.location" type="text" placeholder="e.g. Siem Reap" />
+            </div>
+            <div class="form-group">
+              <label>Duration/Note</label>
+              <input v-model="form.duration" type="text" placeholder="e.g. 3 days / Per night" />
+            </div>
+          </div>
+
+          <!-- Tour Specific -->
+          <template v-if="form.serviceType === 'tour'">
+            <div class="section-title">Tour Details</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Number of Days</label>
+                <input v-model.number="form.numDays" type="number" min="1" />
+              </div>
+              <div class="form-group">
+                <label>Max People</label>
+                <input v-model.number="form.maxPeople" type="number" min="1" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Start Date</label>
+                <input v-model="form.travelDate" type="date" />
+              </div>
+              <div class="form-group">
+                <label>End Date</label>
+                <input v-model="form.endDate" type="date" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Departure Point</label>
+              <input v-model="form.departurePoint" type="text" placeholder="Hotel pickup, Airport, etc." />
+            </div>
+            <div class="checkbox-group">
+              <label><input type="checkbox" v-model="form.includesAccommodation" /> Incl. Accommodation</label>
+              <label><input type="checkbox" v-model="form.includesTransportation" /> Incl. Transport</label>
+              <label><input type="checkbox" v-model="form.includesMeals" /> Incl. Meals</label>
+            </div>
+          </template>
+
+          <!-- Accommodation Specific -->
+          <template v-if="form.serviceType === 'accommodation'">
+            <div class="section-title">Accommodation Details</div>
+            <div class="form-group">
+              <label>Hotel/Property Name</label>
+              <input v-model="form.hotelName" type="text" />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Room Type</label>
+                <input v-model="form.roomType" type="text" placeholder="e.g. Deluxe Suite" />
+              </div>
+              <div class="form-group">
+                <label>Star Rating (1-5)</label>
+                <input v-model.number="form.starRating" type="number" min="1" max="5" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Total Rooms</label>
+                <input v-model.number="form.totalRooms" type="number" min="1" />
+              </div>
+              <div class="form-group">
+                <label>Check-in Time</label>
+                <input v-model="form.checkInTime" type="time" />
+              </div>
+            </div>
+          </template>
+
+          <!-- Transportation Specific -->
+          <template v-if="form.serviceType === 'transportation'">
+            <div class="section-title">Transportation Details</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Vehicle Type</label>
+                <select v-model="form.transportType">
+                  <option value="van">Van</option>
+                  <option value="bus">Bus</option>
+                  <option value="car">Car</option>
+                  <option value="boat">Boat</option>
+                  <option value="tuk_tuk">Tuk-Tuk</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Total Seats</label>
+                <input v-model.number="form.totalSeats" type="number" min="1" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Vehicle Model</label>
+              <input v-model="form.vehicleModel" type="text" placeholder="e.g. Ford Transit 2023" />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Departure Time</label>
+                <input v-model="form.departureTime" type="datetime-local" />
+              </div>
+              <div class="form-group">
+                <label>Arrival Time (Est.)</label>
+                <input v-model="form.arrivalTime" type="datetime-local" />
+              </div>
+            </div>
+          </template>
 
           <div class="form-group checkbox">
             <label>
@@ -102,15 +244,18 @@ function handleSave() {
   display: grid;
   place-items: center;
   z-index: 1000;
+  padding: 20px;
 }
 
 .modal {
   background: #fff;
   width: 100%;
-  max-width: 500px;
+  max-width: 600px;
+  max-height: 90vh;
   border-radius: 16px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-header {
@@ -119,6 +264,7 @@ function handleSave() {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .modal-header h2 {
@@ -140,6 +286,18 @@ function handleSave() {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  overflow-y: auto;
+}
+
+.section-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #0f6e70;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 8px;
+  padding-bottom: 4px;
+  border-bottom: 2px solid #f0f7f7;
 }
 
 .form-group {
@@ -175,6 +333,23 @@ function handleSave() {
   gap: 16px;
 }
 
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: #f9fafb;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
 .checkbox label {
   display: flex;
   align-items: center;
@@ -184,10 +359,12 @@ function handleSave() {
 }
 
 .modal-footer {
-  margin-top: 8px;
+  padding: 16px 24px;
+  border-top: 1px solid #eee;
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .cancel-btn {
