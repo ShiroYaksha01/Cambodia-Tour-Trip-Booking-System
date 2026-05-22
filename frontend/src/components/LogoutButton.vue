@@ -6,7 +6,7 @@
     aria-label="Sign out"
   >
     <span class="logout-icon" :class="{ 'spin': isLoading }">
-      {{ isLoading ? '⏳' : '🚪' }}
+      {{ isLoading ? '○' : '↩' }}
     </span>
     <span class="logout-text">
       {{ isLoading ? 'Signing Out...' : 'Sign Out' }}
@@ -38,23 +38,24 @@ async function logout() {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
-  background: #fff;
-  border: 1px solid rgba(15, 110, 112, 0.15);
+  padding: 7px 9px;
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: 6px;
-  color: #0f6e70;
+  color: #5d6f70;
   font-weight: 600;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(15, 110, 112, 0.08);
+  box-shadow: none;
 }
 
 .logout-button:hover:not(:disabled) {
-  background: #f8fbfb;
-  border-color: #0f6e70;
-  box-shadow: 0 4px 12px rgba(15, 110, 112, 0.12);
-  transform: translateY(-1px);
+  background: #eef7f6;
+  border-color: rgba(15, 110, 112, 0.1);
+  color: #0f6e70;
+  box-shadow: none;
+  transform: none;
 }
 
 .logout-button:active:not(:disabled) {
@@ -67,7 +68,7 @@ async function logout() {
 }
 
 .logout-icon {
-  font-size: 1rem;
+  font-size: 0.88rem;
   display: inline-block;
 }
 
@@ -76,7 +77,7 @@ async function logout() {
 }
 
 .logout-text {
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
 }
 
 @keyframes spin {

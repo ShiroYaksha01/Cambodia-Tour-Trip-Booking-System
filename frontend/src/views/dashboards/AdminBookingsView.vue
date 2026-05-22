@@ -25,9 +25,9 @@
         <div class="topbar-actions">
           <div class="icon-button" aria-label="Notifications">
             <span class="notification-badge">3</span>
-            🔔
+            <span aria-hidden="true">○</span>
           </div>
-          <button class="icon-button" aria-label="Toggle theme">☀️</button>
+          <button class="icon-button" aria-label="Toggle theme">◐</button>
           
           <div class="profile-chip">
             <div class="avatar">AS</div>
@@ -91,7 +91,7 @@
             </div>
 
             <div v-else-if="bookings.length === 0" class="state-container empty">
-              <div class="empty-icon">📂</div>
+              <div class="empty-icon">□</div>
               <h3>No bookings found</h3>
               <p>We couldn't find any bookings matching your search criteria.</p>
               <button class="text-button" @click="clearFilters">Reset filters</button>
@@ -190,7 +190,7 @@
                       <div class="detail-section">
                         <h3>Service Information</h3>
                         <div class="service-highlight">
-                          <div class="service-icon">🏞</div>
+                          <div class="service-icon">◇</div>
                           <div class="service-text">
                             <h4>{{ selectedBooking.serviceName }}</h4>
                             <p>{{ selectedBooking.serviceCategory }} • Provided by {{ selectedBooking.providerName }}</p>
@@ -1517,6 +1517,190 @@ onMounted(() => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+/* Compact SaaS admin refinement */
+.admin-shell {
+  grid-template-columns: 236px minmax(0, 1fr);
+  background: #ffffff;
+  color: #16383a;
+}
+
+.admin-main-area,
+.modal-body {
+  background: #f7f9fa;
+}
+
+.admin-content {
+  padding: 24px 28px 28px;
+  gap: 18px;
+}
+
+:deep(.sidebar-shell) {
+  padding: 18px 12px !important;
+  border-right-color: #e6ecee !important;
+}
+
+:deep(.sidebar-inner) {
+  padding: 0 !important;
+  gap: 16px !important;
+}
+
+:deep(.brand-block) {
+  padding: 0 8px 8px !important;
+}
+
+:deep(.nav-list) {
+  gap: 12px !important;
+}
+
+:deep(.nav-item) {
+  min-height: 31px !important;
+  padding: 6px 9px !important;
+  margin-bottom: 0 !important;
+}
+
+:deep(.nav-item--active),
+:deep(.nav-item.router-link-exact-active) {
+  background: #eaf5f4 !important;
+  border-color: rgba(15, 110, 112, 0.1) !important;
+  color: #0f6e70 !important;
+}
+
+:deep(.sidebar-card) {
+  padding: 10px !important;
+  border-radius: 10px !important;
+}
+
+.topbar {
+  height: 58px;
+  padding: 12px 28px;
+  border-bottom-color: #e6ecee;
+}
+
+.searchbar {
+  height: 34px;
+  max-width: 360px;
+  border-color: #e4ebed;
+  border-radius: 7px;
+}
+
+.icon-button {
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  border-color: #e4ebed;
+  font-size: 0.82rem;
+}
+
+.topbar-actions {
+  gap: 10px;
+}
+
+.profile-chip {
+  min-height: 32px;
+  padding: 2px 8px 2px 6px;
+  border-color: #e4ebed;
+}
+
+.avatar {
+  width: 24px;
+  height: 24px;
+  font-size: 0.66rem;
+  background: #0f6e70;
+}
+
+.profile-meta span {
+  display: none;
+}
+
+.page-heading {
+  padding-bottom: 16px;
+  border-bottom-color: #e6ecee;
+}
+
+.heading-group h1 {
+  margin: 3px 0 5px;
+  font-size: 1.35rem;
+  letter-spacing: 0;
+}
+
+.page-description {
+  font-size: 0.84rem;
+}
+
+.toolbar-row {
+  justify-content: flex-start;
+}
+
+.filter-group {
+  height: 34px;
+  border-color: #e4ebed;
+  border-radius: 7px;
+}
+
+.filter-item {
+  padding: 0 11px;
+}
+
+.table-card,
+.modal-window,
+.service-highlight,
+.customer-card,
+.status-box {
+  border-color: #e4ebed;
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.card-header {
+  padding: 14px 18px;
+  border-bottom-color: #e4ebed;
+}
+
+.data-table th {
+  padding: 10px 18px;
+  background: #fbfcfc;
+}
+
+.data-table td {
+  padding: 12px 18px;
+}
+
+.id-code,
+.id-code-sm {
+  background: #f5f7f8;
+  border-radius: 5px;
+  font-size: 0.74rem;
+}
+
+.status-pill {
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.view-btn,
+.primary-btn,
+.secondary-btn,
+.close-btn {
+  border-radius: 7px;
+}
+
+.modal-header,
+.modal-footer {
+  padding: 16px 22px;
+}
+
+.modal-body {
+  padding: 22px;
+}
+
+.details-grid {
+  gap: 18px;
+}
+
+.detail-section {
+  margin-bottom: 18px;
 }
 
 @media (max-width: 1024px) {
