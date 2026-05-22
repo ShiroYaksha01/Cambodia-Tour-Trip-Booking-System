@@ -17,14 +17,14 @@ export class Accommodation {
   hotelName: string;
 
   @Column({ type: 'text', nullable: true })
-  address: string;
+  address: string | null;
 
   // 1–5 stars — CHECK BETWEEN 1 AND 5 enforced at DB level
   @Column({ name: 'star_rating', type: 'smallint', nullable: true })
-  starRating: number;
+  starRating: number | null;
 
   @Column({ name: 'room_type', type: 'varchar', length: 100, nullable: true })
-  roomType: string;
+  roomType: string | null;
 
   @Column({ name: 'total_rooms', type: 'smallint', default: 1 })
   totalRooms: number;
@@ -36,11 +36,11 @@ export class Accommodation {
 
   // e.g. "14:00"
   @Column({ name: 'check_in_time', type: 'time', nullable: true })
-  checkInTime: string;
+  checkInTime: string | null;
 
   // e.g. "12:00"
   @Column({ name: 'check_out_time', type: 'time', nullable: true })
-  checkOutTime: string;
+  checkOutTime: string | null;
 
   // ── Relations ─────────────────────────────────────────────────
 
