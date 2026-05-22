@@ -20,31 +20,6 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Development Interceptor for Admin Login
-const originalPost = api.post;
-api.post = async function (url, data, config) {
-  if (url === "/auth/login") {
-    const { email, password } = (data as any) || {};
-    if (email === "admin@tourbooking.local" && password === "Admin123!@#") {
-      console.log("Mocking admin login...");
-      return {
-        data: {
-          success: true,
-          message: "Login successful",
-          token: "mock-dev-token",
-          user: {
-            id: "admin-id",
-            username: "Admin",
-            email: "admin@tourbooking.local",
-            role: "admin"
-          }
-        }
-      } as any;
-    }
-  }
-  return originalPost.apply(this, [url, data, config]);
-};
-
 // Export service api
 export const fetchServices = async () => {
   const res = await api.get("/services");
@@ -63,6 +38,51 @@ export const getProviderBookings = (params?: any) => api.get(`/provider/bookings
   // For other errors, still fallback to mock to enable quick dev preview
   return { data: mockProviderBookings() }
 })
+
+export const getProviderDashboardStats = () => api.get(`/provider/dashboard-stats`).catch(() => ({
+  data: {
+    avgOccupancy: '84.2%',
+    revpar: '$142.50',
+    lowStockAlerts: '04',
+    khmerNewYear: '98%',
+  }
+}))
+
+export const getProviderInventoryMatrix = () => api.get(`/provider/inventory-matrix`).catch(() => ({
+  data: [
+    {
+      id: '1',
+      title: 'Angkor Wat Sunrise Premium',
+      description: 'Daily Departure (4am)',
+      price: 85,
+      remaining: 19,
+      total: 50,
+      isClosed: false,
+    },
+    {
+      id: '2',
+      title: 'Floating Village Photography',
+      description: 'Afternoon Boat Tour',
+      price: 45,
+      remaining: 14,
+      total: 30,
+      isClosed: false,
+    },
+    {
+      id: '3',
+      title: 'Khmer Cooking Masterclass',
+      description: 'Limited to 12 Pax',
+      price: 65,
+      remaining: 7,
+      total: 12,
+      isClosed: false,
+    },
+  ]
+}))
+
+export const createService = (data: any) => api.post('/services', data);
+export const updateService = (id: string, data: any) => api.patch(`/services/${id}`, data);
+export const deleteService = (id: string) => api.delete(`/services/${id}`);
 
 function mockProviderBookings() {
   return [

@@ -7,10 +7,10 @@
 
         <!-- Brand column -->
         <div class="lg:col-span-1">
-          <div class="flex items-center gap-2 mb-4">
+          <RouterLink :to="{ name: 'customer-homepage' }" class="flex items-center gap-2 mb-4 hover:opacity-80 transition-opacity">
             <span class="bg-gold text-white rounded-lg px-2 py-1 text-base">🏛</span>
             <span class="font-serif font-bold text-lg">Anajak Tour</span>
-          </div>
+          </RouterLink>
           <p class="text-gray-400 text-sm leading-relaxed mb-5">
             Your premium gateway to Cambodia's timeless heritage. Curated tours, private concierge,
             and unforgettable experiences since 2018.

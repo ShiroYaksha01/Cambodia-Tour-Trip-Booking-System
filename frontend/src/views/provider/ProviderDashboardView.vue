@@ -21,22 +21,22 @@
       <section class="summary-grid" id="overview">
         <article class="summary-card summary-card--teal">
           <span>AVG. OCCUPANCY</span>
-          <strong>84.2%</strong>
-          <small>+12% from March</small>
+          <strong>{{ stats.avgOccupancy }}</strong>
+          <small>Real-time calculation</small>
         </article>
         <article class="summary-card summary-card--gold">
           <span>REVPAR</span>
-          <strong>$142.50</strong>
-          <small>Optimal Pricing Active</small>
+          <strong>{{ stats.revpar }}</strong>
+          <small>Total Rev / Capacity</small>
         </article>
         <article class="summary-card summary-card--red">
           <span>LOW STOCK ALERTS</span>
-          <strong>04</strong>
-          <small>1 action required: April 14</small>
+          <strong>{{ stats.lowStockAlerts }}</strong>
+          <small>Action required</small>
         </article>
         <article class="summary-card summary-card--forest">
           <span>KHMER NEW YEAR</span>
-          <strong>98%</strong>
+          <strong>{{ stats.khmerNewYear }}</strong>
           <small>Peak Demand Season</small>
         </article>
       </section>
@@ -45,10 +45,11 @@
         <article class="matrix-panel" id="matrix">
           <div class="matrix-toolbar">
             <button type="button" class="date-nav">‹</button>
-            <h2>April 2024</h2>
+            <h2>{{ currentMonth }} {{ currentYear }}</h2>
             <button type="button" class="date-nav">›</button>
 
             <div class="matrix-toggle">
+              <button type="button" @click="openCreateModal" class="add-service-btn">+ Add Service</button>
               <button type="button">Month</button>
               <button type="button" class="matrix-toggle__active">Fortnight</button>
             </div>
@@ -57,58 +58,44 @@
           <div class="pricing-table">
             <div class="pricing-table__head">
               <span>Product / Service</span>
-              <span>TUE 10</span>
-              <span>TUE 11</span>
-              <span>TUE 12</span>
-              <span>SAT 13</span>
-              <span>SUN 14</span>
-              <span>MON 15</span>
+              <span v-for="day in displayDays" :key="day">{{ day }}</span>
+              <span>Actions</span>
             </div>
 
-            <div class="pricing-row">
-              <div>
-                <strong>Angkor Wat Sunrise Premium</strong>
-                <small>Daily Departure (4am)</small>
+            <div v-if="loading" class="pricing-row">
+              <div style="grid-column: span 8; text-align: center; padding: 20px;">
+                Loading inventory...
               </div>
-              <span class="slot slot--teal">19 left<br /><small>$85</small></span>
-              <span class="slot slot--teal">12 left<br /><small>$85</small></span>
-              <span class="slot slot--teal">12 left<br /><small>$85</small></span>
-              <span class="slot slot--gold">9 left<br /><small>$120</small></span>
-              <span class="slot slot--red">2 left<br /><small>$130</small></span>
-              <span class="slot slot--teal">11 left<br /><small>$90</small></span>
             </div>
 
-            <div class="pricing-row">
+            <div v-for="item in inventory" :key="item.id" class="pricing-row">
               <div>
-                <strong>Floating Village Photography</strong>
-                <small>Afternoon Boat Tour</small>
+                <strong>{{ item.title }}</strong>
+                <small>{{ item.description }}</small>
               </div>
-              <span class="slot slot--teal">14 left<br /><small>$45</small></span>
-              <span class="slot slot--teal">27 left<br /><small>$45</small></span>
-              <span class="slot slot--teal">10 left<br /><small>$45</small></span>
-              <span class="slot slot--teal">29 left<br /><small>$45</small></span>
-              <span class="slot slot--teal">17 left<br /><small>$45</small></span>
-              <span class="slot slot--teal">22 left<br /><small>$45</small></span>
-            </div>
-
-            <div class="pricing-row">
-              <div>
-                <strong>Khmer Cooking Masterclass</strong>
-                <small>Limited to 12 Pax</small>
+              <template v-if="!item.isClosed">
+                <span v-for="i in 6" :key="i" :class="slotClass(item.remaining, item.total)">
+                  {{ item.remaining }} left<br />
+                  <small>${{ item.price }}</small>
+                </span>
+              </template>
+              <template v-else>
+                <span v-for="i in 6" :key="i" class="slot slot--closed">
+                  CLOSED<br />
+                  <small>${{ item.price }}</small>
+                </span>
+              </template>
+              <div class="actions-cell">
+                <button class="action-btn edit" @click="openEditModal(item)">✎</button>
+                <button class="action-btn delete" @click="handleDelete(item.id)">✕</button>
               </div>
-              <span class="slot slot--teal">7 left<br /><small>$65</small></span>
-              <span class="slot slot--teal">8 left<br /><small>$65</small></span>
-              <span class="slot slot--closed">CLOSED<br /><small>$65</small></span>
-              <span class="slot slot--teal">5 left<br /><small>$65</small></span>
-              <span class="slot slot--teal">5 left<br /><small>$65</small></span>
-              <span class="slot slot--teal">9 left<br /><small>$65</small></span>
             </div>
           </div>
 
           <div class="legend-row">
             <div class="legend-item"><span class="dot dot--teal"></span>Available</div>
             <div class="legend-item"><span class="dot dot--red"></span>Low Stock (&lt;10%)</div>
-            <div class="legend-item"><span class="dot dot--gold"></span>Khmer New Year (Peak)</div>
+            <div class="legend-item"><span class="dot dot--gold"></span>Peak Demand</div>
             <a href="#changes">Export Matrix</a>
           </div>
         </article>
@@ -196,11 +183,111 @@
       </section>
     </section>
   </main>
+
+  <ServiceModal 
+    :show="showModal" 
+    :service="selectedService" 
+    @close="showModal = false" 
+    @save="handleSaveService" 
+  />
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import DashboardSidebar from '../../components/dashboard/DashboardSidebar.vue'
 import LogoutButton from '../../components/LogoutButton.vue'
+import ServiceModal from '../../components/provider/ServiceModal.vue'
+import { 
+  getProviderDashboardStats, 
+  getProviderInventoryMatrix,
+  createService,
+  updateService,
+  deleteService
+} from '../../services/api'
+
+const loading = ref(true)
+const showModal = ref(false)
+const selectedService = ref<any>(null)
+
+const stats = ref({
+  avgOccupancy: '0%',
+  revpar: '$0.00',
+  lowStockAlerts: '00',
+  khmerNewYear: '0%',
+})
+
+const inventory = ref<any[]>([])
+
+const currentMonth = 'May'
+const currentYear = '2026'
+const displayDays = ['TUE 19', 'WED 20', 'THU 21', 'FRI 22', 'SAT 23', 'SUN 24']
+
+async function fetchData() {
+  loading.value = true
+  try {
+    const [statsRes, matrixRes] = await Promise.all([
+      getProviderDashboardStats(),
+      getProviderInventoryMatrix()
+    ])
+    stats.value = statsRes.data
+    inventory.value = matrixRes.data
+  } catch (error) {
+    console.error('Failed to fetch provider dashboard data:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+function openCreateModal() {
+  selectedService.value = null
+  showModal.value = true
+}
+
+function openEditModal(service: any) {
+  selectedService.value = service
+  showModal.value = true
+}
+
+async function handleSaveService(formData: any) {
+  try {
+    if (selectedService.value && selectedService.value.id.length > 5) {
+      await updateService(selectedService.value.id, formData)
+    } else {
+      await createService(formData)
+    }
+    showModal.value = false
+    await fetchData()
+  } catch (error) {
+    alert('Failed to save service')
+  }
+}
+
+async function handleDelete(id: string) {
+  if (id.length < 5) {
+    alert('Mock services cannot be deleted')
+    return
+  }
+  if (confirm('Are you sure you want to delete this service?')) {
+    try {
+      await deleteService(id)
+      await fetchData()
+    } catch (error) {
+      alert('Failed to delete service')
+    }
+  }
+}
+
+function slotClass(remaining: number, total: number) {
+  if (total === 0) return 'slot slot--closed'
+  const ratio = remaining / total
+  if (ratio < 0.1) return 'slot slot--red'
+  if (ratio < 0.3) return 'slot slot--gold'
+  return 'slot slot--teal'
+}
+
+onMounted(() => {
+  fetchData()
+})
 </script>
 
 <style scoped>
@@ -396,6 +483,14 @@ import LogoutButton from '../../components/LogoutButton.vue'
   font-size: 0.68rem;
 }
 
+.add-service-btn {
+  background: #0f6e70 !important;
+  color: #fff !important;
+  font-weight: 700;
+  margin-right: 8px;
+  cursor: pointer;
+}
+
 .matrix-toggle__active {
   background: #0f6e70 !important;
   color: #fff !important;
@@ -412,7 +507,7 @@ import LogoutButton from '../../components/LogoutButton.vue'
 .pricing-table__head,
 .pricing-row {
   display: grid;
-  grid-template-columns: 1.6fr repeat(6, 1fr);
+  grid-template-columns: 1.6fr repeat(6, 1fr) 80px;
 }
 
 .pricing-table__head {
@@ -458,6 +553,38 @@ import LogoutButton from '../../components/LogoutButton.vue'
   margin-top: 3px;
   color: #7b8b88;
   font-size: 0.7rem;
+}
+
+.actions-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.action-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #eee;
+  background: #fff;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  transition: all 0.2s;
+}
+
+.action-btn.edit:hover {
+  background: #eaf3f4;
+  color: #0f6e70;
+  border-color: #0f6e70;
+}
+
+.action-btn.delete:hover {
+  background: #fff3f3;
+  color: #c94f4f;
+  border-color: #c94f4f;
 }
 
 .slot {

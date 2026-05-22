@@ -7,6 +7,7 @@ const routes: RouteRecordRaw[] = [
     path: "/",
     redirect: "/dashboard",
   },
+
   {
     path: "/login",
     name: "login",
@@ -65,16 +66,29 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/admin/dashboard",
     name: "admin-dashboard",
-    component: () => import("../views/dashboards/AdminDashboardView.vue"),
+    component: () => import("../views/admin/AdminDashboardView.vue"),
     meta: {
       requiresAuth: true,
       roles: ["admin"],
     },
   },
+
+  //admin routes for manage users, test: http://localhost:5173/admin/manage-users
+  {
+    path: "/admin/users",
+    name: "admin-manage-users",
+    component: () => import("../views/admin/AdminManageUsersView.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["admin"],
+    },
+  },
+
+
   {
     path: "/admin/providers",
     name: "admin-providers",
-    component: () => import("../views/dashboards/AdminProvidersView.vue"),
+    component: () => import("../views/admin/AdminProvidersView.vue"),
     meta: {
       requiresAuth: true,
       roles: ["admin"],
@@ -83,7 +97,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/admin/bookings",
     name: "admin-bookings",
-    component: () => import("../views/dashboards/AdminBookingsView.vue"),
+    component: () => import("../views/admin/AdminBookingsView.vue"),
     meta: {
       requiresAuth: true,
       roles: ["admin"],
@@ -92,7 +106,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/provider/dashboard",
     name: "provider-dashboard",
-    component: () => import("../views/dashboards/ProviderDashboardView.vue"),
+    component: () => import("../views/provider/ProviderDashboardView.vue"),
     meta: {
       requiresAuth: true,
       roles: ["provider"],
@@ -101,7 +115,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/provider/bookings",
     name: "provider-bookings",
-    component: () => import("../pages/ProviderBookingsView.vue"),
+    component: () => import("../views/provider/ProviderBookingsView.vue"),
     meta: {
       requiresAuth: true,
       roles: ["provider"],
@@ -110,7 +124,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/customer/dashboard",
     name: "customer-dashboard",
-    component: () => import("../views/dashboards/CustomerDashboardView.vue"),
+    component: () => import("../views/customer/CustomerDashboardView.vue"),
     meta: {
       requiresAuth: true,
       roles: ["customer"],
@@ -119,7 +133,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/customer/homepage",
     name: "customer-homepage",
-    component: () => import("../views/CustomerHomepage.vue"),
+    component: () => import("../views/customer/CustomerHomeView.vue"),
     meta: {
       requiresAuth: true,
       roles: ["customer"],
@@ -128,7 +142,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/customer/profile",
     name: "customer-profile",
-    component: () => import("../views/CustomerProfile.vue"),
+    component: () => import("../views/customer/CustomerProfileView.vue"),
     meta: {
       requiresAuth: true,
       roles: ["customer"],
@@ -187,7 +201,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/unauthorized",
     name: "unauthorized",
-    component: () => import("../views/UnauthorizedView.vue"),
+    component: () => import("../views/shared/UnauthorizedView.vue"),
   },
   {
     path: "/:pathMatch(.*)*",

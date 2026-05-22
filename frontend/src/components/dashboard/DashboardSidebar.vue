@@ -89,6 +89,7 @@ type NavItem = {
 
 const navMap: Record<DashboardRole, NavItem[]> = {
   admin: [
+<<<<<<< HEAD
     { label: 'Dashboard', description: 'Overview', href: '/admin/dashboard', icon: '⌂', group: 'Main' },
     { label: 'Clients', description: 'Customers', href: '#clients', icon: '○', group: 'Management' },
     { label: 'Providers', description: 'Partners', href: '/admin/providers', icon: '□', group: 'Management' },
@@ -98,6 +99,17 @@ const navMap: Record<DashboardRole, NavItem[]> = {
     { label: 'Payment Logs', description: 'Transactions', href: '#payments', icon: '≋', group: 'Management' },
     { label: 'Reviews', description: 'Moderation', href: '#reviews', icon: '☆', group: 'Support' },
     { label: 'Support Tickets', description: 'Escalations', href: '#support', icon: '✉', group: 'Support' },
+=======
+    { label: 'Dashboard', description: 'Financial overview', href: '/admin/dashboard', icon: '◌' },
+    { label: 'Users', description: 'Manage users accounts', href: '/admin/users', icon: '👤' },
+    { label: 'Providers', description: 'Vendors and partners', href: '/admin/providers', icon: '▣' },
+    { label: 'Package Oversight', description: 'Trip quality review', href: '#reports', icon: '⌁' },
+    { label: 'Booking Ledger', description: 'Settlement activity', href: '/admin/bookings', icon: '⌕' },
+    { label: 'Finance & Escrow', description: 'Transactions and holds', href: '#reports', icon: '◫' },
+    { label: 'Payment Logs', description: 'Recent payment records', href: '#reports', icon: '≡' },
+    { label: 'Review Moderation', description: 'Content and ratings', href: '#reports', icon: '✦' },
+    { label: 'Support Tickets', description: 'Customer escalations', href: '#reports', icon: '✉' },
+>>>>>>> 05e91c7cedad26aac52e8543ad44910700c128de
   ],
   provider: [
     { label: 'Inventory', description: 'Stock and availability', href: '/provider/dashboard', icon: '◌' },

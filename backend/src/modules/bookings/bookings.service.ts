@@ -62,6 +62,25 @@ export class BookingsService {
     return this.bookingRepository.save(booking);
   }
 
+  async processPayment(bookingId: string, userId: string): Promise<Booking> {
+    const booking = await this.bookingRepository.findOne({
+      where: { id: bookingId, userId },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+
+    if (booking.paymentStatus === PaymentStatus.PAID) {
+      throw new BadRequestException('Booking is already paid');
+    }
+
+    booking.paymentStatus = PaymentStatus.PAID;
+    booking.bookingStatus = BookingStatus.CONFIRMED;
+
+    return this.bookingRepository.save(booking);
+  }
+
   async getUserBookings(userId: string): Promise<Booking[]> {
     return this.bookingRepository.find({
       where: { userId },
@@ -123,6 +142,7 @@ export class BookingsService {
     return booking;
   }
 
+<<<<<<< HEAD
   async getAdminDashboard() {
     const [
       totalUsers,
@@ -258,5 +278,15 @@ export class BookingsService {
       })),
       monthlyStats,
     };
+=======
+  async confirmPayment(bookingId: string, transactionId?: string): Promise<Booking> {
+    const booking = await this.bookingRepository.findOne({ where: { id: bookingId } });
+    if (!booking) throw new NotFoundException('Booking not found');
+
+    booking.paymentStatus = PaymentStatus.PAID;
+    if (transactionId) booking.transactionId = transactionId;
+
+    return this.bookingRepository.save(booking);
+>>>>>>> 05e91c7cedad26aac52e8543ad44910700c128de
   }
 }

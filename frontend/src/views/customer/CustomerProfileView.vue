@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
-import CustomerNavbar from "../components/customer/CustomerNavbar.vue";
-import CustomerFooter from "../components/customer/CustomerFooter.vue";
+import CustomerNavbar from "../../components/customer/CustomerNavbar.vue";
+import CustomerFooter from "../../components/customer/CustomerFooter.vue";
 
 const router = useRouter();
 

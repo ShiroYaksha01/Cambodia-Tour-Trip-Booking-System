@@ -1,5 +1,5 @@
-import { IsString, IsNumber, IsEnum, IsBoolean, IsOptional, IsUUID } from 'class-validator';
-import { ServiceType } from '../../../shared/enums';
+import { IsString, IsNumber, IsEnum, IsBoolean, IsOptional, IsUUID, IsDateString } from 'class-validator';
+import { ServiceType, TransportType } from '../../../shared/enums';
 
 export class CreateServiceDto {
   @IsOptional()
@@ -38,4 +38,100 @@ export class CreateServiceDto {
   @IsOptional()
   @IsString()
   duration?: string;
+
+  // --- Inventory Metadata ---
+  @IsOptional()
+  @IsNumber()
+  totalCapacity?: number;
+
+  // --- Tour Metadata ---
+  @IsOptional()
+  @IsNumber()
+  numDays?: number;
+
+  @IsOptional()
+  @IsNumber()
+  maxPeople?: number;
+
+  @IsOptional()
+  @IsDateString()
+  travelDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  endDate?: string;
+
+  @IsOptional()
+  @IsString()
+  departurePoint?: string;
+
+  @IsOptional()
+  @IsString()
+  destination?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  includesAccommodation?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  includesTransportation?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  includesMeals?: boolean;
+
+  // --- Accommodation Metadata ---
+  @IsOptional()
+  @IsString()
+  hotelName?: string;
+
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @IsOptional()
+  @IsNumber()
+  starRating?: number;
+
+  @IsOptional()
+  @IsString()
+  roomType?: string;
+
+  @IsOptional()
+  @IsNumber()
+  totalRooms?: number;
+
+  @IsOptional()
+  @IsString()
+  checkInTime?: string;
+
+  @IsOptional()
+  @IsString()
+  checkOutTime?: string;
+
+  // --- Transportation Metadata ---
+  @IsOptional()
+  @IsEnum(TransportType)
+  transportType?: TransportType;
+
+  @IsOptional()
+  @IsString()
+  vehicleModel?: string;
+
+  @IsOptional()
+  @IsNumber()
+  totalSeats?: number;
+
+  @IsOptional()
+  @IsDateString()
+  departureTime?: string;
+
+  @IsOptional()
+  @IsDateString()
+  arrivalTime?: string;
+
+  @IsOptional()
+  @IsString()
+  pickupNotes?: string;
 }
