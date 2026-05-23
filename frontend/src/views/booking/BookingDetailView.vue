@@ -65,6 +65,10 @@ onMounted(() => {
         <div class="ticket-header">
           <div>
             <h1>Booking Ticket</h1>
+            <p>
+              Reference Code:
+              <strong>{{ booking.referenceCode || "N/A" }}</strong>
+            </p>
             <p>Booking ID: {{ booking.id }}</p>
           </div>
 
@@ -78,6 +82,11 @@ onMounted(() => {
             <h2>Tour Information</h2>
 
             <div class="info-grid">
+              <div>
+                <label>Reference Code</label>
+                <p>{{ booking.referenceCode || "N/A" }}</p>
+              </div>
+
               <div>
                 <label>Service</label>
                 <p>{{ booking.service?.title || "Unknown Service" }}</p>
@@ -213,9 +222,13 @@ onMounted(() => {
 }
 
 .ticket-header p {
-  margin: 0;
+  margin: 4px 0;
   color: #6b7280;
   font-size: 14px;
+}
+
+.ticket-header strong {
+  color: #0f6e70;
 }
 
 .ticket-body {

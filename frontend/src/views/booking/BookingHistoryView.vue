@@ -20,6 +20,7 @@ interface ProviderInfo {
 
 interface Booking {
   id: string;
+  referenceCode?: string;
   bookingDate: string;
   quantity: number;
   totalAmount: number;
@@ -60,6 +61,7 @@ const filteredBookings = computed(() => {
     list = list.filter(
       (booking) =>
         booking.id.toLowerCase().includes(q) ||
+        booking.referenceCode?.toLowerCase().includes(q) ||
         booking.service?.title?.toLowerCase().includes(q) ||
         booking.provider?.companyName?.toLowerCase().includes(q) ||
         booking.transactionId?.toLowerCase().includes(q),
@@ -148,7 +150,9 @@ onMounted(() => {
       <div class="page-header">
         <div>
           <h1>Booking History</h1>
-          <p>View your bookings, payment status, and ticket details.</p>
+          <p>
+            Search bookings by reference code, payment status, or ticket detail.
+          </p>
         </div>
 
         <div class="header-actions">
@@ -164,7 +168,7 @@ onMounted(() => {
         <input
           v-model="search"
           type="text"
-          placeholder="Search by tour, provider, booking ID, or transaction ID"
+          placeholder="Search by reference code, tour, provider, booking ID, or transaction ID"
         />
 
         <select v-model="statusFilter">
@@ -198,6 +202,11 @@ onMounted(() => {
           <div class="booking-top">
             <div>
               <h2>{{ booking.service?.title || "Unknown Service" }}</h2>
+
+              <p>
+                Reference Code:
+                <strong>{{ booking.referenceCode || "N/A" }}</strong>
+              </p>
 
               <p>
                 Provider:
@@ -401,6 +410,10 @@ onMounted(() => {
   margin: 4px 0;
   color: #6b7280;
   font-size: 14px;
+}
+
+.booking-top strong {
+  color: #0f6e70;
 }
 
 .amount {
