@@ -84,7 +84,6 @@ const routes: RouteRecordRaw[] = [
     },
   },
 
-
   {
     path: "/admin/providers",
     name: "admin-providers",

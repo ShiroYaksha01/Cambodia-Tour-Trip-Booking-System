@@ -1,184 +1,476 @@
-<template>
-  <div class="min-h-screen bg-gradient-to-b from-[#f9faf8] to-[#f3f4f1] py-12 px-4 sm:px-6 lg:px-8 font-sans text-[#142125]">
-    <div class="max-w-4xl mx-auto">
-      <div class="mb-10 flex items-center gap-4">
-        <div class="w-10 h-10 rounded bg-[#f4a71d] flex items-center justify-center text-xl font-bold text-[#1b2a2a] shadow-md">✦</div>
-        <div>
-          <h1 class="text-3xl font-extrabold text-[#1d2427] tracking-tight">Booking History</h1>
-          <p class="text-[0.95rem] text-[#69757a] mt-1">Review your scheduled heritage experiences.</p>
-        </div>
-      </div>
-
-      <!-- Loading State -->
-      <div v-if="isLoading" class="flex justify-center items-center py-16">
-        <svg class="animate-spin h-8 w-8 text-[#0e7f76]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-      </div>
-
-      <!-- Error State -->
-      <div v-else-if="error" class="bg-white/80 backdrop-blur border border-red-200 p-6 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.02)]">
-        <div class="flex items-start">
-          <div class="flex-shrink-0 mt-0.5">
-             <div class="w-6 h-6 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-sm">!</div>
-          </div>
-          <div class="ml-3">
-            <h3 class="text-[0.95rem] text-red-800 font-bold mb-1">Failed to retrieve dossier</h3>
-            <p class="text-[0.88rem] text-red-700 leading-relaxed">{{ error }}</p>
-            <div class="mt-4">
-               <button @click="fetchBookings" class="text-[0.85rem] font-bold text-red-700 underline hover:text-red-900 transition-colors">
-                 Try Again
-               </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Empty State -->
-      <div v-else-if="bookings.length === 0" class="bg-white/90 rounded-xl shadow-[0_12px_24px_rgba(10,109,102,0.04)] border border-[#5f6d74]/10 text-center py-20 px-4 relative overflow-hidden backdrop-blur-sm">
-        <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(245,164,28,0.03),transparent_60%)] pointer-events-none"></div>
-        <div class="w-16 h-16 mx-auto rounded-full border-2 border-[#5f6d74]/20 flex items-center justify-center text-[#8b9498] text-2xl font-serif italic mb-4">No.</div>
-        <h3 class="mt-2 text-xl font-extrabold text-[#1d2427]">No Experiences Found</h3>
-        <p class="mt-2 text-[0.95rem] text-[#69757a] max-w-sm mx-auto">You haven't scheduled any heritage tours yet. Ready to start your journey?</p>
-        <div class="mt-8">
-          <router-link to="/dashboard" class="inline-flex items-center justify-center py-2.5 px-6 rounded-lg shadow-md text-[0.95rem] font-bold text-[#1b2a2a] bg-[#f4a71d] hover:bg-[#e49b18] transition-all transform hover:-translate-y-0.5">
-            Explore Experiences →
-          </router-link>
-        </div>
-      </div>
-
-      <!-- Bookings List -->
-      <div v-else class="space-y-6">
-        <div v-for="booking in bookings" :key="booking.id" class="bg-white rounded-xl shadow-[0_8px_16px_rgba(10,109,102,0.04)] border border-[#5f6d74]/10 overflow-hidden hover:shadow-[0_12px_24px_rgba(10,109,102,0.08)] transition-all relative">
-          
-          <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#0e7f76] to-[#0a6d66]" v-if="booking.status === 'confirmed'"></div>
-          <div class="absolute left-0 top-0 bottom-0 w-1 bg-[#f4a71d]" v-if="booking.status === 'pending'"></div>
-          <div class="absolute left-0 top-0 bottom-0 w-1 bg-gray-400" v-if="booking.status === 'cancelled'"></div>
-
-          <div class="p-6 pl-8">
-            <div class="flex items-center justify-between flex-wrap gap-4 mb-4">
-              <div>
-                <p class="text-[0.75rem] text-[#8b9498] font-bold tracking-widest uppercase mb-1.5">ID: {{ booking.id }}</p>
-                <h3 class="text-[1.25rem] font-extrabold text-[#1d2427] leading-tight">{{ booking.serviceName || 'Heritage Experience' }}</h3>
-              </div>
-              <span 
-                class="px-3 py-1.5 inline-flex text-[0.75rem] tracking-wider uppercase font-bold rounded-full shadow-sm border"
-                :class="{
-                  'bg-[#fff9e6] text-[#b37400] border-[#f4a71d]/20': booking.status === 'pending',
-                  'bg-[#e6f2f1] text-[#0a6d66] border-[#0e7f76]/20': booking.status === 'confirmed',
-                  'bg-gray-50 text-gray-600 border-gray-200': booking.status === 'cancelled'
-                }"
-              >
-                {{ booking.status }}
-              </span>
-            </div>
-            
-            <div class="mt-3 text-[0.9rem] text-[#69757a] flex items-center justify-between">
-              <div>
-                <span class="mr-2 text-[#b0b7ba]">Payment:</span>
-                <strong class="text-[#142125]">{{ booking.paymentStatus ?? 'pending' }}</strong>
-              </div>
-              <div v-if="booking.transactionId">
-                <span class="mr-2 text-[#b0b7ba]">TX:</span>
-                <strong class="text-[#142125]">{{ booking.transactionId }}</strong>
-              </div>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[0.95rem] border-t border-[#5f6d74]/5 pt-4">
-              <div class="flex items-center text-[#69757a]">
-                <span class="mr-2 text-[#b0b7ba]">Date:</span>
-                <strong class="text-[#142125]">{{ formatDate(booking.bookingDate || booking.date) }}</strong>
-              </div>
-              <div class="flex items-center text-[#69757a]">
-                <span class="mr-2 text-[#b0b7ba]">Guests:</span>
-                <strong class="text-[#142125]">{{ booking.quantity }}</strong>
-              </div>
-            </div>
-            
-            <div class="mt-5 text-right flex justify-end gap-4">
-              <router-link 
-                :to="{ name: 'booking-detail', params: { id: booking.id } }"
-                class="text-[0.85rem] font-bold text-[#0e7f76] hover:text-[#0a6d66] transition-colors"
-              >
-                Manage Reservation →
-              </router-link>
-              <button class="text-[0.85rem] font-bold text-[#bf7d10] hover:text-[#e49b18] transition-colors">
-                View Receipt
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <footer class="mt-16 text-center text-[#8d9497] text-[0.64rem] tracking-[0.14em] font-bold">
-         <span>© 2024 THE HERITAGE CURATOR. ALL RIGHTS RESERVED.</span>
-      </footer>
-
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { apiGet } from '../../utils/api'
+import { ref, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import CustomerNavbar from "../../components/customer/CustomerNavbar.vue";
+import CustomerFooter from "../../components/customer/CustomerFooter.vue";
+import api from "../../services/api";
+
+const router = useRouter();
+
+interface ServiceInfo {
+  id?: string;
+  title?: string;
+  price?: number;
+}
+
+interface ProviderInfo {
+  id?: string;
+  companyName?: string;
+}
 
 interface Booking {
-  id: string | number
-  serviceId: string | number
-  serviceName: string
-  bookingDate?: string
-  date?: string
-  quantity: number
-  status: 'pending' | 'confirmed' | 'cancelled'
-  totalPrice?: number
-  paymentStatus?: string
-  transactionId?: string
+  id: string;
+  bookingDate: string;
+  quantity: number;
+  totalAmount: number;
+  bookingStatus: string;
+  paymentStatus: string;
+  transactionId?: string;
+  createdAt?: string;
+  service?: ServiceInfo;
+  provider?: ProviderInfo;
 }
 
-const bookings = ref<Booking[]>([])
-const isLoading = ref(true)
-const error = ref('')
+const bookings = ref<Booking[]>([]);
+const loading = ref(false);
+const payingId = ref("");
+const error = ref("");
+const search = ref("");
+const statusFilter = ref("all");
+const paymentFilter = ref("all");
 
-const mapBooking = (raw: any): Booking => ({
-  id: raw.id,
-  serviceId: raw.serviceId ?? raw.service?.id ?? 'unknown',
-  serviceName: raw.service?.title ?? raw.serviceName ?? 'Heritage Experience',
-  bookingDate: raw.bookingDate ?? raw.date ?? '',
-  date: raw.date,
-  quantity: raw.quantity ?? 1,
-  status: (raw.bookingStatus ?? raw.status ?? 'pending') as 'pending' | 'confirmed' | 'cancelled',
-  totalPrice: raw.totalAmount ?? raw.totalPrice,
-  paymentStatus: raw.paymentStatus,
-  transactionId: raw.transactionId,
-})
+const filteredBookings = computed(() => {
+  let list = bookings.value;
 
-const fetchBookings = async () => {
-  isLoading.value = true
-  error.value = ''
+  if (statusFilter.value !== "all") {
+    list = list.filter(
+      (booking) => booking.bookingStatus?.toLowerCase() === statusFilter.value,
+    );
+  }
+
+  if (paymentFilter.value !== "all") {
+    list = list.filter(
+      (booking) => booking.paymentStatus?.toLowerCase() === paymentFilter.value,
+    );
+  }
+
+  if (search.value.trim()) {
+    const q = search.value.toLowerCase();
+
+    list = list.filter(
+      (booking) =>
+        booking.id.toLowerCase().includes(q) ||
+        booking.service?.title?.toLowerCase().includes(q) ||
+        booking.provider?.companyName?.toLowerCase().includes(q) ||
+        booking.transactionId?.toLowerCase().includes(q),
+    );
+  }
+
+  return list;
+});
+
+function formatDate(date: string) {
+  if (!date) return "N/A";
+
+  return new Date(date).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatMoney(amount: number) {
+  return `$${Number(amount || 0).toLocaleString()}`;
+}
+
+function statusClass(status: string) {
+  return status?.toLowerCase() || "pending";
+}
+
+async function fetchBookings() {
+  loading.value = true;
+  error.value = "";
 
   try {
-    const response = await apiGet<{ success: boolean; data: any[] }>('/booking/user')
-    if (!response.success) {
-      throw new Error('Failed to load booking history.')
-    }
-    bookings.value = response.data.map(mapBooking)
-  } catch (err: any) {
-    error.value = err?.message || 'Unable to load booking history.'
+    const response = await api.get("/booking/user");
+    bookings.value = response.data.data || [];
+  } catch (err) {
+    console.error(err);
+    error.value = "Failed to load booking history.";
   } finally {
-    isLoading.value = false
+    loading.value = false;
   }
 }
 
-const formatDate = (dateString: string) => {
+async function confirmPayment(bookingId: string) {
+  const confirmed = confirm("Do you want to confirm payment for this booking?");
+  if (!confirmed) return;
+
+  payingId.value = bookingId;
+
   try {
-    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' }
-    return new Date(dateString).toLocaleDateString(undefined, options)
-  } catch (e) {
-    return dateString
+    await api.post("/booking/payment/success", {
+      bookingId,
+      transactionId: `PAY-${Date.now()}`,
+    });
+
+    alert("Payment confirmed successfully.");
+    await fetchBookings();
+  } catch (err: any) {
+    console.error(err);
+    alert(err.response?.data?.message || "Failed to confirm payment.");
+  } finally {
+    payingId.value = "";
   }
+}
+
+function viewBookingDetail(id: string) {
+  router.push({
+    name: "booking-detail",
+    params: { id },
+  });
+}
+
+function goBackToProfile() {
+  router.push("/customer/profile");
 }
 
 onMounted(() => {
-  fetchBookings()
-})
+  fetchBookings();
+});
 </script>
+
+<template>
+  <div class="history-page">
+    <CustomerNavbar />
+
+    <main class="history-container">
+      <div class="page-header">
+        <div>
+          <h1>Booking History</h1>
+          <p>View your bookings, payment status, and ticket details.</p>
+        </div>
+
+        <div class="header-actions">
+          <button class="back-btn" @click="goBackToProfile">
+            Back to Profile
+          </button>
+
+          <button class="refresh-btn" @click="fetchBookings">Refresh</button>
+        </div>
+      </div>
+
+      <section class="filters">
+        <input
+          v-model="search"
+          type="text"
+          placeholder="Search by tour, provider, booking ID, or transaction ID"
+        />
+
+        <select v-model="statusFilter">
+          <option value="all">All Booking Status</option>
+          <option value="pending">Pending</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+
+        <select v-model="paymentFilter">
+          <option value="all">All Payment Status</option>
+          <option value="pending">Pending</option>
+          <option value="paid">Paid</option>
+          <option value="failed">Failed</option>
+        </select>
+      </section>
+
+      <p v-if="loading" class="message">Loading booking history...</p>
+      <p v-if="error" class="error-message">{{ error }}</p>
+
+      <section v-if="!loading && !filteredBookings.length" class="empty-box">
+        No bookings found.
+      </section>
+
+      <section v-if="filteredBookings.length" class="booking-list">
+        <article
+          v-for="booking in filteredBookings"
+          :key="booking.id"
+          class="booking-card"
+        >
+          <div class="booking-top">
+            <div>
+              <h2>{{ booking.service?.title || "Unknown Service" }}</h2>
+
+              <p>
+                Provider:
+                {{ booking.provider?.companyName || "Unknown Provider" }}
+              </p>
+
+              <p>Booking ID: {{ booking.id }}</p>
+
+              <p>
+                Transaction ID:
+                {{ booking.transactionId || "N/A" }}
+              </p>
+            </div>
+
+            <div class="amount">
+              {{ formatMoney(booking.totalAmount) }}
+            </div>
+          </div>
+
+          <div class="booking-info">
+            <span>Date: {{ formatDate(booking.bookingDate) }}</span>
+            <span>Quantity: {{ booking.quantity }}</span>
+
+            <span :class="['status-badge', statusClass(booking.bookingStatus)]">
+              Booking: {{ booking.bookingStatus }}
+            </span>
+
+            <span
+              :class="['payment-badge', statusClass(booking.paymentStatus)]"
+            >
+              Payment: {{ booking.paymentStatus }}
+            </span>
+          </div>
+
+          <div class="booking-actions">
+            <button @click="viewBookingDetail(booking.id)">View Ticket</button>
+
+            <button
+              v-if="booking.paymentStatus?.toLowerCase() === 'pending'"
+              class="pay-btn"
+              :disabled="payingId === booking.id"
+              @click="confirmPayment(booking.id)"
+            >
+              {{ payingId === booking.id ? "Processing..." : "Pay Now" }}
+            </button>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <CustomerFooter />
+  </div>
+</template>
+
+<style scoped>
+.history-page {
+  min-height: 100vh;
+  background: #f5f7f8;
+  color: #152323;
+  font-family: Arial, sans-serif;
+}
+
+.history-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+}
+
+.page-header {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.page-header h1 {
+  margin: 0 0 6px;
+  font-size: 26px;
+}
+
+.page-header p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.back-btn {
+  background: #ffffff;
+  color: #0f6e70;
+  border: 1px solid #0f6e70;
+  padding: 10px 18px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.back-btn:hover {
+  background: #eef7f7;
+}
+
+.refresh-btn,
+.booking-actions button {
+  background: #0f6e70;
+  color: #ffffff;
+  border: none;
+  padding: 10px 18px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.refresh-btn:hover,
+.booking-actions button:hover {
+  background: #0a5557;
+}
+
+.pay-btn {
+  background: #047857 !important;
+}
+
+.pay-btn:hover {
+  background: #065f46 !important;
+}
+
+.pay-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.filters {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  padding: 18px;
+  margin: 18px 0;
+  display: grid;
+  grid-template-columns: 1fr 190px 190px;
+  gap: 12px;
+}
+
+.filters input,
+.filters select {
+  border: 1px solid #d1d5db;
+  padding: 11px 12px;
+  font-size: 14px;
+  outline: none;
+}
+
+.filters input:focus,
+.filters select:focus {
+  border-color: #0f6e70;
+}
+
+.message {
+  color: #6b7280;
+}
+
+.error-message {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.empty-box {
+  background: #ffffff;
+  border: 1px dashed #d1d5db;
+  padding: 34px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.booking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.booking-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  padding: 20px;
+}
+
+.booking-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.booking-top h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.booking-top p {
+  margin: 4px 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.amount {
+  color: #0f6e70;
+  font-size: 22px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.booking-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+  align-items: center;
+}
+
+.booking-info span {
+  font-size: 13px;
+}
+
+.status-badge,
+.payment-badge {
+  padding: 5px 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 11px !important;
+}
+
+.status-badge.pending,
+.payment-badge.pending {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.status-badge.confirmed,
+.payment-badge.paid {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.status-badge.cancelled,
+.payment-badge.failed {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.booking-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 800px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    width: 100%;
+  }
+
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-top {
+    flex-direction: column;
+  }
+}
+</style>
