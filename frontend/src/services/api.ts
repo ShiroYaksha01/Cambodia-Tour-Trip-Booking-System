@@ -106,4 +106,7 @@ function mockProviderBookings() {
     },
   ]
 }
+
+export const getAdminDashboardSummary = () => api.get(`/admin/dashboard`).then(res => res.data)
+
 export default api;

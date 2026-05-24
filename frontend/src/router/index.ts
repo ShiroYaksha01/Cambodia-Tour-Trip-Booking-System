@@ -84,7 +84,6 @@ const routes: RouteRecordRaw[] = [
     },
   },
 
-
   {
     path: "/admin/providers",
     name: "admin-providers",
@@ -143,6 +142,15 @@ const routes: RouteRecordRaw[] = [
     path: "/customer/profile",
     name: "customer-profile",
     component: () => import("../views/customer/CustomerProfileView.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["customer"],
+    },
+  },
+  {
+    path: "/customer/feedback/:id",
+    name: "customer-feedback",
+    component: () => import("../views/customer/Feedback.vue"),
     meta: {
       requiresAuth: true,
       roles: ["customer"],

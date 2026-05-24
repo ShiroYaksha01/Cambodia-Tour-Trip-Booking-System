@@ -9,6 +9,8 @@ import { Booking } from './entities/booking.entity';
 import { BookingStatus, PaymentStatus } from '../../shared/enums';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { Service } from '../services/entities/service.entity';
+import { Provider } from '../providers/entities/provider.entity';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class BookingsService {
@@ -17,6 +19,10 @@ export class BookingsService {
     private readonly bookingRepository: Repository<Booking>,
     @InjectRepository(Service)
     private readonly serviceRepository: Repository<Service>,
+    @InjectRepository(Provider)
+    private readonly providerRepository: Repository<Provider>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
 
   async createBooking(
@@ -134,6 +140,143 @@ export class BookingsService {
     }
 
     return booking;
+  }
+
+  async getAdminDashboard() {
+    const [
+      totalUsers,
+      totalProviders,
+      totalBookings,
+      paidTotals,
+    ] = await Promise.all([
+      this.userRepository.count(),
+      this.providerRepository.count(),
+      this.bookingRepository.count(),
+      this.bookingRepository
+        .createQueryBuilder('booking')
+        .leftJoin('booking.provider', 'provider')
+        .select('COALESCE(SUM(booking.totalAmount), 0)', 'total_revenue')
+        .addSelect(
+          'COALESCE(SUM(booking.totalAmount * provider.commissionRate / 100), 0)',
+          'total_platform_fee',
+        )
+        .where('booking.paymentStatus = :paymentStatus', { paymentStatus: PaymentStatus.PAID })
+        .getRawOne<{ total_revenue: string; total_platform_fee: string }>(),
+    ]);
+
+    return {
+      total_users: totalUsers,
+      total_providers: totalProviders,
+      total_bookings: totalBookings,
+      total_revenue: Number(paidTotals?.total_revenue || 0),
+      total_platform_fee: Number(paidTotals?.total_platform_fee || 0),
+    };
+  }
+
+  async getAdminDashboardSummary() {
+    const totalBookings = await this.bookingRepository.count();
+
+    const revenueResult = await this.bookingRepository
+      .createQueryBuilder('booking')
+      .select('COALESCE(SUM(booking.totalAmount), 0)', 'total')
+      .getRawOne<{ total: string }>();
+    const totalRevenue = Number(revenueResult?.total || 0);
+
+    const totalProviders = await this.providerRepository.count();
+    const totalUsers = await this.userRepository.count();
+    const totalServices = await this.serviceRepository.count();
+    const verifiedProviders = await this.providerRepository.count({ where: { isVerified: true } });
+
+    const statusRows = await this.bookingRepository
+      .createQueryBuilder('booking')
+      .select('booking.bookingStatus', 'status')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('booking.bookingStatus')
+      .getRawMany<{ status: BookingStatus; count: string }>();
+
+    const statusBreakdown = Object.values(BookingStatus).reduce(
+      (acc, status) => ({ ...acc, [status]: 0 }),
+      {} as Record<BookingStatus, number>,
+    );
+
+    for (const row of statusRows) {
+      statusBreakdown[row.status] = Number(row.count || 0);
+    }
+
+    const recentBookings = await this.bookingRepository.find({
+      relations: ['user', 'service', 'provider'],
+      order: { createdAt: 'DESC' },
+      take: 5,
+    });
+
+    const monthStarts = Array.from({ length: 6 }, (_, index) => {
+      const date = new Date();
+      date.setDate(1);
+      date.setHours(0, 0, 0, 0);
+      date.setMonth(date.getMonth() - (5 - index));
+      return date;
+    });
+
+    const monthlyRows = await this.bookingRepository
+      .createQueryBuilder('booking')
+      .select("TO_CHAR(DATE_TRUNC('month', booking.createdAt), 'YYYY-MM')", 'monthKey')
+      .addSelect('COUNT(*)', 'bookings')
+      .addSelect('COALESCE(SUM(booking.totalAmount), 0)', 'revenue')
+      .where('booking.createdAt >= :startDate', { startDate: monthStarts[0] })
+      .groupBy("DATE_TRUNC('month', booking.createdAt)")
+      .orderBy("DATE_TRUNC('month', booking.createdAt)", 'ASC')
+      .getRawMany<{ monthKey: string; bookings: string; revenue: string }>();
+
+    const monthlyStatsByKey = new Map(
+      monthlyRows.map((row) => [
+        row.monthKey,
+        {
+          bookings: Number(row.bookings || 0),
+          revenue: Number(row.revenue || 0),
+        },
+      ]),
+    );
+
+    const monthlyStats = monthStarts.map((date) => {
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const stats = monthlyStatsByKey.get(monthKey);
+
+      return {
+        month: date.toLocaleString('en-US', { month: 'short' }),
+        bookings: stats?.bookings ?? 0,
+        revenue: stats?.revenue ?? 0,
+      };
+    });
+
+    const paidPaymentCount = await this.bookingRepository.count({
+      where: { paymentStatus: PaymentStatus.PAID },
+    });
+
+    return {
+      stats: {
+        totalBookings,
+        totalRevenue,
+        totalProviders,
+        totalUsers,
+        totalServices,
+        verifiedProviders,
+        paidPaymentCount,
+      },
+      statusBreakdown,
+      recentBookings: recentBookings.map(b => ({
+        id: b.id,
+        customerName: b.user?.username || 'Guest',
+        customerEmail: b.user?.email || 'N/A',
+        serviceTitle: b.service?.title || 'Unknown Tour',
+        providerName: b.provider?.companyName || 'Unknown Provider',
+        amount: b.totalAmount,
+        status: b.bookingStatus,
+        date: b.bookingDate,
+        transactionId: b.transactionId,
+        createdAt: b.createdAt,
+      })),
+      monthlyStats,
+    };
   }
 
   async confirmPayment(bookingId: string, transactionId?: string): Promise<Booking> {

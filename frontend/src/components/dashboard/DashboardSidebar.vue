@@ -1,6 +1,9 @@
 <template>
   <aside class="sidebar-shell" :class="`sidebar-shell--${role}`">
-    <div v-if="role === 'provider'" class="sidebar-inner sidebar-inner--provider">
+    <div
+      v-if="role === 'provider'"
+      class="sidebar-inner sidebar-inner--provider"
+    >
       <div class="provider-brand">
         <div class="provider-brand__mark" aria-hidden="true">⬤</div>
         <div>
@@ -10,8 +13,15 @@
       </div>
 
       <nav class="provider-nav" aria-label="Provider navigation">
-        <router-link v-for="item in providerNavItems" :key="item.label" :to="item.href" class="provider-nav__item">
-          <span class="provider-nav__icon" aria-hidden="true">{{ item.icon }}</span>
+        <router-link
+          v-for="item in providerNavItems"
+          :key="item.label"
+          :to="item.href"
+          class="provider-nav__item"
+        >
+          <span class="provider-nav__icon" aria-hidden="true">{{
+            item.icon
+          }}</span>
           <span>{{ item.label }}</span>
         </router-link>
       </nav>
@@ -35,21 +45,38 @@
       </div>
 
       <nav class="nav-list" aria-label="Dashboard navigation">
-        <router-link v-for="item in navItems" :key="item.label" :to="item.href" class="nav-item">
-          <span class="nav-item__icon" aria-hidden="true">{{ item.icon }}</span>
-          <span>
-            <strong>{{ item.label }}</strong>
-            <small>{{ item.description }}</small>
-          </span>
-        </router-link>
+        <section
+          v-for="section in groupedNavItems"
+          :key="section.label"
+          class="nav-section"
+        >
+          <p class="nav-section__label">{{ section.label }}</p>
+          <component
+            :is="item.href.startsWith('/') ? 'router-link' : 'a'"
+            v-for="item in section.items"
+            :key="item.label"
+            :to="item.href.startsWith('/') ? item.href : undefined"
+            :href="item.href.startsWith('/') ? undefined : item.href"
+            class="nav-item"
+            :class="{ 'nav-item--active': isActiveItem(item) }"
+          >
+            <span class="nav-item__icon" aria-hidden="true">{{
+              item.icon
+            }}</span>
+            <span>
+              <strong>{{ item.label }}</strong>
+              <small>{{ item.description }}</small>
+            </span>
+          </component>
+        </section>
       </nav>
 
       <section class="sidebar-card">
         <div class="system-status">
           <span class="system-status__dot"></span>
           <div>
-            <p>SYSTEM STATUS</p>
-            <strong>System Online, Connectivity with ABA Pay is stable.</strong>
+            <p>System status</p>
+            <strong>Operational</strong>
           </div>
         </div>
 
@@ -63,41 +90,100 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
-import LogoutButton from '../LogoutButton.vue'
+import { defineComponent } from "vue";
+import LogoutButton from "../LogoutButton.vue";
 
-type DashboardRole = 'admin' | 'provider'
+type DashboardRole = "admin" | "provider";
 
 type NavItem = {
-  label: string
-  description: string
-  href: string
-  icon: string
-}
+  label: string;
+  description: string;
+  href: string;
+  icon: string;
+  group?: "Main" | "Management";
+};
 
 const navMap: Record<DashboardRole, NavItem[]> = {
   admin: [
-    { label: 'Dashboard', description: 'Financial overview', href: '/admin/dashboard', icon: '◌' },
-    { label: 'Users', description: 'Manage users accounts', href: '/admin/users', icon: '👤' },
-    { label: 'Providers', description: 'Vendors and partners', href: '/admin/providers', icon: '▣' },
-    { label: 'Package Oversight', description: 'Trip quality review', href: '#reports', icon: '⌁' },
-    { label: 'Booking Ledger', description: 'Settlement activity', href: '/admin/bookings', icon: '⌕' },
-    { label: 'Finance & Escrow', description: 'Transactions and holds', href: '#reports', icon: '◫' },
-    { label: 'Payment Logs', description: 'Recent payment records', href: '#reports', icon: '≡' },
-    { label: 'Review Moderation', description: 'Content and ratings', href: '#reports', icon: '✦' },
-    { label: 'Support Tickets', description: 'Customer escalations', href: '#reports', icon: '✉' },
+    {
+      label: "Dashboard",
+      description: "Overview",
+      href: "/admin/dashboard",
+      icon: "⌂",
+      group: "Main",
+    },
+    {
+      label: "Users",
+      description: "Manage user accounts",
+      href: "/admin/users",
+      icon: "👤",
+      group: "Management",
+    },
+    {
+      label: "Providers",
+      description: "Vendors and partners",
+      href: "/admin/providers",
+      icon: "□",
+      group: "Management",
+    },
+    {
+      label: "Packages",
+      description: "Quality review",
+      href: "#packages",
+      icon: "◇",
+      group: "Management",
+    },
+    {
+      label: "Bookings",
+      description: "Ledger",
+      href: "/admin/bookings",
+      icon: "≡",
+      group: "Management",
+    },
+    {
+      label: "Finance",
+      description: "Revenue & transactions",
+      href: "#finance",
+      icon: "$",
+      group: "Management",
+    },
   ],
   provider: [
-    { label: 'Inventory', description: 'Stock and availability', href: '/provider/dashboard', icon: '◌' },
-    { label: 'Bookings', description: 'Reservation ledger', href: '/provider/bookings', icon: '▣' },
-    { label: 'Finance', description: 'Pricing and markup', href: '#pricing', icon: '◫' },
-    { label: 'Messages', description: 'Inbox and requests', href: '#controller', icon: '✉' },
-    { label: 'Settings', description: 'Provider preferences', href: '#changes', icon: '⚙' },
+    {
+      label: "Inventory",
+      description: "Stock and availability",
+      href: "/provider/dashboard",
+      icon: "◌",
+    },
+    {
+      label: "Bookings",
+      description: "Reservation ledger",
+      href: "/provider/bookings",
+      icon: "▣",
+    },
+    {
+      label: "Finance",
+      description: "Pricing and markup",
+      href: "#pricing",
+      icon: "◫",
+    },
+    {
+      label: "Messages",
+      description: "Inbox and requests",
+      href: "#controller",
+      icon: "✉",
+    },
+    {
+      label: "Settings",
+      description: "Provider preferences",
+      href: "#changes",
+      icon: "⚙",
+    },
   ],
-}
+};
 
 export default defineComponent({
-  name: 'DashboardSidebar',
+  name: "DashboardSidebar",
   components: {
     LogoutButton,
   },
@@ -109,26 +195,40 @@ export default defineComponent({
   },
   computed: {
     navItems(): NavItem[] {
-      return navMap[this.role]
+      return navMap[this.role];
+    },
+    groupedNavItems(): Array<{ label: string; items: NavItem[] }> {
+      const groups: Array<NavItem["group"]> = ["Main", "Management"];
+      return groups
+        .map((group) => ({
+          label: group || "",
+          items: this.navItems.filter((item) => item.group === group),
+        }))
+        .filter((section) => section.items.length > 0);
     },
     providerNavItems(): NavItem[] {
-      return navMap.provider
+      return navMap.provider;
     },
     roleLabel(): string {
-      return this.role === 'admin' ? 'Administrator' : 'Provider'
+      return this.role === "admin" ? "Administrator" : "Provider";
     },
   },
-})
+  methods: {
+    isActiveItem(item: NavItem): boolean {
+      return item.href.startsWith("/") && this.$route.path === item.href;
+    },
+  },
+});
 </script>
 
 <style scoped>
 .sidebar-shell {
   min-height: 100%;
-  border-radius: 22px;
+  border-radius: 0;
   overflow: hidden;
-  background: #f6f6f4;
-  border: 1px solid rgba(18, 31, 31, 0.07);
-  box-shadow: 0 18px 42px rgba(18, 31, 31, 0.12);
+  background: #ffffff;
+  border-right: 1px solid #e8eeef;
+  box-shadow: none;
 }
 
 .sidebar-shell--provider {
@@ -140,7 +240,7 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   gap: 18px;
-  padding: 16px 14px 14px;
+  padding: 22px 14px 16px;
 }
 
 .sidebar-inner--provider {
@@ -241,26 +341,27 @@ export default defineComponent({
   display: flex;
   gap: 12px;
   align-items: start;
-  padding: 6px 4px 10px;
+  padding: 0 6px 6px;
 }
 
 .brand-block strong {
   display: block;
-  font-size: 0.98rem;
-  color: #154b4d;
+  font-size: 0.94rem;
+  color: #173f42;
+  line-height: 1.15;
 }
 
 .brand-block small {
   display: block;
   margin-top: 2px;
-  color: #72817d;
-  font-size: 0.74rem;
+  color: #7a8a8b;
+  font-size: 0.72rem;
 }
 
 .brand-mark {
   width: 30px;
   height: 30px;
-  border-radius: 6px;
+  border-radius: 8px;
   display: grid;
   place-items: center;
   font-weight: 800;
@@ -271,27 +372,38 @@ export default defineComponent({
 
 .eyebrow,
 .nav-item small,
-.sidebar-card__eyebrow {
+.sidebar-card__eyebrow,
+.nav-section__label {
   margin: 0;
-  font-size: 0.69rem;
-  letter-spacing: 0.1em;
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #7b8884;
+  color: #8a9897;
 }
 
 .nav-list {
   display: grid;
-  gap: 6px;
+  gap: 14px;
+}
+
+.nav-section {
+  display: grid;
+  gap: 4px;
+}
+
+.nav-section__label {
+  padding: 0 10px 4px;
+  font-weight: 700;
 }
 
 .nav-item {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
-  min-height: 34px;
-  padding: 8px 10px;
+  min-height: 32px;
+  padding: 7px 9px;
   border-radius: 8px;
-  color: #223d3f;
+  color: #526466;
   text-decoration: none;
   background: transparent;
   border: 1px solid transparent;
@@ -302,9 +414,15 @@ export default defineComponent({
 }
 
 .nav-item:hover {
-  transform: translateX(2px);
-  background: rgba(15, 110, 112, 0.06);
-  border-color: rgba(15, 110, 112, 0.08);
+  transform: none;
+  background: #f6f9f9;
+  color: #173f42;
+}
+
+.nav-item--active {
+  background: #eaf5f4;
+  color: #0f6e70;
+  border-color: rgba(15, 110, 112, 0.1);
 }
 
 .nav-item__icon {
@@ -312,66 +430,66 @@ export default defineComponent({
   height: 20px;
   display: grid;
   place-items: center;
-  font-size: 0.86rem;
-  color: #6d7e7b;
+  font-size: 0.82rem;
+  color: currentColor;
 }
 
 .nav-item strong,
 .sidebar-card__metric strong,
 .system-status strong {
   display: block;
-  font-size: 0.88rem;
-  color: #1f3d3f;
+  font-size: 0.83rem;
+  color: inherit;
 }
 
 .nav-item small {
   display: block;
-  margin-top: 1px;
+  margin-top: 0;
   text-transform: none;
   letter-spacing: 0;
-  color: #8a9691;
+  color: #8a9897;
+  font-size: 0.69rem;
 }
 
 .sidebar-card {
   margin-top: auto;
-  padding: 14px;
-  border-radius: 16px;
-  background: #f0f4f3;
-  border: 1px solid rgba(18, 31, 31, 0.06);
+  padding: 10px;
+  border-radius: 10px;
+  background: #f8fbfb;
+  border: 1px solid #e8eeef;
 }
 
 .system-status {
   display: flex;
-  gap: 10px;
-  align-items: start;
+  gap: 8px;
+  align-items: center;
 }
 
 .system-status__dot {
   width: 8px;
   height: 8px;
-  margin-top: 5px;
   border-radius: 999px;
   background: #24b47e;
-  box-shadow: 0 0 0 4px rgba(36, 180, 126, 0.18);
+  box-shadow: 0 0 0 3px rgba(36, 180, 126, 0.14);
 }
 
 .system-status p {
-  margin: 0 0 4px;
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  margin: 0;
+  font-size: 0.69rem;
   color: #7a8782;
 }
 
 .system-status strong {
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   line-height: 1.45;
   color: #203c3e;
 }
 
 .sidebar-actions {
   display: flex;
-  gap: 18px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   padding-top: 10px;
   color: #7a8782;
 }
