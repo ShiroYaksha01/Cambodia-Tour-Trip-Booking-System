@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Between } from 'typeorm';
 import { Booking } from './entities/booking.entity';
 import { BookingStatus, PaymentStatus } from '../../shared/enums';
 import { CreateBookingDto } from './dto/create-booking.dto';
@@ -289,5 +289,72 @@ export class BookingsService {
     if (transactionId) booking.transactionId = transactionId;
 
     return this.bookingRepository.save(booking);
+  }
+
+  async getRevenueAnalytics(range: number) {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - range);
+
+    // Overview Stats
+    const allBookings = await this.bookingRepository.find({
+      where: { createdAt: Between(startDate, endDate) }
+    });
+
+    const totalRevenue = allBookings
+      .filter(b => b.paymentStatus === PaymentStatus.PAID)
+      .reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+
+    const pendingAmount = allBookings
+      .filter(b => b.paymentStatus === PaymentStatus.PENDING)
+      .reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+
+    const refundAmount = allBookings
+      .filter(b => b.paymentStatus === PaymentStatus.REFUNDED)
+      .reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+
+    const overview = {
+      totalRevenue,
+      bookingsTotal: allBookings.length,
+      bookingsPaid: allBookings.filter(b => b.paymentStatus === PaymentStatus.PAID).length,
+      pendingAmount,
+      pendingCount: allBookings.filter(b => b.paymentStatus === PaymentStatus.PENDING).length,
+      refundAmount,
+      refundCount: allBookings.filter(b => b.paymentStatus === PaymentStatus.REFUNDED).length
+    };
+
+    // Trend Data
+    const query = this.bookingRepository
+      .createQueryBuilder('booking')
+      .select("DATE_TRUNC('day', booking.createdAt)", 'date')
+      .addSelect('SUM(booking.totalAmount)', 'value')
+      .where('booking.paymentStatus = :status', { status: PaymentStatus.PAID })
+      .andWhere('booking.createdAt BETWEEN :start AND :end', { start: startDate, end: endDate })
+      .groupBy("DATE_TRUNC('day', booking.createdAt)")
+      .orderBy("DATE_TRUNC('day', booking.createdAt)", 'ASC');
+
+    if (range > 90) {
+      query.select("DATE_TRUNC('month', booking.createdAt)", 'date')
+           .groupBy("DATE_TRUNC('month', booking.createdAt)");
+    }
+
+    const rawTrend = await query.getRawMany();
+    const trend: { label: string; value: number }[] = rawTrend.map(t => ({
+      label: range > 90 
+        ? new Date(t.date).toLocaleDateString('en-US', { month: 'short' })
+        : new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      value: parseFloat(t.value)
+    }));
+
+    return { overview, trend };
+  }
+
+  async getRecentPaidBookings(limit: number) {
+    return this.bookingRepository.find({
+      where: { paymentStatus: PaymentStatus.PAID },
+      relations: ['user', 'service'],
+      order: { createdAt: 'DESC' },
+      take: limit
+    });
   }
 }

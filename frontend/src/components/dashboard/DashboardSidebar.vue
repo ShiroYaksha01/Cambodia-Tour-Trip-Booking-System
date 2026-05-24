@@ -107,23 +107,37 @@ const navMap: Record<DashboardRole, NavItem[]> = {
   admin: [
     {
       label: "Dashboard",
-      description: "Overview",
+      description: "Financial overview",
       href: "/admin/dashboard",
       icon: "⌂",
       group: "Main",
     },
     {
       label: "Users",
-      description: "Manage user accounts",
+      description: "Manage accounts",
       href: "/admin/users",
       icon: "👤",
       group: "Management",
     },
     {
       label: "Providers",
-      description: "Vendors and partners",
+      description: "Vendors & partners",
       href: "/admin/providers",
-      icon: "□",
+      icon: "▣",
+      group: "Management",
+    },
+    {
+      label: "Revenue",
+      description: "Financial analytics",
+      href: "/admin/revenue",
+      icon: "💰",
+      group: "Management",
+    },
+    {
+      label: "Bookings",
+      description: "Booking Ledger",
+      href: "/admin/bookings",
+      icon: "≡",
       group: "Management",
     },
     {
@@ -131,20 +145,6 @@ const navMap: Record<DashboardRole, NavItem[]> = {
       description: "Quality review",
       href: "#packages",
       icon: "◇",
-      group: "Management",
-    },
-    {
-      label: "Bookings",
-      description: "Ledger",
-      href: "/admin/bookings",
-      icon: "≡",
-      group: "Management",
-    },
-    {
-      label: "Finance",
-      description: "Revenue & transactions",
-      href: "#finance",
-      icon: "$",
       group: "Management",
     },
   ],
@@ -223,8 +223,8 @@ export default defineComponent({
 
 <style scoped>
 .sidebar-shell {
-  min-height: 100%;
-  border-radius: 0;
+  height: 100%;
+  border-radius: 22px;
   overflow: hidden;
   background: #ffffff;
   border-right: 1px solid #e8eeef;
@@ -236,7 +236,7 @@ export default defineComponent({
 }
 
 .sidebar-inner {
-  min-height: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -425,6 +425,12 @@ export default defineComponent({
   border-color: rgba(15, 110, 112, 0.1);
 }
 
+.router-link-active.nav-item {
+  background: rgba(15, 110, 112, 0.08) !important;
+  border-color: rgba(15, 110, 112, 0.12) !important;
+  transform: translateX(4px);
+}
+
 .nav-item__icon {
   width: 20px;
   height: 20px;
@@ -432,6 +438,10 @@ export default defineComponent({
   place-items: center;
   font-size: 0.82rem;
   color: currentColor;
+}
+
+.router-link-active .nav-item__icon {
+  color: #0f6e70;
 }
 
 .nav-item strong,

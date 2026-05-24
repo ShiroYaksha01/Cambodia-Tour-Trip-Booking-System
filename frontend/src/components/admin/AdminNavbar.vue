@@ -2,18 +2,35 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
-const props = defineProps<{ breadcrumb?: string }>()
+const props = defineProps<{ 
+  breadcrumb?: string
+  searchPlaceholder?: string
+}>()
+
+const emit = defineEmits(['search'])
 const router = useRouter()
 const showProfile = ref(false)
+const searchQuery = ref('')
 
 const authUser = computed(() => {
-  try { return JSON.parse(localStorage.getItem('auth_user') || '{}') }
-  catch { return {} }
+  try { 
+    const stored = localStorage.getItem('auth_user')
+    if (stored) return JSON.parse(stored)
+    return {
+      username: 'admin',
+      email: 'admin@tourbooking.local',
+      role: 'admin'
+    }
+  }
+  catch { 
+    return { username: 'admin', email: 'admin@tourbooking.local', role: 'admin' } 
+  }
 })
+
 const adminName    = computed(() => authUser.value?.username || 'Admin')
-const adminEmail   = computed(() => authUser.value?.email    || '—')
+const adminEmail   = computed(() => authUser.value?.email    || 'admin@tourbooking.local')
 const adminRole    = computed(() => authUser.value?.role     || 'admin')
-const adminInitial = computed(() => adminName.value.charAt(0).toUpperCase())
+const adminInitial = computed(() => adminName.value.substring(0, 2).toUpperCase())
 
 const handleLogout = () => {
   localStorage.removeItem('token')
@@ -21,26 +38,43 @@ const handleLogout = () => {
   localStorage.removeItem('auth_user')
   router.push('/login')
 }
+
+const onSearchInput = () => {
+  emit('search', searchQuery.value)
+}
 </script>
 
 <template>
-  <header class="navbar">
-    <!-- Left: breadcrumb -->
-    <div class="breadcrumb">
-      <p>Management / <span>User & Provider Central</span></p>
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-trigger" aria-label="Toggle Menu" type="button">
+        <span class="menu-icon">☰</span>
+      </button>
+      <div class="searchbar">
+        <span class="searchbar__icon" aria-hidden="true">⌕</span>
+        <input
+          v-model.trim="searchQuery"
+          type="search"
+          :placeholder="props.searchPlaceholder || 'Search bookings, clients, providers...'"
+          @input="onSearchInput"
+        />
+        <span class="search-shortcut">⌘K</span>
+      </div>
     </div>
 
-    <!-- Right: profile only -->
-    <div class="profile" @click="showProfile = true">
-      <div class="profile-info">
-        <span class="pname">{{ adminName }}</span>
-        <span class="prole">{{ adminRole }}</span>
+    <div class="topbar-actions">
+      <div class="profile-chip" @click="showProfile = true">
+        <div class="avatar">{{ adminInitial }}</div>
+        <div class="profile-meta">
+          <strong>{{ adminName }}</strong>
+          <span>{{ adminRole === 'admin' ? 'System Administrator' : adminRole }}</span>
+        </div>
+        <span class="chevron-down">▾</span>
       </div>
-      <div class="avatar">{{ adminInitial }}</div>
     </div>
   </header>
 
-  <!-- Profile modal -->
+  <!-- Profile modal (Keeping existing functionality but styling it slightly to match) -->
   <transition name="fade">
     <div v-if="showProfile" class="modal-bd">
       <div class="overlay" @click="showProfile = false"></div>
@@ -70,40 +104,128 @@ const handleLogout = () => {
 </template>
 
 <style scoped>
-.navbar {
-  height: 64px;
-  background: white;
-  border-bottom: 1px solid #ece7df;
+.topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 34px;
+  gap: 20px;
+  background: #ffffff;
+  border-bottom: 1px solid #edf2f5;
+  padding: 12px 28px;
+  height: 58px;
+  box-sizing: border-box;
 }
 
-.breadcrumb { color: #89938f; margin-bottom: 5px; font-size: 17 px; }
-.breadcrumb span { color: #006566; font-weight: 600; }
-
-.profile {
+.topbar-left {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  border-radius: 14px;
-  cursor: pointer;
-  transition: 0.18s;
+  gap: 16px;
+  flex: 1;
 }
-.profile:hover { background: #f5f2ee; }
 
-.profile-info { text-align: right; }
-.pname { display: block; font-size: 14px; font-weight: 600; color: #1d2a26; }
-.prole { display: block; font-size: 12px; color: #8a938f; text-transform: capitalize; }
+.menu-trigger {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: #5e6e70;
+  cursor: pointer;
+}
+
+.searchbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid #e4ebed;
+  border-radius: 7px;
+  height: 34px;
+  width: 100%;
+  max-width: 360px;
+  padding: 0 12px;
+  transition: all 0.2s ease;
+}
+
+.searchbar:focus-within {
+  border-color: #0f6e70;
+  box-shadow: 0 0 0 2px rgba(15, 110, 112, 0.08);
+}
+
+.searchbar__icon {
+  font-size: 1.1rem;
+  color: #9ea9ab;
+}
+
+.searchbar input {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-size: 0.88rem;
+  color: #173f42;
+  background: transparent;
+}
+
+.searchbar input::placeholder {
+  color: #9ea9ab;
+}
+
+.search-shortcut {
+  font-size: 0.72rem;
+  background: #f1f3f5;
+  color: #9ea9ab;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+  padding: 2px 8px 2px 6px;
+  border-radius: 8px;
+  border: 1px solid #e4ebed;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.profile-meta {
+  text-align: left;
+}
+
+.profile-meta strong {
+  display: block;
+  font-size: 0.82rem;
+  color: #173f42;
+  font-weight: 700;
+}
+
+.profile-meta span {
+  display: none; /* Matching the compact dashboard style */
+}
 
 .avatar {
-  width: 40px; height: 40px; border-radius: 50%;
-  background: linear-gradient(135deg, #006566, #00888a);
-  color: white; font-size: 16px; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #0f6e70;
+  color: #ffffff;
+  font-size: 0.66rem;
+  font-weight: bold;
+  display: grid;
+  place-items: center;
+}
+
+.chevron-down {
+  font-size: 0.72rem;
+  color: #9ea9ab;
 }
 
 /* Modal */
@@ -113,9 +235,7 @@ const handleLogout = () => {
   position: relative; width: 380px; background: white;
   border-radius: 24px; padding: 32px;
   box-shadow: 0 20px 48px rgba(0,0,0,0.13); z-index: 301;
-  animation: pop 0.28s cubic-bezier(0.34,1.56,0.64,1);
 }
-@keyframes pop { from { opacity:0; transform:scale(0.93) translateY(16px); } to { opacity:1; transform:scale(1) translateY(0); } }
 
 .xbtn {
   position: absolute; top: 16px; right: 16px;
@@ -149,4 +269,10 @@ const handleLogout = () => {
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+@media (max-width: 1024px) {
+  .menu-trigger {
+    display: block;
+  }
+}
 </style>

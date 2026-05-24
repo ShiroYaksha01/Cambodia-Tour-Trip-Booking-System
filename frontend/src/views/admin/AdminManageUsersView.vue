@@ -78,12 +78,10 @@ async function fetchUsers() {
 
 async function handleEditSave(form: any) {
   try {
-    const roleMap: Record<string, string> = { Customer: 'customer', Provider: 'provider', Admin: 'admin' }
     const body: Record<string, any> = {
       username: form.username,
       email:    form.email,
       status:   form.status.toLowerCase(),
-      role:     roleMap[form.role] ?? form.role,
     }
     if (form.password?.trim()) body.password = form.password
 
@@ -100,7 +98,6 @@ async function handleEditSave(form: any) {
       username: form.username,
       email:    form.email,
       status:   body.status as any,
-      role:     body.role as any,
     }
     showToast('User updated successfully')
   } catch (e: any) { showToast(e.message || 'Update failed', 'error') }
@@ -120,7 +117,6 @@ async function handleAddSave(form: any) {
     })
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message || 'Create failed') }
 
-    // If status isn't active, update it after registration
     if (form.status && form.status !== 'active') {
       const created = await res.json().catch(() => null)
       if (created?.id) {
@@ -160,10 +156,9 @@ onMounted(fetchUsers)
 </script>
 
 <template>
-  <AdminLayout>
+  <AdminLayout breadcrumb="Management / Manage Users" @search="(q) => search = q">
     <div class="page-header">
       <div class="header-left">
-        <p class="breadcrumb">Management / <span>User & Provider </span></p>
         <h1>Users Management</h1>
         <p class="description">Oversee the ecosystem of tour providers and discerning travelers.</p>
       </div>
@@ -201,21 +196,13 @@ onMounted(fetchUsers)
           >{{ tab }}</button>
         </div>
         <div class="toolbar-right">
-          <div class="search-wrap">
-            <svg class="si" viewBox="0 0 20 20" fill="none">
-              <circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="1.5"/>
-              <path d="M13 13L17 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <button class="sec-btn" title="Refresh Data" @click="fetchUsers">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 4v6h-6"></path>
+              <path d="M1 20v-6h6"></path>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
             </svg>
-            <input
-              v-model="search"
-              type="search"
-              autocomplete="off"
-              autocorrect="off"
-              spellcheck="false"
-              placeholder="Search name or email..."
-              @search="clearSearch"
-            />
-          </div>
+          </button>
           <button class="sec-btn" @click="exportCSV">Export CSV</button>
           <button class="pri-btn" @click="showAddModal = true">+ Add User</button>
         </div>
@@ -226,41 +213,43 @@ onMounted(fetchUsers)
         "<strong>{{ search }}</strong>" in <strong>{{ activeTab }}</strong>
       </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th>NAME & IDENTITY</th>
-            <th>EMAIL</th>
-            <th>ROLE</th>
-            <th>STATUS</th>
-            <th>JOIN DATE</th>
-            <th>ACTIONS</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="u in paged" :key="u.id">
-            <td>
-              <div class="user-info">
-                <div class="av">{{ u.username?.charAt(0)?.toUpperCase() || '?' }}</div>
-                <div>
-                  <h4>{{ u.username }}</h4>
-                  <p>{{ u.id.slice(0,8) }}...</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>NAME & IDENTITY</th>
+              <th>EMAIL</th>
+              <th>ROLE</th>
+              <th>STATUS</th>
+              <th>JOIN DATE</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="u in paged" :key="u.id">
+              <td>
+                <div class="user-info">
+                  <div class="av">{{ u.username?.charAt(0)?.toUpperCase() || '?' }}</div>
+                  <div>
+                    <h4>{{ u.username }}</h4>
+                    <p>{{ u.id.slice(0,8) }}...</p>
+                  </div>
                 </div>
-              </div>
-            </td>
-            <td class="muted">{{ u.email }}</td>
-            <td><span class="role">{{ u.role }}</span></td>
-            <td><span class="status" :class="u.status">{{ u.status }}</span></td>
-            <td>{{ fmtDate(u.createdAt) }}</td>
-            <td><button class="edit-btn" @click="openEdit(u)">Edit</button></td>
-          </tr>
-          <tr v-if="paged.length === 0">
-            <td colspan="6" class="empty">
-              {{ search ? `No results for "${search}" in ${activeTab}` : `No users in "${activeTab}"` }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+              </td>
+              <td class="muted">{{ u.email }}</td>
+              <td><span class="role">{{ u.role }}</span></td>
+              <td><span class="status" :class="u.status">{{ u.status }}</span></td>
+              <td>{{ fmtDate(u.createdAt) }}</td>
+              <td><button class="edit-btn" @click="openEdit(u)">Edit</button></td>
+            </tr>
+            <tr v-if="paged.length === 0">
+              <td colspan="6" class="empty">
+                {{ search ? `No results for "${search}" in ${activeTab}` : `No users in "${activeTab}"` }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <div class="pagination">
         <button
@@ -285,84 +274,76 @@ onMounted(fetchUsers)
 <style scoped>
 * { box-sizing: border-box; }
 
-.page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; gap: 20px; }
+.page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; gap: 24px; }
 .header-left { flex: 1; }
-.breadcrumb { color: #89938f; margin-bottom: 10px; font-size: 14px; }
-.breadcrumb span { color: #006566; font-weight: 600; }
 h1 { font-size: 38px; color: #182420; margin: 0 0 10px; }
-.description { color: #73807b; max-width: 480px; margin: 0; font-size: 14px; }
+.description { color: #73807b; max-width: 520px; margin: 0; font-size: 14px; line-height: 1.5; }
 
 .stats { display: flex; gap: 16px; flex-shrink: 0; }
-.stat-card { width: 200px; background: white; border-radius: 24px; padding: 24px; box-shadow: 0 8px 28px rgba(0,0,0,0.05); }
-.stat-card p { color: #7d8884; font-size: 11px; margin: 0; letter-spacing: 0.5px; }
+.stat-card { width: 200px; background: white; border-radius: 24px; padding: 24px; box-shadow: 0 8px 28px rgba(0,0,0,0.05); border: 1px solid #f0ede8; }
+.stat-card p { color: #7d8884; font-size: 11px; margin: 0; letter-spacing: 0.5px; font-weight: 700; }
 .stat-card h2 { margin: 12px 0 0; font-size: 36px; color: #006566; }
 .warning h2 { color: #c58a22; }
 
 .state-box { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 72px 0; color: #89938f; background: white; border-radius: 28px; }
 .state-box.err { color: #c93b3b; }
 .spinner { width: 30px; height: 30px; border: 2.5px solid #f3f0eb; border-top-color: #006566; border-radius: 50%; animation: spin 0.7s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
 
-.table-card { background: white; border-radius: 28px; overflow: hidden; box-shadow: 0 8px 28px rgba(0,0,0,0.05); }
+.table-card { background: white; border-radius: 28px; overflow: hidden; box-shadow: 0 8px 28px rgba(0,0,0,0.05); border: 1px solid #f0ede8; }
 
-.toolbar { padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.toolbar { padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px; border-bottom: 1px solid #f2ede7; }
 .tabs { display: flex; gap: 8px; }
-.tabs button { height: 40px; padding: 0 16px; border-radius: 12px; border: none; background: #f3f0eb; cursor: pointer; font-size: 13px; transition: 0.18s; }
+.tabs button { height: 40px; padding: 0 16px; border-radius: 12px; border: none; background: #f3f0eb; cursor: pointer; font-size: 13px; transition: 0.18s; font-weight: 600; }
 .tabs button:hover { background: #e8e4d9; }
 .tabs .active { background: #006566; color: white; }
 
-.toolbar-right { display: flex; gap: 8px; align-items: center; }
+.toolbar-right { display: flex; gap: 12px; align-items: center; }
 
 .search-wrap { position: relative; display: flex; align-items: center; }
 .search-wrap input {
-  height: 40px; width: 220px;
+  height: 40px; width: 240px;
   border: 1.5px solid #e5e0d5; border-radius: 12px;
   background: #faf8f5; padding: 0 14px 0 36px;
   font-size: 13px; outline: none; transition: 0.18s;
-  /* kill browser autofill styling */
-  -webkit-appearance: none;
 }
 .search-wrap input:focus { border-color: #006566; background: white; }
-/* hide browser's native X in search input */
-.search-wrap input::-webkit-search-cancel-button { display: none; }
-.si { position: absolute; left: 11px; width: 15px; height: 15px; color: #aab0ac; pointer-events: none; flex-shrink: 0; }
+.si { position: absolute; left: 11px; width: 15px; height: 15px; color: #aab0ac; pointer-events: none; }
 
-.sec-btn, .pri-btn { height: 40px; padding: 0 16px; border-radius: 12px; border: none; cursor: pointer; font-size: 13px; transition: 0.18s; white-space: nowrap; }
-.sec-btn { background: #f3f0eb; }
+.sec-btn, .pri-btn { height: 40px; padding: 0 18px; border-radius: 12px; border: none; cursor: pointer; font-size: 13px; transition: 0.18s; white-space: nowrap; font-weight: 600; }
+.sec-btn { background: #f3f0eb; color: #1d2925; }
 .sec-btn:hover { background: #e8e4d9; }
 .pri-btn { background: #006566; color: white; box-shadow: 0 6px 18px rgba(0,101,102,0.18); }
 .pri-btn:hover { background: #00514f; }
 
-.search-hint { padding: 8px 24px; font-size: 13px; color: #73807b; background: #faf8f5; border-top: 1px solid #f2ede7; }
+.search-hint { padding: 10px 24px; font-size: 13px; color: #73807b; background: #faf8f5; border-bottom: 1px solid #f2ede7; }
 
+.table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
-th { text-align: left; padding: 14px 24px; font-size: 11px; color: #8d9792; border-top: 1px solid #f2ede7; border-bottom: 1px solid #f2ede7; letter-spacing: 0.5px; }
-td { padding: 18px 24px; border-bottom: 1px solid #f5f1ea; vertical-align: middle; }
+th { text-align: left; padding: 14px 24px; font-size: 10px; color: #8d9792; background: #faf8f5; border-bottom: 1px solid #f2ede7; letter-spacing: 0.8px; font-weight: 800; }
+td { padding: 16px 24px; border-bottom: 1px solid #f5f1ea; vertical-align: middle; }
 .muted { color: #7f8b86; font-size: 13px; }
 
 .user-info { display: flex; align-items: center; gap: 12px; }
-.av { width: 44px; height: 44px; border-radius: 14px; background: #e8f5f4; color: #006566; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; flex-shrink: 0; }
+.av { width: 40px; height: 40px; border-radius: 12px; background: #e8f5f4; color: #006566; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; flex-shrink: 0; }
 .user-info h4 { margin: 0 0 2px; color: #1d2925; font-size: 14px; }
 .user-info p { margin: 0; color: #7f8b86; font-size: 11px; }
 
-.role { padding: 5px 12px; border-radius: 999px; background: #e8f5f4; color: #006566; font-size: 12px; font-weight: 600; text-transform: capitalize; }
-.status { padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; text-transform: capitalize; }
+.role { padding: 4px 12px; border-radius: 999px; background: #e8f5f4; color: #006566; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+.status { padding: 4px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
 .status.active    { background: #e8f7f5; color: #00817f; }
 .status.inactive  { background: #fff4e3; color: #c78c1c; }
 .status.suspended { background: #ffe7e7; color: #c93b3b; }
 
-.edit-btn { height: 36px; padding: 0 16px; border-radius: 10px; border: none; background: #f3f0eb; cursor: pointer; transition: 0.18s; font-size: 13px; }
+.edit-btn { height: 34px; padding: 0 14px; border-radius: 10px; border: none; background: #f3f0eb; cursor: pointer; transition: 0.18s; font-size: 13px; font-weight: 600; }
 .edit-btn:hover { background: #e8e4d9; }
 .empty { text-align: center; color: #89938f; padding: 48px !important; font-size: 14px; }
 
 .pagination { display: flex; justify-content: flex-end; gap: 8px; padding: 20px 24px; }
-.pagination button { width: 38px; height: 38px; border-radius: 10px; border: none; background: #f3f0eb; cursor: pointer; font-size: 13px; transition: 0.18s; }
+.pagination button { width: 36px; height: 36px; border-radius: 10px; border: none; background: #f3f0eb; cursor: pointer; font-size: 13px; transition: 0.18s; font-weight: 600; }
 .pagination button:hover { background: #e8e4d9; }
 .pagination .active { background: #006566; color: white; }
 
 .toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 22px; border-radius: 14px; font-size: 13px; font-weight: 600; z-index: 9999; box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
 .toast.success { background: #e8f7f5; color: #006566; border: 1.5px solid #006566; }
 .toast.error   { background: #ffe7e7; color: #c93b3b; border: 1.5px solid #c93b3b; }
-.fade-enter-active, .fade-leave-active { transition: all 0.22s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(6px); }
 </style>

@@ -11,6 +11,24 @@ import { UserRole } from '../../shared/enums'
 export class AdminBookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
 
+  @Get('revenue-stats')
+  async getRevenueStats(@Query('range') range?: string) {
+    const stats = await this.bookingsService.getRevenueAnalytics(parseInt(range || '30'))
+    return {
+      success: true,
+      data: stats,
+    }
+  }
+
+  @Get('recent-paid')
+  async getRecentPaid(@Query('limit') limit?: string) {
+    const bookings = await this.bookingsService.getRecentPaidBookings(parseInt(limit || '10'))
+    return {
+      success: true,
+      data: bookings,
+    }
+  }
+
   @Get()
   async getBookings(
     @Query('q') q?: string,

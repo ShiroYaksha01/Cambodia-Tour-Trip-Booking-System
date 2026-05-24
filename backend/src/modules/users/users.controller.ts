@@ -40,12 +40,11 @@ export class UsersController {
     @Body() dto: UpdateUserDto,
     @Request() req: any,
   ) {
-    // Security: Only admins can change 'role' or 'status'
+    // Security: Only admins can change 'status'
     const isAdmin = req.user?.role === 'admin';
     const updateData: any = { ...dto };
 
     if (!isAdmin) {
-      delete updateData.role;
       delete updateData.status;
       
       // Also, non-admins should only be able to update their own profile

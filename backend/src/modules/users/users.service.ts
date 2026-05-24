@@ -32,19 +32,20 @@ export class UsersService {
   async updateUser(id: string, data: Partial<User> & { password?: string }) {
     const user = await this.findById(id);
 
-    const allowed = ['username', 'email', 'phoneNumber', 'profilePicture', 'status', 'role'];
+    const allowed = ['username', 'email', 'phoneNumber', 'profilePicture', 'status'];
+
     for (const key of allowed) {
       if (data[key] !== undefined) {
         user[key] = data[key];
       }
-    }
+    } // ← for loop closes here
 
     // Hash and save new password if provided
     if ((data as any).password?.trim()) {
       user.passwordHash = await bcrypt.hash((data as any).password, 10);
     }
 
-    return this.userRepo.save(user);
+    return this.userRepo.save(user); // ← return is outside the loop
   }
 
   async findAll() {

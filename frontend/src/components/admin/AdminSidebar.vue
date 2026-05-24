@@ -32,7 +32,7 @@
 <style scoped>
 .sidebar {
   width: 310px;
-  min-height: 100vh;
+  height: 100%;
   background: #173937;
   display: flex;
   flex-direction: column;
