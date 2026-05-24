@@ -31,7 +31,7 @@ Create a `.env` file in the `backend` root directory with the following variable
 
 ### Database
 - `DATABASE_HOST`: Database host (e.g., localhost)
-- `DATABASE_PORT`: Database port (e.g., 5433)
+- `DATABASE_PORT`: Database port (e.g., 5432)
 - `DATABASE_USER`: Database user
 - `DATABASE_PASSWORD`: Database password
 - `DATABASE_NAME`: Database name

@@ -186,7 +186,7 @@ The project demonstrates full-stack web development concepts including authentic
     Create a `.env` file in the `backend` folder:
     ```env
     DATABASE_HOST=localhost
-    DATABASE_PORT=5433
+    DATABASE_PORT=5432
     DATABASE_USER=your_user
     DATABASE_PASSWORD=your_password
     DATABASE_NAME=tour_booking
