@@ -78,6 +78,36 @@
         </article>
       </section>
 
+      <section class="earnings-panel">
+        <div class="panel-heading panel-heading--compact">
+          <div>
+            <p class="section-kicker">Provider Earnings Tracker</p>
+            <h2>Money Logic</h2>
+          </div>
+          <span class="chart-note">10% platform commission</span>
+        </div>
+
+        <div class="earnings-grid">
+          <article class="earnings-card earnings-card--teal">
+            <span>Total Revenue</span>
+            <strong>{{ formatMoney(earnings.totalRevenue) }}</strong>
+            <small>Sum of all paid bookings</small>
+          </article>
+
+          <article class="earnings-card earnings-card--gold">
+            <span>Platform Commission</span>
+            <strong>{{ formatMoney(earnings.platformCommission) }}</strong>
+            <small>Automatically reserved by the platform</small>
+          </article>
+
+          <article class="earnings-card earnings-card--forest">
+            <span>Payout Balance</span>
+            <strong>{{ formatMoney(earnings.payoutBalance) }}</strong>
+            <small>Actual money the provider earns</small>
+          </article>
+        </div>
+      </section>
+
       <section class="workspace-grid">
         <article class="chart-panel">
           <div class="panel-heading">
@@ -313,6 +343,18 @@ const summary = computed(() => {
     uniqueGuests,
     completedBookings: paidBookings,
     confirmationRate: totalBookings === 0 ? 0 : Math.round((paidBookings / totalBookings) * 100),
+  }
+})
+
+const earnings = computed(() => {
+  const totalRevenue = summary.value.paidRevenue
+  const platformCommission = totalRevenue * 0.1
+  const payoutBalance = totalRevenue - platformCommission
+
+  return {
+    totalRevenue,
+    platformCommission,
+    payoutBalance,
   }
 })
 
@@ -577,6 +619,62 @@ onMounted(() => {
 .summary-card--gold { border-top-color: #c68a22; }
 .summary-card--red { border-top-color: #e03a3a; }
 .summary-card--forest { border-top-color: #4a7a65; }
+
+.earnings-panel {
+  display: grid;
+  gap: 12px;
+  padding: 18px 16px 16px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(20, 31, 31, 0.07);
+}
+
+.panel-heading--compact h2 {
+  margin-top: 0;
+  color: #1b3031;
+  font-size: 1rem;
+}
+
+.earnings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.earnings-card {
+  padding: 16px 14px 14px;
+  border-radius: 14px;
+  background: #fbfcfb;
+  border: 1px solid #eef1f0;
+  border-top: 3px solid transparent;
+}
+
+.earnings-card span {
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: #7f8b88;
+  text-transform: uppercase;
+}
+
+.earnings-card strong {
+  display: block;
+  margin-top: 8px;
+  color: #173f42;
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.earnings-card small {
+  display: block;
+  margin-top: 6px;
+  color: #6c7b77;
+  font-size: 0.78rem;
+}
+
+.earnings-card--teal { border-top-color: #1b8d90; }
+.earnings-card--gold { border-top-color: #c68a22; }
+.earnings-card--forest { border-top-color: #4a7a65; }
 
 .workspace-grid {
   display: grid;
