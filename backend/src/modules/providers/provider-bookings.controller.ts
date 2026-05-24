@@ -13,6 +13,18 @@ export class ProviderBookingsController {
     return this.providerBookingsService.findBookingsForProvider(request.user);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('dashboard-stats')
+  getDashboardStats(@Req() request: { user: { userId: string; role: string } }) {
+    return this.providerBookingsService.getDashboardStats(request.user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('inventory-matrix')
+  getInventoryMatrix(@Req() request: { user: { userId: string; role: string } }) {
+    return this.providerBookingsService.getInventoryMatrix(request.user);
+  }
+
   // Dev-only: return sample bookings for quick local preview
   @Get('bookings/mock')
   getMockBookings() {

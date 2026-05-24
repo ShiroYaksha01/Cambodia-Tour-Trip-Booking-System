@@ -34,7 +34,7 @@ export class TourPackage {
   endDate: Date;
 
   @Column({ name: 'departure_point', type: 'text', nullable: true })
-  departurePoint: string;
+  departurePoint: string | null;
 
   @Column({ name: 'destination', type: 'text' })
   destination: string;

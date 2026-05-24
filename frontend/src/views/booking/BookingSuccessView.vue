@@ -26,7 +26,7 @@
           <div class="bg-[#f7fbfa] rounded-3xl p-6 border border-[#0e7f76]/10 text-left mb-10 space-y-4">
              <div class="flex justify-between items-center">
                 <span class="text-[0.65rem] font-bold text-[#8b9498] uppercase tracking-widest">Reference</span>
-                <span class="text-sm font-bold text-[#142125] font-mono">{{ bookingId.slice(0, 13) }}...</span>
+                <span class="text-sm font-bold text-[#142125] font-mono">{{ referenceCode || bookingId.slice(0, 8).toUpperCase() }}</span>
              </div>
              <div class="flex justify-between items-center">
                 <span class="text-[0.65rem] font-bold text-[#8b9498] uppercase tracking-widest">Expedition Date</span>
@@ -75,6 +75,7 @@ import { apiGet } from '../../utils/api'
 const router = useRouter()
 const route = useRoute()
 const bookingId = ref('')
+const referenceCode = ref('')
 const bookingDate = ref('')
 
 const goToHistory = () => {
@@ -89,13 +90,16 @@ onMounted(async () => {
   bookingId.value = id
 
   try {
-    const response = await apiGet<{ success: boolean; data: { bookingDate?: string } }>(`/booking/${id}`)
-    if (response.success && response.data.bookingDate) {
-      bookingDate.value = new Date(response.data.bookingDate).toLocaleDateString('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric'
-      })
+    const response = await apiGet<{ success: boolean; data: { bookingDate?: string; referenceCode?: string } }>(`/booking/${id}`)
+    if (response.success && response.data) {
+      referenceCode.value = response.data.referenceCode || ''
+      if (response.data.bookingDate) {
+        bookingDate.value = new Date(response.data.bookingDate).toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric'
+        })
+      }
     }
   } catch {
     // Already confirmed, just show fallback

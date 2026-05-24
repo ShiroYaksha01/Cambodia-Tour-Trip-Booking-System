@@ -1,7 +1,7 @@
 <template>
   <main class="simple-page">
     <nav class="navbar">
-      <div class="navbar-brand">Anajak Tour</div>
+      <RouterLink to="/" class="navbar-brand">Anajak Tour</RouterLink>
       <ul class="nav-menu">
         <li><a href="#home">Home</a></li>
         <li><a href="#tours">Tours</a></li>
@@ -98,6 +98,7 @@ function selectRole(role: 'admin' | 'provider' | 'customer') {
   font-size: 1.5rem;
   font-weight: 700;
   color: #333;
+  text-decoration: none;
 }
 
 .nav-menu {

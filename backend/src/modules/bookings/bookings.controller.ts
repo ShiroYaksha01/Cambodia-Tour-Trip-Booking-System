@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Param, UseGuards, Request } from '@nestjs/
 import { BookingsService } from './bookings.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('booking')
@@ -36,5 +37,11 @@ export class BookingsController {
       success: true,
       data: booking,
     };
+  }
+
+  @Post('payment/success')
+  async confirmPayment(@Body() dto: ConfirmPaymentDto) {
+    const booking = await this.bookingsService.confirmPayment(dto.bookingId, dto.transactionId);
+    return { success: true, data: booking };
   }
 }

@@ -39,6 +39,51 @@ export const getProviderBookings = (params?: any) => api.get(`/provider/bookings
   return { data: mockProviderBookings() }
 })
 
+export const getProviderDashboardStats = () => api.get(`/provider/dashboard-stats`).catch(() => ({
+  data: {
+    avgOccupancy: '84.2%',
+    revpar: '$142.50',
+    lowStockAlerts: '04',
+    khmerNewYear: '98%',
+  }
+}))
+
+export const getProviderInventoryMatrix = () => api.get(`/provider/inventory-matrix`).catch(() => ({
+  data: [
+    {
+      id: '1',
+      title: 'Angkor Wat Sunrise Premium',
+      description: 'Daily Departure (4am)',
+      price: 85,
+      remaining: 19,
+      total: 50,
+      isClosed: false,
+    },
+    {
+      id: '2',
+      title: 'Floating Village Photography',
+      description: 'Afternoon Boat Tour',
+      price: 45,
+      remaining: 14,
+      total: 30,
+      isClosed: false,
+    },
+    {
+      id: '3',
+      title: 'Khmer Cooking Masterclass',
+      description: 'Limited to 12 Pax',
+      price: 65,
+      remaining: 7,
+      total: 12,
+      isClosed: false,
+    },
+  ]
+}))
+
+export const createService = (data: any) => api.post('/services', data);
+export const updateService = (id: string, data: any) => api.patch(`/services/${id}`, data);
+export const deleteService = (id: string) => api.delete(`/services/${id}`);
+
 function mockProviderBookings() {
   return [
     {
@@ -61,4 +106,7 @@ function mockProviderBookings() {
     },
   ]
 }
+
+export const getAdminDashboardSummary = () => api.get(`/admin/dashboard`).then(res => res.data)
+
 export default api;

@@ -25,9 +25,7 @@ const emit = defineEmits(['search'])
   height: 100vh;
   display: grid;
   grid-template-columns: 290px minmax(0, 1fr);
-  gap: 18px;
-  padding: 16px;
-  background: black;
+  background: #f4f1ec; /* Using the development light theme background */
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -42,7 +40,6 @@ const emit = defineEmits(['search'])
   flex-direction: column;
   height: 100%;
   background: linear-gradient(180deg, #f3f3f2 0%, #f8f8f6 100%);
-  border-radius: 24px;
   overflow: hidden;
 }
 
