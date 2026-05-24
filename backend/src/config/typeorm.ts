@@ -7,7 +7,8 @@ dotenvConfig({ path: '.env' });
 
 const commonConfig = {
     type: 'postgres' as const,
-    entities: ["dist/**/*.entity{.ts,.js}"],
+    // support both compiled (dist) and TS source (src) paths so tests and dev run correctly
+    entities: ["dist/**/*.entity{.ts,.js}", "src/**/*.entity{.ts,.js}"],
     migrations: ["dist/migrations/*{.ts,.js}"],
     autoLoadEntities: true,
     synchronize: false,

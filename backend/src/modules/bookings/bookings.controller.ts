@@ -19,6 +19,13 @@ export class BookingsController {
     };
   }
 
+  @Post('cancel')
+  async cancelBooking(@Request() req: any, @Body() body: { bookingId: string; refund?: boolean }) {
+    const userId = req.user.userId;
+    const booking = await this.bookingsService.cancelBooking(body.bookingId, userId, !!body.refund);
+    return { success: true, data: booking };
+  }
+
   @Get('user')
   async getUserBookings(@Request() req: any) {
     const userId = req.user.userId;

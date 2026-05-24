@@ -9,6 +9,7 @@ import { Booking } from './entities/booking.entity';
 import { BookingStatus, PaymentStatus } from '../../shared/enums';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { Service } from '../services/entities/service.entity';
+import { ServiceInventory } from '../services/entities/service-inventory.entity';
 
 @Injectable()
 export class BookingsService {
@@ -17,6 +18,8 @@ export class BookingsService {
     private readonly bookingRepository: Repository<Booking>,
     @InjectRepository(Service)
     private readonly serviceRepository: Repository<Service>,
+    @InjectRepository(ServiceInventory)
+    private readonly inventoryRepository: Repository<ServiceInventory>,
   ) {}
 
   async createBooking(
@@ -35,6 +38,16 @@ export class BookingsService {
     });
     if (!service) {
       throw new NotFoundException('Service not found');
+    }
+
+    // Check inventory availability at booking time
+    const inventory = await this.inventoryRepository.findOne({ where: { serviceId } });
+    if (!inventory) {
+      throw new NotFoundException('Service inventory not found');
+    }
+
+    if ((inventory.totalCapacity - inventory.bookedCount) < quantity) {
+      throw new BadRequestException('Not enough seats available for the requested quantity');
     }
 
     // Calculate total price
@@ -57,22 +70,30 @@ export class BookingsService {
   }
 
   async processPayment(bookingId: string, userId: string): Promise<Booking> {
-    const booking = await this.bookingRepository.findOne({
-      where: { id: bookingId, userId },
+    return this.bookingRepository.manager.transaction(async (manager) => {
+      const bookingRepo = manager.getRepository(Booking);
+      const inventoryRepo = manager.getRepository(ServiceInventory);
+
+      const booking = await bookingRepo.findOne({ where: { id: bookingId, userId } });
+      if (!booking) throw new NotFoundException('Booking not found');
+      if (booking.paymentStatus === PaymentStatus.PAID) throw new BadRequestException('Booking is already paid');
+
+      const inventory = await inventoryRepo.findOne({ where: { serviceId: booking.serviceId } });
+      if (!inventory) throw new NotFoundException('Service inventory not found');
+
+      if ((inventory.totalCapacity - inventory.bookedCount) < booking.quantity) {
+        throw new BadRequestException('Not enough seats available for this booking');
+      }
+
+      inventory.bookedCount = inventory.bookedCount + booking.quantity;
+      if (inventory.bookedCount >= inventory.totalCapacity) inventory.isClosed = true;
+      await inventoryRepo.save(inventory);
+
+      booking.paymentStatus = PaymentStatus.PAID;
+      booking.bookingStatus = BookingStatus.CONFIRMED;
+
+      return bookingRepo.save(booking);
     });
-
-    if (!booking) {
-      throw new NotFoundException('Booking not found');
-    }
-
-    if (booking.paymentStatus === PaymentStatus.PAID) {
-      throw new BadRequestException('Booking is already paid');
-    }
-
-    booking.paymentStatus = PaymentStatus.PAID;
-    booking.bookingStatus = BookingStatus.CONFIRMED;
-
-    return this.bookingRepository.save(booking);
   }
 
   async getUserBookings(userId: string): Promise<Booking[]> {
@@ -94,6 +115,37 @@ export class BookingsService {
     }
 
     return booking;
+  }
+
+  async cancelBooking(bookingId: string, userId: string, refund = false): Promise<Booking> {
+    return this.bookingRepository.manager.transaction(async (manager) => {
+      const bookingRepo = manager.getRepository(Booking);
+      const inventoryRepo = manager.getRepository(ServiceInventory);
+
+      const booking = await bookingRepo.findOne({ where: { id: bookingId, userId } });
+      if (!booking) throw new NotFoundException('Booking not found');
+
+      if (booking.bookingStatus === BookingStatus.CANCELLED) {
+        return booking;
+      }
+
+      // If this booking was paid, release seats back to inventory
+      if (booking.paymentStatus === PaymentStatus.PAID) {
+        const inventory = await inventoryRepo.findOne({ where: { serviceId: booking.serviceId } });
+        if (!inventory) throw new NotFoundException('Service inventory not found');
+
+        inventory.bookedCount = Math.max(0, inventory.bookedCount - booking.quantity);
+        if (inventory.bookedCount < inventory.totalCapacity) inventory.isClosed = false;
+        await inventoryRepo.save(inventory);
+
+        if (refund) {
+          booking.paymentStatus = PaymentStatus.REFUNDED;
+        }
+      }
+
+      booking.bookingStatus = BookingStatus.CANCELLED;
+      return bookingRepo.save(booking);
+    });
   }
 
   async getAdminBookings(q?: string, status?: string, paymentStatus?: string): Promise<Booking[]> {
@@ -137,12 +189,28 @@ export class BookingsService {
   }
 
   async confirmPayment(bookingId: string, transactionId?: string): Promise<Booking> {
-    const booking = await this.bookingRepository.findOne({ where: { id: bookingId } });
-    if (!booking) throw new NotFoundException('Booking not found');
+    return this.bookingRepository.manager.transaction(async (manager) => {
+      const bookingRepo = manager.getRepository(Booking);
+      const inventoryRepo = manager.getRepository(ServiceInventory);
 
-    booking.paymentStatus = PaymentStatus.PAID;
-    if (transactionId) booking.transactionId = transactionId;
+      const booking = await bookingRepo.findOne({ where: { id: bookingId } });
+      if (!booking) throw new NotFoundException('Booking not found');
 
-    return this.bookingRepository.save(booking);
+      const inventory = await inventoryRepo.findOne({ where: { serviceId: booking.serviceId } });
+      if (!inventory) throw new NotFoundException('Service inventory not found');
+
+      if ((inventory.totalCapacity - inventory.bookedCount) < booking.quantity) {
+        throw new BadRequestException('Not enough seats available for this booking');
+      }
+
+      inventory.bookedCount = inventory.bookedCount + booking.quantity;
+      if (inventory.bookedCount >= inventory.totalCapacity) inventory.isClosed = true;
+      await inventoryRepo.save(inventory);
+
+      booking.paymentStatus = PaymentStatus.PAID;
+      if (transactionId) booking.transactionId = transactionId;
+
+      return bookingRepo.save(booking);
+    });
   }
 }
