@@ -138,7 +138,7 @@ const exportReport = () => alert('Exporting revenue report...')
 </script>
 
 <template>
-  <AdminLayout breadcrumb="Management / Revenue Analytics">
+  <AdminLayout breadcrumb="Management / Revenue Analytics" @search="(q) => searchQuery = q">
     <div class="page-header">
       <div class="header-left">
         <h1>Financial Overview</h1>
@@ -200,15 +200,9 @@ const exportReport = () => alert('Exporting revenue report...')
         <div class="toolbar">
           <h3>Recent Paid Bookings</h3>
           <div class="toolbar-right">
-            <div class="search-wrap">
-              <svg class="si" viewBox="0 0 20 20" fill="none">
-                <circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="1.5"/>
-                <path d="M13 13L17 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
-              <input v-model="searchQuery" type="search" placeholder="Search booking or customer..." />
-            </div>
             <button class="sec-btn" @click="exportReport">Export Report</button>
           </div>
+
         </div>
 
         <div class="table-wrap">

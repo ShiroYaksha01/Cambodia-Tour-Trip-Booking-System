@@ -156,7 +156,7 @@ onMounted(fetchUsers)
 </script>
 
 <template>
-  <AdminLayout breadcrumb="Management / Manage Users">
+  <AdminLayout breadcrumb="Management / Manage Users" @search="(q) => search = q">
     <div class="page-header">
       <div class="header-left">
         <h1>Users Management</h1>
@@ -196,18 +196,6 @@ onMounted(fetchUsers)
           >{{ tab }}</button>
         </div>
         <div class="toolbar-right">
-          <div class="search-wrap">
-            <svg class="si" viewBox="0 0 20 20" fill="none">
-              <circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="1.5"/>
-              <path d="M13 13L17 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
-            <input
-              v-model="search"
-              type="search"
-              placeholder="Search name or email..."
-              @search="clearSearch"
-            />
-          </div>
           <button class="sec-btn" title="Refresh Data" @click="fetchUsers">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M23 4v6h-6"></path>
