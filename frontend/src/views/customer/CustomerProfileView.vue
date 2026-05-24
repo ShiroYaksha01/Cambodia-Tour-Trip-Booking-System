@@ -314,7 +314,11 @@ async function fetchProfile() {
 
   try {
     const response = await api.get("/users/me");
-    const profile = response.data.data;
+    const profile = response.data.data || response.data;
+
+    if (!profile) {
+      throw new Error("Profile data not found in response");
+    }
 
     user.value = {
       id: profile.id || "",
