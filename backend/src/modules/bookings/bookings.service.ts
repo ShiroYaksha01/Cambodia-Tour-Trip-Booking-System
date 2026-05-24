@@ -46,6 +46,7 @@ export class BookingsService {
     // Calculate total price
     const totalAmount = service.price * quantity;
     const transactionId = `TX-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+    const referenceCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
     const booking = this.bookingRepository.create({
       userId,
@@ -57,6 +58,7 @@ export class BookingsService {
       bookingStatus: BookingStatus.PENDING,
       paymentStatus: PaymentStatus.PENDING,
       transactionId,
+      referenceCode,
     });
 
     return this.bookingRepository.save(booking);

@@ -217,43 +217,46 @@ export class ServicesService {
       const type = serviceType || existingService.serviceType;
       
       if (type === ServiceType.TOUR) {
+        const existingTour = existingService.tourPackage || {};
         await queryRunner.manager.upsert(TourPackage, {
           serviceId: id,
-          ...(metadata.numDays && { numDays: metadata.numDays }),
-          ...(metadata.maxPeople && { maxPeople: metadata.maxPeople }),
-          ...(price !== undefined && { basePrice: price }),
-          ...(metadata.travelDate && { travelDate: new Date(metadata.travelDate) }),
-          ...(metadata.endDate && { endDate: new Date(metadata.endDate) }),
-          ...(metadata.departurePoint !== undefined && { departurePoint: metadata.departurePoint || null }),
-          ...(metadata.destination !== undefined && { destination: metadata.destination }),
-          ...(metadata.includesAccommodation !== undefined && { includesAccommodation: metadata.includesAccommodation }),
-          ...(metadata.includesTransportation !== undefined && { includesTransportation: metadata.includesTransportation }),
-          ...(metadata.includesMeals !== undefined && { includesMeals: metadata.includesMeals }),
+          numDays: metadata.numDays ?? existingTour.numDays ?? 1,
+          maxPeople: metadata.maxPeople ?? existingTour.maxPeople ?? 10,
+          basePrice: price ?? existingTour.basePrice ?? existingService.price,
+          travelDate: metadata.travelDate ? new Date(metadata.travelDate) : (existingTour.travelDate ? new Date(existingTour.travelDate) : new Date()),
+          endDate: metadata.endDate ? new Date(metadata.endDate) : (existingTour.endDate ? new Date(existingTour.endDate) : new Date()),
+          departurePoint: metadata.departurePoint !== undefined ? (metadata.departurePoint || null) : (existingTour.departurePoint ?? null),
+          destination: metadata.destination || existingTour.destination || location || existingService.location || 'Unknown',
+          includesAccommodation: metadata.includesAccommodation !== undefined ? metadata.includesAccommodation : (existingTour.includesAccommodation ?? true),
+          includesTransportation: metadata.includesTransportation !== undefined ? metadata.includesTransportation : (existingTour.includesTransportation ?? true),
+          includesMeals: metadata.includesMeals !== undefined ? metadata.includesMeals : (existingTour.includesMeals ?? false),
         } as any, ['serviceId']);
       } else if (type === ServiceType.ACCOMMODATION) {
+        const existingAcc = existingService.accommodation || {};
         await queryRunner.manager.upsert(Accommodation, {
           serviceId: id,
-          ...(metadata.hotelName && { hotelName: metadata.hotelName }),
-          ...(metadata.address !== undefined && { address: metadata.address || null }),
-          ...(metadata.starRating !== undefined && { starRating: metadata.starRating }),
-          ...(metadata.roomType && { roomType: metadata.roomType }),
-          ...(metadata.totalRooms !== undefined && { totalRooms: metadata.totalRooms }),
-          ...(price !== undefined && { pricePerNight: price }),
-          ...(metadata.checkInTime && { checkInTime: metadata.checkInTime }),
-          ...(metadata.checkOutTime && { checkOutTime: metadata.checkOutTime }),
+          hotelName: metadata.hotelName || existingAcc.hotelName || title || existingService.title,
+          address: metadata.address !== undefined ? (metadata.address || null) : (existingAcc.address ?? null),
+          starRating: metadata.starRating !== undefined ? metadata.starRating : (existingAcc.starRating ?? 3),
+          roomType: metadata.roomType || existingAcc.roomType || 'Standard',
+          totalRooms: metadata.totalRooms !== undefined ? metadata.totalRooms : (existingAcc.totalRooms ?? 1),
+          pricePerNight: price ?? existingAcc.pricePerNight ?? existingService.price,
+          checkInTime: metadata.checkInTime || existingAcc.checkInTime || '14:00',
+          checkOutTime: metadata.checkOutTime || existingAcc.checkOutTime || '12:00',
         } as any, ['serviceId']);
       } else if (type === ServiceType.TRANSPORTATION) {
+        const existingTrans = existingService.transportation || {};
         await queryRunner.manager.upsert(Transportation, {
           serviceId: id,
-          ...(metadata.transportType && { transportType: metadata.transportType }),
-          ...(metadata.vehicleModel !== undefined && { vehicleModel: metadata.vehicleModel || null }),
-          ...(metadata.totalSeats !== undefined && { totalSeats: metadata.totalSeats }),
-          ...(price !== undefined && { pricePerSeat: price }),
-          ...(metadata.departurePoint !== undefined && { departurePoint: metadata.departurePoint }),
-          ...(metadata.destination !== undefined && { destination: metadata.destination }),
-          ...(metadata.departureTime && { departureTime: new Date(metadata.departureTime) }),
-          ...(metadata.arrivalTime !== undefined && { arrivalTime: metadata.arrivalTime ? new Date(metadata.arrivalTime) : null }),
-          ...(metadata.pickupNotes !== undefined && { pickupNotes: metadata.pickupNotes || null }),
+          transportType: metadata.transportType || existingTrans.transportType || 'van',
+          vehicleModel: metadata.vehicleModel !== undefined ? (metadata.vehicleModel || null) : (existingTrans.vehicleModel ?? null),
+          totalSeats: metadata.totalSeats !== undefined ? metadata.totalSeats : (existingTrans.totalSeats ?? 1),
+          pricePerSeat: price ?? existingTrans.pricePerSeat ?? existingService.price,
+          departurePoint: metadata.departurePoint || existingTrans.departurePoint || location || existingService.location || 'Unknown',
+          destination: metadata.destination || existingTrans.destination || 'Unknown',
+          departureTime: metadata.departureTime ? new Date(metadata.departureTime) : (existingTrans.departureTime ? new Date(existingTrans.departureTime) : new Date()),
+          arrivalTime: metadata.arrivalTime !== undefined ? (metadata.arrivalTime ? new Date(metadata.arrivalTime) : null) : (existingTrans.arrivalTime ? new Date(existingTrans.arrivalTime) : null),
+          pickupNotes: metadata.pickupNotes !== undefined ? (metadata.pickupNotes || null) : (existingTrans.pickupNotes ?? null),
         } as any, ['serviceId']);
       }
 

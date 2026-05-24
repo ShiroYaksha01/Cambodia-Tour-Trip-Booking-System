@@ -317,17 +317,60 @@ function openEditModal(service: any) {
   showModal.value = true
 }
 
+function cleanServicePayload(formData: any) {
+  const payload: any = {}
+  
+  // Whitelist of fields from CreateServiceDto/UpdateServiceDto
+  const allowedFields = [
+    'serviceType', 'title', 'description', 'price', 'isActive', 
+    'image', 'location', 'rating', 'duration', 'totalCapacity',
+    'numDays', 'maxPeople', 'travelDate', 'endDate', 
+    'departurePoint', 'destination', 'includesAccommodation', 
+    'includesTransportation', 'includesMeals',
+    'hotelName', 'address', 'starRating', 'roomType', 
+    'totalRooms', 'checkInTime', 'checkOutTime',
+    'transportType', 'vehicleModel', 'totalSeats', 
+    'departureTime', 'arrivalTime', 'pickupNotes'
+  ]
+
+  allowedFields.forEach(field => {
+    const value = formData[field]
+    if (value !== undefined && value !== null && value !== '') {
+      // Convert numeric fields
+      if ([
+        'price', 'rating', 'totalCapacity', 'numDays', 'maxPeople', 
+        'starRating', 'totalRooms', 'totalSeats'
+      ].includes(field)) {
+        payload[field] = Number(value)
+      } 
+      // Convert boolean fields
+      else if ([
+        'isActive', 'includesAccommodation', 'includesTransportation', 'includesMeals'
+      ].includes(field)) {
+        payload[field] = Boolean(value)
+      }
+      else {
+        payload[field] = value
+      }
+    }
+  })
+
+  return payload
+}
+
 async function handleSaveService(formData: any) {
   try {
+    const payload = cleanServicePayload(formData)
     if (selectedService.value && selectedService.value.id.length > 5) {
-      await updateService(selectedService.value.id, formData)
+      await updateService(selectedService.value.id, payload)
     } else {
-      await createService(formData)
+      await createService(payload)
     }
     showModal.value = false
     await fetchData()
   } catch (error) {
-    alert('Failed to save service')
+    console.error('Save failed:', error)
+    alert('Failed to save service. Check console for details.')
   }
 }
 
