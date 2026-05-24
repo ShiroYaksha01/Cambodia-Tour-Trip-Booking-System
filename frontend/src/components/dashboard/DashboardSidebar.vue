@@ -78,11 +78,11 @@ type NavItem = {
 const navMap: Record<DashboardRole, NavItem[]> = {
   admin: [
     { label: 'Dashboard', description: 'Financial overview', href: '/admin/dashboard', icon: '◌' },
-    { label: 'Clients', description: 'Manage customer accounts', href: '#bookings', icon: '👤' },
+    { label: 'ManageUsers', description: 'Manage customer accounts', href: '/admin/manage-users', icon: '👤' },
     { label: 'Providers', description: 'Vendors and partners', href: '/admin/providers', icon: '▣' },
-    { label: 'Package Oversight', description: 'Trip quality review', href: '#reports', icon: '⌁' },
+    { label: 'Revenue', description: 'Financial analytics', href: '/admin/revenue', icon: '💰' },
     { label: 'Booking Ledger', description: 'Settlement activity', href: '/admin/bookings', icon: '⌕' },
-    { label: 'Finance & Escrow', description: 'Transactions and holds', href: '#reports', icon: '◫' },
+    { label: 'Package Oversight', description: 'Trip quality review', href: '#reports', icon: '⌁' },
     { label: 'Payment Logs', description: 'Recent payment records', href: '#reports', icon: '≡' },
     { label: 'Review Moderation', description: 'Content and ratings', href: '#reports', icon: '✦' },
     { label: 'Support Tickets', description: 'Customer escalations', href: '#reports', icon: '✉' },
@@ -123,7 +123,7 @@ export default defineComponent({
 
 <style scoped>
 .sidebar-shell {
-  min-height: 100%;
+  height: 100%;
   border-radius: 22px;
   overflow: hidden;
   background: #f6f6f4;
@@ -136,7 +136,7 @@ export default defineComponent({
 }
 
 .sidebar-inner {
-  min-height: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -307,6 +307,12 @@ export default defineComponent({
   border-color: rgba(15, 110, 112, 0.08);
 }
 
+.router-link-active.nav-item {
+  background: rgba(15, 110, 112, 0.08) !important;
+  border-color: rgba(15, 110, 112, 0.12) !important;
+  transform: translateX(4px);
+}
+
 .nav-item__icon {
   width: 20px;
   height: 20px;
@@ -314,6 +320,10 @@ export default defineComponent({
   place-items: center;
   font-size: 0.86rem;
   color: #6d7e7b;
+}
+
+.router-link-active .nav-item__icon {
+  color: #0f6e70;
 }
 
 .nav-item strong,

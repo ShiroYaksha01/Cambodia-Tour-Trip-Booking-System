@@ -7,13 +7,34 @@ const router = useRouter()
 const showProfile = ref(false)
 
 const authUser = computed(() => {
-  try { return JSON.parse(localStorage.getItem('auth_user') || '{}') }
-  catch { return {} }
+  try { 
+    const stored = localStorage.getItem('auth_user')
+    if (stored) return JSON.parse(stored)
+    // Fallback to seeded admin data if not in storage (for dev convenience)
+    return {
+      username: 'admin',
+      email: 'admin@tourbooking.local',
+      role: 'admin'
+    }
+  }
+  catch { 
+    return { username: 'admin', email: 'admin@tourbooking.local', role: 'admin' } 
+  }
 })
+
 const adminName    = computed(() => authUser.value?.username || 'Admin')
-const adminEmail   = computed(() => authUser.value?.email    || '—')
+const adminEmail   = computed(() => authUser.value?.email    || 'admin@tourbooking.local')
 const adminRole    = computed(() => authUser.value?.role     || 'admin')
 const adminInitial = computed(() => adminName.value.charAt(0).toUpperCase())
+
+const displayBreadcrumb = computed(() => {
+  if (!props.breadcrumb) return 'Management / Central'
+  const parts = props.breadcrumb.split(' / ')
+  if (parts.length > 1) {
+    return `${parts[0]} / <span>${parts[1]}</span>`
+  }
+  return props.breadcrumb
+})
 
 const handleLogout = () => {
   localStorage.removeItem('token')
@@ -26,9 +47,7 @@ const handleLogout = () => {
 <template>
   <header class="navbar">
     <!-- Left: breadcrumb -->
-    <div class="breadcrumb">
-      <p>Management / <span>User & Provider Central</span></p>
-    </div>
+    <div class="breadcrumb" v-html="displayBreadcrumb"></div>
 
     <!-- Right: profile only -->
     <div class="profile" @click="showProfile = true">

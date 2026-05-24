@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import AdminNavbar from './AdminNavbar.vue'
-import AdminSidebar from './AdminSidebar.vue'
+import DashboardSidebar from '../dashboard/DashboardSidebar.vue'
 
+const props = defineProps<{ breadcrumb?: string }>()
 const emit = defineEmits(['search'])
 </script>
 
 <template>
-  <div class="layout">
-    <AdminSidebar />
+  <div class="admin-shell">
+    <DashboardSidebar role="admin" class="sidebar-fixed" />
 
-    <div class="main">
-      <AdminNavbar @search="(q) => emit('search', q)" />
+    <div class="main-container">
+      <AdminNavbar :breadcrumb="props.breadcrumb" @search="(q) => emit('search', q)" />
 
       <div class="page-content">
         <slot />
@@ -20,24 +21,34 @@ const emit = defineEmits(['search'])
 </template>
 
 <style scoped>
-* { box-sizing: border-box; }
-
-.layout {
-  display: flex;
-  min-height: 100vh;
-  background: #f4f1ec;
-  font-family: Inter, sans-serif;
+.admin-shell {
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 290px minmax(0, 1fr);
+  gap: 18px;
+  padding: 16px;
+  background: black;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
-.main {
-  flex: 1;
+.sidebar-fixed {
+  height: 100%;
+}
+
+.main-container {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  background: linear-gradient(180deg, #f3f3f2 0%, #f8f8f6 100%);
+  border-radius: 24px;
+  overflow: hidden;
 }
 
 .page-content {
   flex: 1;
-  padding: 34px;
+  padding: 24px 30px;
+  overflow-y: auto;
 }
 </style>

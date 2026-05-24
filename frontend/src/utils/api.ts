@@ -88,6 +88,7 @@ export async function apiGet<T>(path: string): Promise<T> {
     headers: {
       ...getAuthHeaders(),
     },
+    cache: 'no-store', // Prevent aggressive browser caching
   })
 
   const payload = await parseResponse(response)
