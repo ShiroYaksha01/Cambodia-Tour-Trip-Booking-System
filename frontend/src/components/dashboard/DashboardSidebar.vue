@@ -100,64 +100,52 @@ type NavItem = {
   description: string;
   href: string;
   icon: string;
-  group?: "Main" | "Management" | "Support";
+  group?: "Main" | "Management";
 };
 
 const navMap: Record<DashboardRole, NavItem[]> = {
   admin: [
     {
       label: "Dashboard",
-      description: "Financial overview",
+      description: "Overview",
       href: "/admin/dashboard",
-      icon: "⌾",
+      icon: "⌂",
+      group: "Main",
     },
     {
       label: "Users",
       description: "Manage user accounts",
       href: "/admin/users",
-      icon: "◭",
+      icon: "👤",
+      group: "Management",
     },
     {
       label: "Providers",
       description: "Vendors and partners",
       href: "/admin/providers",
-      icon: "▣",
+      icon: "□",
+      group: "Management",
     },
     {
-      label: "Package Oversight",
-      description: "Trip quality review",
-      href: "#reports",
-      icon: "⌁",
+      label: "Packages",
+      description: "Quality review",
+      href: "#packages",
+      icon: "◇",
+      group: "Management",
     },
     {
-      label: "Booking Ledger",
-      description: "Settlement activity",
+      label: "Bookings",
+      description: "Ledger",
       href: "/admin/bookings",
-      icon: "○",
-    },
-    {
-      label: "Finance & Escrow",
-      description: "Transactions and holds",
-      href: "#reports",
-      icon: "▥",
-    },
-    {
-      label: "Payment Logs",
-      description: "Recent payment records",
-      href: "#reports",
       icon: "≡",
+      group: "Management",
     },
     {
-      label: "Review Moderation",
-      description: "Content and ratings",
-      href: "#reports",
-      icon: "✦",
-    },
-    {
-      label: "Support Tickets",
-      description: "Customer escalations",
-      href: "#reports",
-      icon: "✉",
+      label: "Finance",
+      description: "Revenue & transactions",
+      href: "#finance",
+      icon: "$",
+      group: "Management",
     },
   ],
   provider: [
@@ -210,7 +198,7 @@ export default defineComponent({
       return navMap[this.role];
     },
     groupedNavItems(): Array<{ label: string; items: NavItem[] }> {
-      const groups: Array<NavItem["group"]> = ["Main", "Management", "Support"];
+      const groups: Array<NavItem["group"]> = ["Main", "Management"];
       return groups
         .map((group) => ({
           label: group || "",
