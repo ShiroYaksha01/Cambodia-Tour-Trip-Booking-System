@@ -23,14 +23,6 @@
         </div>
 
         <div class="topbar-actions">
-          <button class="icon-button notification-btn" type="button" aria-label="Notifications">
-            <span aria-hidden="true">○</span>
-            <span v-if="notificationCount" class="notification-badge">{{ notificationCount }}</span>
-          </button>
-          <button class="icon-button" type="button" aria-label="Toggle Theme">
-            <span aria-hidden="true">◐</span>
-          </button>
-
           <div class="profile-chip">
             <div class="avatar">AS</div>
             <div class="profile-meta">
@@ -834,37 +826,31 @@ const formatRelativeTime = (dateStr: string): string => {
   padding: 0;
   background: #ffffff; /* pure white sidebar container base */
   box-sizing: border-box;
-<<<<<<< HEAD:frontend/src/views/dashboards/AdminDashboardView.vue
   font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: #173f42;
+  overflow: hidden;
 }
 
 .admin-main-area {
   display: flex;
   flex-direction: column;
   background: #f8fafb; /* The light page backdrop exactly matching the mockup */
-  min-height: 100vh;
-=======
+  height: 100vh;
   overflow: hidden;
->>>>>>> 05e91c7cedad26aac52e8543ad44910700c128de:frontend/src/views/admin/AdminDashboardView.vue
+}
+
+.admin-viewport-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .admin-content {
   min-width: 0;
-<<<<<<< HEAD:frontend/src/views/dashboards/AdminDashboardView.vue
   padding: 32px;
   display: flex;
   flex-direction: column;
   gap: 24px;
-=======
-  padding: 14px 18px 18px 2px;
-  display: grid;
-  gap: 18px;
-  background: linear-gradient(180deg, #f3f3f2 0%, #f8f8f6 100%);
-  border-radius: 24px;
-  position: relative;
-  overflow-y: auto;
->>>>>>> 05e91c7cedad26aac52e8543ad44910700c128de:frontend/src/views/admin/AdminDashboardView.vue
 }
 
 /* Sidebar Custom Styling - Scoped overrides to look EXACTLY like the mockup */

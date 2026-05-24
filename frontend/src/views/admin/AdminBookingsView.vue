@@ -23,12 +23,6 @@
         </div>
 
         <div class="topbar-actions">
-          <div class="icon-button" aria-label="Notifications">
-            <span class="notification-badge">3</span>
-            <span aria-hidden="true">○</span>
-          </div>
-          <button class="icon-button" aria-label="Toggle theme">◐</button>
-          
           <div class="profile-chip">
             <div class="avatar">AS</div>
             <div class="profile-meta">
@@ -523,7 +517,6 @@ onMounted(() => {
   height: 100vh;
   display: grid;
   grid-template-columns: 264px minmax(0, 1fr);
-<<<<<<< HEAD:frontend/src/views/dashboards/AdminBookingsView.vue
   gap: 0;
   padding: 0;
   background: #ffffff; /* pure white sidebar container base */
@@ -544,13 +537,6 @@ onMounted(() => {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
-=======
-  gap: 18px;
-  padding: 16px;
-  background: #262626;
-  box-sizing: border-box;
-  overflow: hidden;
->>>>>>> 05e91c7cedad26aac52e8543ad44910700c128de:frontend/src/views/admin/AdminBookingsView.vue
 }
 
 .admin-content {
@@ -559,12 +545,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 24px;
-<<<<<<< HEAD:frontend/src/views/dashboards/AdminBookingsView.vue
-=======
-  background: linear-gradient(180deg, #f3f3f2 0%, #f8f8f6 100%);
-  border-radius: 24px;
-  overflow-y: auto;
->>>>>>> 05e91c7cedad26aac52e8543ad44910700c128de:frontend/src/views/admin/AdminBookingsView.vue
 }
 
 /* Sidebar Custom Styling - Scoped overrides to look EXACTLY like the mockup */

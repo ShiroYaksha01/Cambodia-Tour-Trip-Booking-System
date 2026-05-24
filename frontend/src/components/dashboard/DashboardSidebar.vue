@@ -1,6 +1,9 @@
 <template>
   <aside class="sidebar-shell" :class="`sidebar-shell--${role}`">
-    <div v-if="role === 'provider'" class="sidebar-inner sidebar-inner--provider">
+    <div
+      v-if="role === 'provider'"
+      class="sidebar-inner sidebar-inner--provider"
+    >
       <div class="provider-brand">
         <div class="provider-brand__mark" aria-hidden="true">⬤</div>
         <div>
@@ -10,8 +13,15 @@
       </div>
 
       <nav class="provider-nav" aria-label="Provider navigation">
-        <router-link v-for="item in providerNavItems" :key="item.label" :to="item.href" class="provider-nav__item">
-          <span class="provider-nav__icon" aria-hidden="true">{{ item.icon }}</span>
+        <router-link
+          v-for="item in providerNavItems"
+          :key="item.label"
+          :to="item.href"
+          class="provider-nav__item"
+        >
+          <span class="provider-nav__icon" aria-hidden="true">{{
+            item.icon
+          }}</span>
           <span>{{ item.label }}</span>
         </router-link>
       </nav>
@@ -35,7 +45,11 @@
       </div>
 
       <nav class="nav-list" aria-label="Dashboard navigation">
-        <section v-for="section in groupedNavItems" :key="section.label" class="nav-section">
+        <section
+          v-for="section in groupedNavItems"
+          :key="section.label"
+          class="nav-section"
+        >
           <p class="nav-section__label">{{ section.label }}</p>
           <component
             :is="item.href.startsWith('/') ? 'router-link' : 'a'"
@@ -46,7 +60,9 @@
             class="nav-item"
             :class="{ 'nav-item--active': isActiveItem(item) }"
           >
-            <span class="nav-item__icon" aria-hidden="true">{{ item.icon }}</span>
+            <span class="nav-item__icon" aria-hidden="true">{{
+              item.icon
+            }}</span>
             <span>
               <strong>{{ item.label }}</strong>
               <small>{{ item.description }}</small>
@@ -74,54 +90,100 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
-import LogoutButton from '../LogoutButton.vue'
+import { defineComponent } from "vue";
+import LogoutButton from "../LogoutButton.vue";
 
-type DashboardRole = 'admin' | 'provider'
+type DashboardRole = "admin" | "provider";
 
 type NavItem = {
-  label: string
-  description: string
-  href: string
-  icon: string
-  group?: 'Main' | 'Management' | 'Support'
-}
+  label: string;
+  description: string;
+  href: string;
+  icon: string;
+  group?: "Main" | "Management";
+};
 
 const navMap: Record<DashboardRole, NavItem[]> = {
   admin: [
-<<<<<<< HEAD
-    { label: 'Dashboard', description: 'Overview', href: '/admin/dashboard', icon: '⌂', group: 'Main' },
-    { label: 'Clients', description: 'Customers', href: '#clients', icon: '○', group: 'Management' },
-    { label: 'Providers', description: 'Partners', href: '/admin/providers', icon: '□', group: 'Management' },
-    { label: 'Packages', description: 'Quality review', href: '#packages', icon: '◇', group: 'Management' },
-    { label: 'Bookings', description: 'Ledger', href: '/admin/bookings', icon: '≡', group: 'Management' },
-    { label: 'Finance', description: 'Escrow', href: '#finance', icon: '$', group: 'Management' },
-    { label: 'Payment Logs', description: 'Transactions', href: '#payments', icon: '≋', group: 'Management' },
-    { label: 'Reviews', description: 'Moderation', href: '#reviews', icon: '☆', group: 'Support' },
-    { label: 'Support Tickets', description: 'Escalations', href: '#support', icon: '✉', group: 'Support' },
-=======
-    { label: 'Dashboard', description: 'Financial overview', href: '/admin/dashboard', icon: '◌' },
-    { label: 'Users', description: 'Manage users accounts', href: '/admin/users', icon: '👤' },
-    { label: 'Providers', description: 'Vendors and partners', href: '/admin/providers', icon: '▣' },
-    { label: 'Package Oversight', description: 'Trip quality review', href: '#reports', icon: '⌁' },
-    { label: 'Booking Ledger', description: 'Settlement activity', href: '/admin/bookings', icon: '⌕' },
-    { label: 'Finance & Escrow', description: 'Transactions and holds', href: '#reports', icon: '◫' },
-    { label: 'Payment Logs', description: 'Recent payment records', href: '#reports', icon: '≡' },
-    { label: 'Review Moderation', description: 'Content and ratings', href: '#reports', icon: '✦' },
-    { label: 'Support Tickets', description: 'Customer escalations', href: '#reports', icon: '✉' },
->>>>>>> 05e91c7cedad26aac52e8543ad44910700c128de
+    {
+      label: "Dashboard",
+      description: "Overview",
+      href: "/admin/dashboard",
+      icon: "⌂",
+      group: "Main",
+    },
+    {
+      label: "Users",
+      description: "Manage user accounts",
+      href: "/admin/users",
+      icon: "👤",
+      group: "Management",
+    },
+    {
+      label: "Providers",
+      description: "Vendors and partners",
+      href: "/admin/providers",
+      icon: "□",
+      group: "Management",
+    },
+    {
+      label: "Packages",
+      description: "Quality review",
+      href: "#packages",
+      icon: "◇",
+      group: "Management",
+    },
+    {
+      label: "Bookings",
+      description: "Ledger",
+      href: "/admin/bookings",
+      icon: "≡",
+      group: "Management",
+    },
+    {
+      label: "Finance",
+      description: "Revenue & transactions",
+      href: "#finance",
+      icon: "$",
+      group: "Management",
+    },
   ],
   provider: [
-    { label: 'Inventory', description: 'Stock and availability', href: '/provider/dashboard', icon: '◌' },
-    { label: 'Bookings', description: 'Reservation ledger', href: '/provider/bookings', icon: '▣' },
-    { label: 'Finance', description: 'Pricing and markup', href: '#pricing', icon: '◫' },
-    { label: 'Messages', description: 'Inbox and requests', href: '#controller', icon: '✉' },
-    { label: 'Settings', description: 'Provider preferences', href: '#changes', icon: '⚙' },
+    {
+      label: "Inventory",
+      description: "Stock and availability",
+      href: "/provider/dashboard",
+      icon: "◌",
+    },
+    {
+      label: "Bookings",
+      description: "Reservation ledger",
+      href: "/provider/bookings",
+      icon: "▣",
+    },
+    {
+      label: "Finance",
+      description: "Pricing and markup",
+      href: "#pricing",
+      icon: "◫",
+    },
+    {
+      label: "Messages",
+      description: "Inbox and requests",
+      href: "#controller",
+      icon: "✉",
+    },
+    {
+      label: "Settings",
+      description: "Provider preferences",
+      href: "#changes",
+      icon: "⚙",
+    },
   ],
-}
+};
 
 export default defineComponent({
-  name: 'DashboardSidebar',
+  name: "DashboardSidebar",
   components: {
     LogoutButton,
   },
@@ -133,30 +195,30 @@ export default defineComponent({
   },
   computed: {
     navItems(): NavItem[] {
-      return navMap[this.role]
+      return navMap[this.role];
     },
     groupedNavItems(): Array<{ label: string; items: NavItem[] }> {
-      const groups: Array<NavItem['group']> = ['Main', 'Management', 'Support']
+      const groups: Array<NavItem["group"]> = ["Main", "Management"];
       return groups
         .map((group) => ({
-          label: group || '',
+          label: group || "",
           items: this.navItems.filter((item) => item.group === group),
         }))
-        .filter((section) => section.items.length > 0)
+        .filter((section) => section.items.length > 0);
     },
     providerNavItems(): NavItem[] {
-      return navMap.provider
+      return navMap.provider;
     },
     roleLabel(): string {
-      return this.role === 'admin' ? 'Administrator' : 'Provider'
+      return this.role === "admin" ? "Administrator" : "Provider";
     },
   },
   methods: {
     isActiveItem(item: NavItem): boolean {
-      return item.href.startsWith('/') && this.$route.path === item.href
+      return item.href.startsWith("/") && this.$route.path === item.href;
     },
   },
-})
+});
 </script>
 
 <style scoped>

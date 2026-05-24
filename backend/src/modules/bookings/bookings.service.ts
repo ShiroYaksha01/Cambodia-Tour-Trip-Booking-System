@@ -142,7 +142,6 @@ export class BookingsService {
     return booking;
   }
 
-<<<<<<< HEAD
   async getAdminDashboard() {
     const [
       totalUsers,
@@ -278,7 +277,8 @@ export class BookingsService {
       })),
       monthlyStats,
     };
-=======
+  }
+
   async confirmPayment(bookingId: string, transactionId?: string): Promise<Booking> {
     const booking = await this.bookingRepository.findOne({ where: { id: bookingId } });
     if (!booking) throw new NotFoundException('Booking not found');
@@ -287,6 +287,5 @@ export class BookingsService {
     if (transactionId) booking.transactionId = transactionId;
 
     return this.bookingRepository.save(booking);
->>>>>>> 05e91c7cedad26aac52e8543ad44910700c128de
   }
 }
