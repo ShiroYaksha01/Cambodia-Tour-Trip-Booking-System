@@ -23,14 +23,6 @@
         </div>
 
         <div class="topbar-actions">
-          <button class="icon-button notification-btn" type="button" aria-label="Notifications">
-            <span aria-hidden="true">○</span>
-            <span v-if="notificationCount" class="notification-badge">{{ notificationCount }}</span>
-          </button>
-          <button class="icon-button" type="button" aria-label="Toggle Theme">
-            <span aria-hidden="true">◐</span>
-          </button>
-
           <div class="profile-chip">
             <div class="avatar">AS</div>
             <div class="profile-meta">

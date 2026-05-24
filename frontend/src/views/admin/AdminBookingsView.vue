@@ -23,12 +23,6 @@
         </div>
 
         <div class="topbar-actions">
-          <div class="icon-button" aria-label="Notifications">
-            <span class="notification-badge">3</span>
-            <span aria-hidden="true">○</span>
-          </div>
-          <button class="icon-button" aria-label="Toggle theme">◐</button>
-          
           <div class="profile-chip">
             <div class="avatar">AS</div>
             <div class="profile-meta">
