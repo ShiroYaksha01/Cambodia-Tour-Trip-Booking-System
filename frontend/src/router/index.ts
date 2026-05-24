@@ -148,6 +148,15 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: "/customer/feedback/:id",
+    name: "customer-feedback",
+    component: () => import("../views/customer/Feedback.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["customer"],
+    },
+  },
+  {
     path: "/service/:id",
     name: "service-detail",
     component: () => import("../views/services/ServiceDetailView.vue"),
