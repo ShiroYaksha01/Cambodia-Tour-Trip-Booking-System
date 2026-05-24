@@ -177,10 +177,6 @@
           </div>
         </div>
         <button class="btn-icon-large"></button>
-        <div class="tip-box">
-          <p class="tip-title">Curator Tip</p>
-          <p class="tip-text">Keep your packages consistent with the provider dashboard layout for easier scanning and management.</p>
-        </div>
       </footer>
     </main>
   </div>
@@ -814,28 +810,6 @@ const serviceItems = [
   border: none;
   cursor: pointer;
   font-size: 20px;
-}
-
-.tip-box {
-  margin-left: auto;
-  background: #d4f0eb;
-  padding: 12px 16px;
-  border-radius: 6px;
-  border-left: 4px solid #1b7f6a;
-}
-
-.tip-title {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: #1b7f6a;
-}
-
-.tip-text {
-  margin: 4px 0 0 0;
-  font-size: 12px;
-  color: #555;
-  line-height: 1.4;
 }
 
 @media (max-width: 1180px) {

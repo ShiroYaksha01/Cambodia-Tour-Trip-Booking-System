@@ -19,30 +19,40 @@
           <span class="icon">📊</span>
           Inventory & Pricing
         </RouterLink>
-        <a href="#" class="nav-item" @click.prevent>
+        <RouterLink class="nav-item" :to="{ name: 'provider-manifest' }" active-class="active">
           <span class="icon">👥</span>
           Guest Manifest
-        </a>
-        <a href="#" class="nav-item" @click.prevent>
+        </RouterLink>
+        <RouterLink class="nav-item" :to="{ name: 'provider-ledger' }" active-class="active">
           <span class="icon">💰</span>
           Financial Ledger
-        </a>
-        <a href="#" class="nav-item" @click.prevent>
-          <span class="icon">💬</span>
-          Customer Chat
-        </a>
-        <a href="#" class="nav-item" @click.prevent>
-          <span class="icon">🎨</span>
-          Brand Settings
-        </a>
+        </RouterLink>
+        <RouterLink class="nav-item" :to="{ name: 'provider-settings' }" active-class="active">
+          <span class="icon">⚙️</span>
+          Settings
+        </RouterLink>
       </nav>
     </aside>
 
     <main class="shell-content">
-      <RouterView />
+      <ProviderHeader :title="route.meta.title || ''" />
+
+      <RouterView v-slot="{ Component }">
+        <component
+          :is="Component"
+          :key="$route.fullPath"
+        />
+      </RouterView>
     </main>
   </div>
 </template>
+
+<script setup lang="ts">
+import { useRoute } from "vue-router";
+import ProviderHeader from "@/components/ProviderHeader.vue";
+
+const route = useRoute();
+</script>
 
 <style scoped>
 .provider-shell {

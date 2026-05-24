@@ -76,16 +76,37 @@ const routes: RouteRecordRaw[] = [
         path: "",
         name: "provider-dashboard",
         component: () => import("../views/dashboards/ProviderDashboardView.vue"),
+        meta: { title: "Command Center" },
       },
       {
         path: "service",
         name: "provider-service",
         component: () => import("../views/dashboards/ServiceManagerView.vue"),
+        meta: { title: "Service Manager" },
       },
       {
         path: "inventory",
         name: "provider-inventory",
         component: () => import("../views/dashboards/InventoryView.vue"),
+        meta: { title: "Inventory & Pricing" },
+      },
+      {
+        path: "manifest",
+        name: "provider-manifest",
+        component: () => import("../views/dashboards/ManifestView.vue"),
+        meta: { title: "Manifest" },
+      },
+      {
+        path: "ledger",
+        name: "provider-ledger",
+        component: () => import("../views/dashboards/FinancialLedgerView.vue"),
+        meta: { title: "Financial Ledger" },
+      },
+      {
+        path: "settings",
+        name: "provider-settings",
+        component: () => import("../views/dashboards/SettingsView.vue"),
+        meta: { title: "Brand & Public Profile" },
       },
     ],
   },
@@ -100,6 +121,18 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/provider/inventory",
     redirect: { name: "provider-inventory" },
+  },
+  {
+    path: "/provider/manifest",
+    redirect: { name: "provider-manifest" },
+  },
+  {
+    path: "/provider/ledger",
+    redirect: { name: "provider-ledger" },
+  },
+  {
+    path: "/provider/settings",
+    redirect: { name: "provider-settings" },
   },
   {
     path: "/customer/dashboard",

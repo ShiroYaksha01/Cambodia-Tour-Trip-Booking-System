@@ -1,93 +1,7 @@
 <template>
-  <div class="provider-suite">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <h2>Provider Suite</h2>
-        <p class="subtitle">HERITAGE MANAGEMENT</p>
-      </div>
-      <nav class="sidebar-nav">
-        <RouterLink class="nav-item" :to="{ name: 'provider-dashboard' }" active-class="active">
-          <span class="icon">⚙️</span>
-          Command Center
-        </RouterLink>
-        <RouterLink class="nav-item" :to="{ name: 'provider-service' }" active-class="active">
-          <span class="icon">🛠️</span>
-          Service Manager
-        </RouterLink>
-        <RouterLink class="nav-item" :to="{ name: 'provider-inventory' }" active-class="active">
-          <span class="icon">📊</span>
-          Inventory & Pricing
-        </RouterLink>
-        <a href="#" class="nav-item" @click.prevent>
-          <span class="icon">👥</span>
-          Guest Manifest
-        </a>
-        <a href="#" class="nav-item" @click.prevent>
-          <span class="icon">💰</span>
-          Financial Ledger
-        </a>
-        <a href="#" class="nav-item" @click.prevent>
-          <span class="icon">💬</span>
-          Customer Chat
-        </a>
-        <a href="#" class="nav-item" @click.prevent>
-          <span class="icon">🎨</span>
-          Brand Settings
-        </a>
-      </nav>
-    </aside>
-
+  <div class="provider-dashboard-view">
     <!-- Main Content -->
     <main class="main-content">
-      <!-- Header -->
-      <header class="header">
-        <div class="header-left">
-          <h1>The Heritage Curator</h1>
-          <div class="header-controls">
-            <select class="month-select">
-              <option>April 2026</option>
-            </select>
-            <div class="search-container">
-              <input
-                v-model="searchQuery"
-                type="text"
-                placeholder="Search services..."
-                class="search-input"
-              />
-              <span class="search-icon">🔍</span>
-            </div>
-            <div class="header-buttons">
-              <button
-                class="btn-secondary"
-                :class="{ active: activeCategory === 'tours' }"
-                @click="activeCategory = 'tours'"
-              >
-                Tours
-              </button>
-              <button
-                class="btn-secondary"
-                :class="{ active: activeCategory === 'stays' }"
-                @click="activeCategory = 'stays'"
-              >
-                Stays
-              </button>
-              <button
-                class="btn-secondary"
-                :class="{ active: activeCategory === 'transport' }"
-                @click="activeCategory = 'transport'"
-              >
-                Transport
-              </button>
-              <button class="btn-primary">Sync All Calendars</button>
-            </div>
-          </div>
-        </div>
-        <div class="header-icons">
-          <button class="icon-btn">🔔</button>
-          <button class="icon-btn">❓</button>
-        </div>
-      </header>
 
       <!-- Content Area -->
       <div class="content-wrapper">
@@ -261,18 +175,7 @@
       </div>
       <!-- Footer -->
       <footer class="footer">
-        <div class="curator-info">
-          <img src="https://via.placeholder.com/40" alt="Somnang Chen" class="avatar">
-          <div>
-            <p class="name">Somnang Chen</p>
-            <p class="role">Senior Curator</p>
-          </div>
-        </div>
         <button class="btn-icon-large"></button>
-        <div class="tip-box">
-          <p class="tip-title">Curator Tip</p>
-          <p class="tip-text">Peak season prices are typically 25% higher during Khmer New Year. Ensure your availability is maximized!</p>
-        </div>
       </footer>
     </main>
   </div>
@@ -326,6 +229,40 @@ const draftStartDate = ref(startDate.value);
 const draftEndDate = ref(endDate.value);
 const activeCategory = ref<CategoryKey>("tours");
 const searchQuery = ref("");
+
+const authUser = computed(() => {
+  try {
+    const rawUser = localStorage.getItem("auth_user");
+    return rawUser ? JSON.parse(rawUser) : null;
+  } catch {
+    return null;
+  }
+});
+
+const providerName = computed(() => authUser.value?.username || "Provider");
+const providerRoleLabel = computed(() => {
+  if (!authUser.value?.role) {
+    return "Provider";
+  }
+
+  return String(authUser.value.role)
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (char: string) => char.toUpperCase());
+});
+const providerProfileImage = computed(() => authUser.value?.profilePicture || "");
+const providerInitials = computed(() => {
+  const name = providerName.value.trim();
+  if (!name) {
+    return "P";
+  }
+
+  return name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || "")
+    .join("")
+    .slice(0, 2) || "P";
+});
 
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat("en-US", {
@@ -501,39 +438,20 @@ const saveServiceChanges = () => {
   box-sizing: border-box;
 }
 
-.provider-suite {
+.provider-dashboard-view {
   display: flex;
-  height: 100vh;
+  flex-direction: column;
+  min-height: 100vh;
   background: #f5f5f5;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* Sidebar */
-.sidebar {
-  width: 200px;
-  background: white;
-  border-right: 1px solid #e0e0e0;
-  padding: 20px;
+/* Main Content */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
-}
-
-.sidebar-header {
-  margin-bottom: 30px;
-}
-
-.sidebar-header h2 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-.subtitle {
-  margin: 4px 0 0 0;
-  font-size: 11px;
-  color: #999;
-  letter-spacing: 1px;
-  text-transform: uppercase;
 }
 
 .sidebar-nav {
@@ -570,39 +488,12 @@ const saveServiceChanges = () => {
   font-size: 16px;
 }
 
-/* Main Content */
-.main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-}
-
-.header {
-  background: white;
-  border-bottom: 1px solid #e0e0e0;
-  padding: 20px 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 30px;
-}
-
-.header-left h1 {
-  margin: 0;
-  font-size: 24px;
-  color: #1a1a1a;
-}
-
-.header-controls {
+/* Dashboard Controls */
+.dashboard-controls {
   display: flex;
   align-items: center;
   gap: 15px;
+  flex-wrap: wrap;
 }
 
 .month-select {
@@ -651,21 +542,12 @@ const saveServiceChanges = () => {
   transition: all 0.2s;
 }
 
-.btn-primary:hover {
-  background: #166a57;
-}
-
-.header-icons {
+/* Main Content */
+.main-content {
+  flex: 1;
   display: flex;
-  gap: 15px;
-}
-
-.icon-btn {
-  background: none;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
-  padding: 4px 8px;
+  flex-direction: column;
+  overflow-y: auto;
 }
 
 /* Content Wrapper */
@@ -1076,32 +958,31 @@ const saveServiceChanges = () => {
   padding: 20px 30px;
   display: flex;
   align-items: center;
-  gap: 20px;
-}
-
-.curator-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  justify-content: flex-end;
 }
 
 .avatar {
   width: 40px;
   height: 40px;
   border-radius: 50%;
+  overflow: hidden;
+  flex: 0 0 40px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #0f6e70, #efb34f);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
 }
 
-.name {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 500;
-  color: #1a1a1a;
+.avatar--image {
+  background: transparent;
 }
 
-.role {
-  margin: 2px 0 0 0;
-  font-size: 12px;
-  color: #999;
+.avatar--image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .btn-icon-large {
@@ -1112,28 +993,6 @@ const saveServiceChanges = () => {
   border: none;
   cursor: pointer;
   font-size: 20px;
-}
-
-.tip-box {
-  margin-left: auto;
-  background: #d4f0eb;
-  padding: 12px 16px;
-  border-radius: 6px;
-  border-left: 4px solid #1b7f6a;
-}
-
-.tip-title {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: #1b7f6a;
-}
-
-.tip-text {
-  margin: 4px 0 0 0;
-  font-size: 12px;
-  color: #555;
-  line-height: 1.4;
 }
 
 /* Modal Styles */

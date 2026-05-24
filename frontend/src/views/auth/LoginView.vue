@@ -21,6 +21,7 @@ const handleLogin = async () => {
     console.log("LOGIN SUCCESS:", res.data);
 
     if (res.data.success) {
+      localStorage.setItem("auth_user", JSON.stringify(res.data.user));
       localStorage.setItem("auth_role", res.data.user.role);
 
       // optional: save token
