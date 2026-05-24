@@ -69,6 +69,12 @@ export class UsersController {
 
   
   @UseGuards(JwtAuthGuard)
+  @Get('me')
+  getMe(@Request() req: any) {
+    return this.usersService.findById(req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   findById(@Param('id') id: string) {
     return this.usersService.findById(id);
