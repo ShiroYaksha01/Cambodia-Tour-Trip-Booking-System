@@ -828,13 +828,21 @@ const formatRelativeTime = (dateStr: string): string => {
   box-sizing: border-box;
   font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: #173f42;
+  overflow: hidden;
 }
 
 .admin-main-area {
   display: flex;
   flex-direction: column;
   background: #f8fafb; /* The light page backdrop exactly matching the mockup */
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.admin-viewport-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .admin-content {
