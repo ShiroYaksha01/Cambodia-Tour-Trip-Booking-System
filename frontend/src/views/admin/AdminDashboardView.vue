@@ -1,5 +1,5 @@
 <template>
-  <AdminLayout @search="(q) => searchQuery = q">
+  <AdminLayout breadcrumb="Overview / Dashboard" @search="(q) => searchQuery = q">
     <section class="admin-content">
       <div class="welcome-banner">
         <div class="banner-text">
@@ -379,6 +379,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
+import axios from 'axios'
 import AdminLayout from '../../components/admin/AdminLayout.vue'
 import { getAdminDashboardSummary } from '../../services/api'
 
@@ -393,14 +394,6 @@ type DashboardStats = {
   verifiedProviders: number
   paidPaymentCount: number
   totalPlatformFee: number
-}
-
-type AdminDashboardResponse = {
-  total_users: number
-  total_providers: number
-  total_bookings: number
-  total_revenue: number
-  total_platform_fee: number
 }
 
 type RecentBooking = {
@@ -471,29 +464,53 @@ const loadStatsData = async () => {
     const res = await getAdminDashboardSummary()
     const data = res?.success && res?.data ? res.data : res
 
-    if (isDashboardResponse(data)) {
+    if (data && typeof data === 'object') {
+      const s = data.stats || {}
       stats.value = {
-        ...emptyStats(),
-        totalUsers: Number(data.total_users || 0),
-        totalProviders: Number(data.total_providers || 0),
-        totalBookings: Number(data.total_bookings || 0),
-        totalRevenue: Number(data.total_revenue || 0),
-        totalPlatformFee: Number(data.total_platform_fee || 0),
+        totalBookings: Number(s.totalBookings || 0),
+        totalRevenue: Number(s.totalRevenue || 0),
+        totalProviders: Number(s.totalProviders || 0),
+        totalUsers: Number(s.totalUsers || 0),
+        totalServices: Number(s.totalServices || 0),
+        verifiedProviders: Number(s.verifiedProviders || 0),
+        paidPaymentCount: Number(s.paidPaymentCount || 0),
+        totalPlatformFee: Number(s.totalPlatformFee || 0),
       }
-      statusBreakdown.value = emptyStatusBreakdown()
-      recentBookings.value = []
-      monthlyStats.value = []
-    } else if (res && res.success && res.data) {
-      stats.value = { ...emptyStats(), ...(data.stats || {}) }
       statusBreakdown.value = { ...emptyStatusBreakdown(), ...(data.statusBreakdown || {}) }
-      recentBookings.value = data.recentBookings || []
+      recentBookings.value = (data.recentBookings || []).map((b: any) => ({
+        id: b.id,
+        customerName: b.customerName || b.user?.username || 'Guest',
+        customerEmail: b.customerEmail || b.user?.email,
+        serviceTitle: b.serviceTitle || b.service?.title,
+        providerName: b.providerName || b.provider?.companyName,
+        amount: Number(b.amount || b.totalAmount || 0),
+        status: (b.status || b.bookingStatus || 'pending').toLowerCase(),
+        date: b.date || b.createdAt,
+        transactionId: b.transactionId || b.referenceCode || b.id.substring(0, 8).toUpperCase(),
+        createdAt: b.createdAt
+      }))
       monthlyStats.value = data.monthlyStats || []
     } else {
       throw new Error('The backend returned an invalid dashboard response.')
     }
   } catch (err) {
     console.error("Failed to load SaaS stats dashboard data:", err)
-    loadError.value = 'Please make sure the backend is running and the database is reachable.'
+    if (axios.isAxiosError(err)) {
+      if (!err.response) {
+        loadError.value =
+          'Cannot reach the backend. Start it with `npm run start:dev` in the backend folder (http://localhost:3000).'
+      } else if (err.response.status === 401) {
+        loadError.value =
+          'Your session has expired or you are not signed in. Log in again with an admin account.'
+      } else if (err.response.status === 403) {
+        loadError.value = 'Your account does not have admin access to this dashboard.'
+      } else {
+        const message = (err.response.data as { message?: string })?.message
+        loadError.value = message || `Server error (${err.response.status}).`
+      }
+    } else {
+      loadError.value = 'An unexpected error occurred while loading dashboard data.'
+    }
     stats.value = emptyStats()
     statusBreakdown.value = emptyStatusBreakdown()
     recentBookings.value = []
@@ -501,17 +518,6 @@ const loadStatsData = async () => {
   } finally {
     isLoading.value = false
   }
-}
-
-const isDashboardResponse = (data: unknown): data is AdminDashboardResponse => {
-  if (!data || typeof data !== 'object') return false
-  return (
-    'total_users' in data &&
-    'total_providers' in data &&
-    'total_bookings' in data &&
-    'total_revenue' in data &&
-    'total_platform_fee' in data
-  )
 }
 
 onMounted(() => {
@@ -578,7 +584,7 @@ const recentActivities = computed(() => {
   }))
 })
 
-const notificationCount = computed(() => recentActivities.value.length)
+
 
 const greeting = computed(() => {
   const hour = new Date().getHours()

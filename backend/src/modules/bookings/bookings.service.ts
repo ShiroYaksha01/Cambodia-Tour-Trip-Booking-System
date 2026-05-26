@@ -178,12 +178,6 @@ export class BookingsService {
   async getAdminDashboardSummary() {
     const totalBookings = await this.bookingRepository.count();
 
-    const revenueResult = await this.bookingRepository
-      .createQueryBuilder('booking')
-      .select('COALESCE(SUM(booking.totalAmount), 0)', 'total')
-      .getRawOne<{ total: string }>();
-    const totalRevenue = Number(revenueResult?.total || 0);
-
     const totalProviders = await this.providerRepository.count();
     const totalUsers = await this.userRepository.count();
     const totalServices = await this.serviceRepository.count();
@@ -254,15 +248,27 @@ export class BookingsService {
       where: { paymentStatus: PaymentStatus.PAID },
     });
 
+    const paidTotals = await this.bookingRepository
+      .createQueryBuilder('booking')
+      .leftJoin('booking.provider', 'provider')
+      .select('COALESCE(SUM(booking.totalAmount), 0)', 'total_revenue')
+      .addSelect(
+        'COALESCE(SUM(booking.totalAmount * COALESCE(provider.commissionRate, 10) / 100), 0)',
+        'total_platform_fee',
+      )
+      .where('booking.paymentStatus = :paymentStatus', { paymentStatus: PaymentStatus.PAID })
+      .getRawOne<{ total_revenue: string; total_platform_fee: string }>();
+
     return {
       stats: {
         totalBookings,
-        totalRevenue,
+        totalRevenue: Number(paidTotals?.total_revenue || 0),
         totalProviders,
         totalUsers,
         totalServices,
         verifiedProviders,
         paidPaymentCount,
+        totalPlatformFee: Number(paidTotals?.total_platform_fee || 0),
       },
       statusBreakdown,
       recentBookings: recentBookings.map(b => ({

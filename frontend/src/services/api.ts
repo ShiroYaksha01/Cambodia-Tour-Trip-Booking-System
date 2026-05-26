@@ -1,24 +1,46 @@
 import axios from "axios";
+import router from "../router";
+import { clearAuthData, getAuthToken } from "../utils/auth";
 
 const api = axios.create({
-  baseURL: "http://localhost:3000",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000",
 });
 
 // Attach JWT from localStorage if present.
 api.interceptors.request.use((config) => {
   try {
-    const token = localStorage.getItem('token') || localStorage.getItem('access_token') || localStorage.getItem('jwt')
+    const token = getAuthToken();
     if (token) {
-      config.headers = config.headers || {}
+      config.headers = config.headers || {};
       if (!config.headers.Authorization) {
-        config.headers.Authorization = `Bearer ${token}`
+        config.headers.Authorization = `Bearer ${token}`;
       }
     }
-  } catch (e) {
+  } catch {
     // ignore localStorage errors in non-browser environments
   }
-  return config
-})
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+    const requestUrl = String(error?.config?.url || "");
+    const isAuthRoute =
+      requestUrl.includes("/auth/login") || requestUrl.includes("/auth/register");
+
+    if (status === 401 && !isAuthRoute) {
+      clearAuthData();
+      const current = router.currentRoute.value;
+      if (current.name !== "login") {
+        router.push({ name: "login", query: { redirect: current.fullPath } });
+      }
+    }
+
+    return Promise.reject(error);
+  },
+);
 
 // Export service api
 export const fetchServices = async () => {
@@ -107,6 +129,6 @@ function mockProviderBookings() {
   ]
 }
 
-export const getAdminDashboardSummary = () => api.get(`/admin/dashboard`).then(res => res.data)
+export const getAdminDashboardSummary = () => api.get(`/admin/dashboard/summary`).then(res => res.data)
 
 export default api;

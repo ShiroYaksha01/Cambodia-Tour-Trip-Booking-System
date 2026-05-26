@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import type { RouteRecordRaw } from "vue-router";
-import { getCurrentUserRole } from "../utils/auth";
+import { getCurrentUserRole, hasAuthSession } from "../utils/auth";
 
 const routes: RouteRecordRaw[] = [
   {
@@ -108,6 +108,15 @@ const routes: RouteRecordRaw[] = [
     path: "/admin/bookings",
     name: "admin-bookings",
     component: () => import("../views/admin/AdminBookingsView.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["admin"],
+    },
+  },
+  {
+    path: "/admin/packages",
+    name: "admin-packages",
+    component: () => import("../views/admin/AdminPackagesView.vue"),
     meta: {
       requiresAuth: true,
       roles: ["admin"],
@@ -239,7 +248,7 @@ router.beforeEach((to) => {
   const guestOnly = Boolean(to.meta.guestOnly);
   const allowedRoles = (to.meta.roles as string[] | undefined) ?? [];
 
-  if (requiresAuth && !role) {
+  if (requiresAuth && !hasAuthSession()) {
     return { name: "login", query: { redirect: to.fullPath } };
   }
 

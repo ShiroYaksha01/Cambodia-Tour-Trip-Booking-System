@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { clearAuthData } from '../../utils/auth'
 
 const props = defineProps<{ 
   breadcrumb?: string
@@ -13,17 +14,11 @@ const showProfile = ref(false)
 const searchQuery = ref('')
 
 const authUser = computed(() => {
-  try { 
-    const stored = localStorage.getItem('auth_user')
-    if (stored) return JSON.parse(stored)
-    return {
-      username: 'admin',
-      email: 'admin@tourbooking.local',
-      role: 'admin'
-    }
-  }
-  catch { 
-    return { username: 'admin', email: 'admin@tourbooking.local', role: 'admin' } 
+  try {
+    const stored = localStorage.getItem('auth_user') || localStorage.getItem('user')
+    return stored ? JSON.parse(stored) : null
+  } catch {
+    return null
   }
 })
 
@@ -33,9 +28,7 @@ const adminRole    = computed(() => authUser.value?.role     || 'admin')
 const adminInitial = computed(() => adminName.value.substring(0, 2).toUpperCase())
 
 const handleLogout = () => {
-  localStorage.removeItem('token')
-  localStorage.removeItem('auth_role')
-  localStorage.removeItem('auth_user')
+  clearAuthData()
   router.push('/login')
 }
 

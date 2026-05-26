@@ -33,17 +33,18 @@ export class AuthController {
     @UploadedFile() file: any,
     @Body() dto: RegisterDto,
   ) {
-  console.log('FILE:', file);
-  console.log('BODY:', dto);
+    console.log('FILE:', file);
+    console.log('BODY:', dto);
 
-  return this.authService.register(
-    dto.username,
-    dto.email,
-    dto.password,
-    dto.phoneNumber,
-    file?.filename,
-  );
-}
+    return this.authService.register(
+      dto.username,
+      dto.email,
+      dto.password,
+      dto.phoneNumber,
+      file?.filename,
+      dto.role,
+    );
+  }
 
   @Post('login')
   login(@Body() dto: LoginDto) {
