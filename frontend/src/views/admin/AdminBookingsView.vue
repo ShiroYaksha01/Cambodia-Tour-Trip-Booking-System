@@ -1,5 +1,5 @@
 <template>
-  <AdminLayout @search="(q) => searchQuery = q">
+  <AdminLayout breadcrumb="Management / All Bookings" @search="(q) => searchQuery = q">
     <!-- Scrollable Main Content Viewport -->
     <section class="admin-content">
       <div class="page-heading">

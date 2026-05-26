@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import api from "../../services/api";
 import { useRouter } from "vue-router";
+import { setCurrentUserRole } from "../../utils/auth";
 
 const router = useRouter();
 
@@ -21,9 +22,10 @@ const handleLogin = async () => {
     console.log("LOGIN SUCCESS:", res.data);
 
     if (res.data.success) {
-      localStorage.setItem("auth_role", res.data.user.role);
+      setCurrentUserRole(res.data.user.role);
       localStorage.setItem("token", res.data.token);
-      localStorage.setItem("auth_user", JSON.stringify(res.data.user)); 
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+      localStorage.setItem("auth_user", JSON.stringify(res.data.user));
 
       const redirectPath = router.currentRoute.value.query.redirect as string;
       if (redirectPath) {

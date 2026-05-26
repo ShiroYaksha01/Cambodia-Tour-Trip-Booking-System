@@ -9,7 +9,7 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const tours = ref([])
+const tours = ref<any[]>([])
 
 const handleBook = (tour: any) => {
   router.push({ name: 'booking-form', params: { id: tour.id } })

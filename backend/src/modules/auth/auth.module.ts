@@ -42,7 +42,7 @@ import { UsersModule } from '../users/users.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') as string,
+        secret: configService.get<string>('JWT_SECRET') || 'super-secret-key-12345',
         signOptions: { 
           expiresIn: configService.get<string>('JWT_EXPIRATION', '1d') as any
         },

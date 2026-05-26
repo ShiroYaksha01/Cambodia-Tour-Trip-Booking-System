@@ -143,7 +143,7 @@ const navMap: Record<DashboardRole, NavItem[]> = {
     {
       label: "Packages",
       description: "Quality review",
-      href: "#packages",
+      href: "/admin/packages",
       icon: "◇",
       group: "Management",
     },

@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import AdminLayout from '../../components/admin/AdminLayout.vue'
 import EditUserModal from '../../components/admin/EditUserModal.vue'
 import AddUserModal from '../../components/admin/AddUserModal.vue'
-import { apiGet, getAuthHeaders } from '../../utils/api'
+import { apiGet, apiPost, apiPut } from '../../utils/api'
 
 interface AdminUser {
   id: string
@@ -29,8 +29,6 @@ const tabs       = ['All Users', 'Customers', 'Providers']
 
 const toast = ref({ visible: false, message: '', type: 'success' })
 let toastTimer: ReturnType<typeof setTimeout>
-
-const API_BASE = (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:3000'
 
 // ─── Computed ─────────────────────────────────────────────────────────────────
 const filtered = computed(() => {
@@ -66,7 +64,7 @@ function showToast(msg: string, type: 'success' | 'error' = 'success') {
 }
 
 const setTab = (t: string) => { activeTab.value = t; currentPage.value = 1 }
-const clearSearch = () => { search.value = ''; currentPage.value = 1 }
+
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 async function fetchUsers() {
@@ -85,12 +83,7 @@ async function handleEditSave(form: any) {
     }
     if (form.password?.trim()) body.password = form.password
 
-    const res = await fetch(`${API_BASE}/users/${form.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      body: JSON.stringify(body),
-    })
-    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message || 'Update failed') }
+    await apiPut(`/users/${form.id}`, body)
 
     const idx = users.value.findIndex(u => u.id === form.id)
     if (idx !== -1) users.value[idx] = {
@@ -105,26 +98,17 @@ async function handleEditSave(form: any) {
 
 async function handleAddSave(form: any) {
   try {
-    const res = await fetch(`${API_BASE}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      body: JSON.stringify({
-        username: form.username,
-        email:    form.email,
-        password: form.password,
-        role:     form.role,
-      }),
+    const res = await apiPost<any>('/auth/register', {
+      username: form.username,
+      email:    form.email,
+      password: form.password,
+      role:     form.role,
     })
-    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message || 'Create failed') }
 
     if (form.status && form.status !== 'active') {
-      const created = await res.json().catch(() => null)
-      if (created?.id) {
-        await fetch(`${API_BASE}/users/${created.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-          body: JSON.stringify({ status: form.status }),
-        })
+      const createdId = res?.id || res?.user?.id || res?.data?.id
+      if (createdId) {
+        await apiPut(`/users/${createdId}`, { status: form.status.toLowerCase() })
       }
     }
 
