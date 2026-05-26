@@ -25,6 +25,25 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## Environment Variables
+
+Create a `.env` file in the `backend` root directory with the following variables:
+
+### Database
+- `DATABASE_HOST`: Database host (e.g., localhost)
+- `DATABASE_PORT`: Database port (e.g., 5432)
+- `DATABASE_USER`: Database user
+- `DATABASE_PASSWORD`: Database password
+- `DATABASE_NAME`: Database name
+- `DATABASE_URL`: Full connection string (optional, overrides individual settings)
+
+### Authentication (JWT)
+- `JWT_SECRET`: A strong secret key for signing tokens
+- `JWT_EXPIRATION`: Token expiration time (e.g., 1d, 3600s)
+
+### App
+- `PORT`: The port the server will listen on (default: 3000)
+
 ## Project setup
 
 ```bash
@@ -75,9 +94,9 @@ With Mau, you can deploy your application in just a few clicks, allowing you to 
 This project uses TypeORM for database management. Below are the commands to handle migrations:
 
 ### 1. Generate a Migration
-Run this when you have made changes to your entities (in `src/entities/*.entity.ts`) and want to generate a new migration file.
+Run this when you have made changes to your entities (in `src/modules/**/entities/*.entity.ts`) and want to generate a new migration file.
 ```bash
-# Replace <MigrationName> with a descriptive name (e.g., AddUserRole)
+# Replace <MigrationName> with a descriptive name (e.g., UpdateServiceIdToUuid)
 npm run migration:generate -- src/database/migrations/<MigrationName>
 ```
 

@@ -6,7 +6,7 @@
         <div class="search-container">
           <input
             :value="searchQuery"
-            @input="$emit('update:searchQuery', $event.target.value)"
+            @input="$emit('update:searchQuery', ($event.target as HTMLInputElement).value)"
             type="text"
             :placeholder="searchPlaceholder"
             class="search-input"

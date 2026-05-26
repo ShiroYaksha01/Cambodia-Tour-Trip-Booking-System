@@ -29,21 +29,22 @@ export class AuthController {
       }),
     }),
   )
- register(
-  @UploadedFile() file: Express.Multer.File,
-  @Body() dto: RegisterDto,
-) {
-  console.log('FILE:', file);
-  console.log('BODY:', dto);
+  register(
+    @UploadedFile() file: any,
+    @Body() dto: RegisterDto,
+  ) {
+    console.log('FILE:', file);
+    console.log('BODY:', dto);
 
-  return this.authService.register(
-    dto.username,
-    dto.email,
-    dto.password,
-    dto.phoneNumber,
-    file?.filename,
-  );
-}
+    return this.authService.register(
+      dto.username,
+      dto.email,
+      dto.password,
+      dto.phoneNumber,
+      file?.filename,
+      dto.role,
+    );
+  }
 
   @Post('login')
   login(@Body() dto: LoginDto) {

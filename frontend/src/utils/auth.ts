@@ -2,6 +2,21 @@ export type UserRole = "admin" | "provider" | "customer";
 
 const AUTH_ROLE_KEY = "auth_role";
 
+export function getAuthToken(): string | null {
+  const tokenKeys = ["token", "access_token", "auth_token", "jwt"];
+  for (const key of tokenKeys) {
+    const token = localStorage.getItem(key);
+    if (token) {
+      return token;
+    }
+  }
+  return null;
+}
+
+export function hasAuthSession(): boolean {
+  return Boolean(getAuthToken() && getCurrentUserRole());
+}
+
 export function getCurrentUserRole(): UserRole | null {
   const directRole = localStorage.getItem(AUTH_ROLE_KEY);
   if (isUserRole(directRole)) {
@@ -16,7 +31,7 @@ export function getCurrentUserRole(): UserRole | null {
     }
   }
 
-  const rawUser = localStorage.getItem("user");
+  const rawUser = localStorage.getItem("user") || localStorage.getItem("auth_user");
   if (!rawUser) {
     return null;
   }
@@ -44,6 +59,13 @@ export function clearCurrentUserRole(): void {
 export function clearAuthData(): void {
   clearCurrentUserRole();
   localStorage.removeItem("user");
+  localStorage.removeItem("auth_user");
+  localStorage.removeItem("token");
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("auth_token");
+  localStorage.removeItem("jwt");
+  localStorage.removeItem("role");
+  localStorage.removeItem("userRole");
 }
 
 function isUserRole(value: unknown): value is UserRole {

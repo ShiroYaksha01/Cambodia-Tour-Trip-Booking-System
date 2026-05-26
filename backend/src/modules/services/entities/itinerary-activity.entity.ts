@@ -12,7 +12,7 @@ export class ItineraryActivity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'day_id' })
+  @Column({ name: 'day_id', type: 'uuid' })
   dayId: string;
 
   @Column({ name: 'sort_order', type: 'smallint', default: 0 })

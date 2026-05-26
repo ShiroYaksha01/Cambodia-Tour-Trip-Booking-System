@@ -16,7 +16,7 @@ export class ItineraryDay {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'service_id' })
+  @Column({ name: 'service_id', type: 'uuid' })
   serviceId: string;
 
   // 1 = Day 1, 2 = Day 2, etc.

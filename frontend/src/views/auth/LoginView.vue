@@ -1,7 +1,8 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from "vue";
-import api from "../../services/api.js";
+import api from "../../services/api";
 import { useRouter } from "vue-router";
+import { setCurrentUserRole } from "../../utils/auth";
 
 const router = useRouter();
 
@@ -25,10 +26,17 @@ const handleLogin = async () => {
       localStorage.setItem("auth_role", res.data.user.role);
 
       // optional: save token
+      setCurrentUserRole(res.data.user.role);
       localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+      localStorage.setItem("auth_user", JSON.stringify(res.data.user));
 
-      // redirect based on role OR dashboard
-      router.push("/");
+      const redirectPath = router.currentRoute.value.query.redirect as string;
+      if (redirectPath) {
+        router.push(redirectPath);
+      } else {
+        router.push("/");
+      }
     }
   } catch (err) {
     message.value = "Login failed";
@@ -41,10 +49,10 @@ const handleLogin = async () => {
   <main class="auth-page">
     <section class="auth-shell">
       <div class="hero-panel">
-        <div class="brand-mark">
+        <RouterLink to="/" class="brand-mark">
           <div class="brand-icon" aria-hidden="true">✦</div>
           <div class="brand-name">Anajak Tour</div>
-        </div>
+        </RouterLink>
 
         <div class="hero-copy">
           <div class="hero-accent"></div>
@@ -72,11 +80,10 @@ const handleLogin = async () => {
             <p>Please enter your details to access your curator dashboard.</p>
           </header>
 
-          <form class="auth-form">
+          <form class="auth-form" @submit.prevent="handleLogin">
             <label class="field">
               <span>Email Address</span>
               <div class="input-wrap">
-                <span class="input-icon" aria-hidden="true">✉</span>
                 <input
                   v-model="email"
                   type="email"
@@ -85,14 +92,14 @@ const handleLogin = async () => {
                 />
               </div>
             </label>
-
+            
             <label class="field password-field">
               <div class="field-row">
                 <span>Password</span>
                 <RouterLink to="/forgot-password">Forgot Password?</RouterLink>
               </div>
               <div class="input-wrap">
-                <span class="input-icon" aria-hidden="true">⌁~</span>
+                <span class="input-icon" aria-hidden="true">⌁</span>
                 <input
                   v-model="password"
                   type="password"
@@ -101,20 +108,27 @@ const handleLogin = async () => {
                 />
               </div>
             </label>
-            <p>{{ message }}</p>
-            <label class="remember-row">
+            <p class="error-msg" v-if="message">{{ message }}</p>
+            <div class="form-actions">
+              <label class="remember-row">
               <input type="checkbox" checked />
               <span>Remember me for 30 days</span>
-            </label>
+              </label>
 
-            <button class="primary-button" type="button" @click="handleLogin">
-              Sign In to Dashboard →
-            </button>
+              <button class="primary-button" type="submit">
+                Sign In to Dashboard →
+              </button>
+            </div>
+            
           </form>
 
           <p class="signup-row">
             Don't have an account yet?
             <RouterLink to="/register">Curate your Journey →</RouterLink>
+          </p>
+
+          <p class="signup-row text-sm text-[#9ca2a7] mt-4">
+            Tip: this demo stores a customer role in localStorage so you can continue to booking.
           </p>
 
           <footer class="footer-links">
@@ -267,6 +281,7 @@ const handleLogin = async () => {
   display: inline-flex;
   align-items: center;
   gap: 14px;
+  text-decoration: none;
 }
 
 .brand-icon {
@@ -404,159 +419,10 @@ const handleLogin = async () => {
   font-size: 0.98rem;
 }
 
-.social-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 34px;
-}
-
-.social-button,
-.primary-button {
-  border: 0;
-  border-radius: 8px;
-  font: inherit;
-  cursor: pointer;
-}
-
-.social-button {
-  background: #ffffff;
-  min-height: 40px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  color: #2b3135;
-  font-weight: 500;
-  box-shadow:
-    0 1px 0 rgba(17, 24, 39, 0.04),
-    0 0 0 1px rgba(17, 24, 39, 0.05) inset;
-}
-
-.social-dot {
-  width: 18px;
-  height: 18px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  font-size: 11px;
-  color: #ffffff;
-  font-weight: 700;
-}
-
-.facebook {
-  background: #1877f2;
-}
-
-.telegram {
-  background: #229ed9;
-}
-
-.separator {
-  position: relative;
-  margin: 28px 0 18px;
-  text-align: center;
-}
-
-.separator::before,
-.separator::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  width: calc(50% - 90px);
-  height: 1px;
-  background: rgba(97, 109, 116, 0.16);
-}
-
-.separator::before {
-  left: 0;
-}
-
-.separator::after {
-  right: 0;
-}
-
-.separator span {
-  font-size: 0.71rem;
-  letter-spacing: 0.16em;
-  font-weight: 700;
-  color: #8b9498;
-}
-
-.auth-form {
-  display: grid;
-  gap: 16px;
-}
-
-.field {
-  display: grid;
-  gap: 7px;
-}
-
-.field > span,
-.field-row {
-  font-size: 0.88rem;
+.error-msg {
+  color: #b42f2f;
+  font-size: 0.85rem;
   font-weight: 600;
-  color: #3b4548;
-}
-
-.field-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.field-row a,
-.signup-row a,
-.footer-links a {
-  color: #bf7d10;
-  text-decoration: none;
-}
-
-.input-wrap {
-  height: 42px;
-  border-radius: 8px;
-  background: #ffffff;
-  border: 1px solid rgba(95, 109, 116, 0.12);
-  display: flex;
-  align-items: center;
-  padding: 0 14px;
-  gap: 10px;
-  box-shadow: 0 1px 0 rgba(17, 24, 39, 0.02);
-}
-
-.input-icon {
-  font-size: 0.92rem;
-  color: #8b9498;
-  width: 16px;
-  text-align: center;
-}
-
-.input-wrap input {
-  border: 0;
-  outline: 0;
-  width: 100%;
-  font: inherit;
-  color: #233036;
-  background: transparent;
-}
-
-.input-wrap input::selection {
-  background: rgba(244, 167, 29, 0.22);
-}
-
-.remember-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.88rem;
-  color: #495459;
-}
-
-.remember-row input {
-  width: 14px;
-  height: 14px;
-  accent-color: #0d7e73;
 }
 
 .primary-button {
@@ -564,7 +430,12 @@ const handleLogin = async () => {
   min-height: 42px;
   background: linear-gradient(180deg, #0e7f76, #0a6d66);
   color: #ffffff;
+  font: inherit;
+  font-size: 0.95rem;
   font-weight: 700;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
   box-shadow: 0 12px 24px rgba(10, 109, 102, 0.25);
 }
 
@@ -573,6 +444,11 @@ const handleLogin = async () => {
   text-align: center;
   font-size: 0.95rem;
   color: #536067;
+}
+
+.signup-row a {
+  color: #bf7d10;
+  text-decoration: none;
 }
 
 .footer-links {
@@ -596,36 +472,76 @@ const handleLogin = async () => {
   gap: 12px 18px;
 }
 
+.footer-links a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.input-wrap {
+  height: 42px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid rgba(95, 109, 116, 0.12);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 10px;
+}
+
+.input-wrap input {
+  border: 0;
+  outline: 0;
+  width: 100%;
+  font: inherit;
+  color: #233036;
+  background: transparent;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+}
+
+.field span {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #3b4548;
+}
+
+.field-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #3b4548;
+}
+
+.field-row a {
+  color: #bf7d10;
+  text-decoration: none;
+}
+
+.remember-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+  color: #495459;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
 @media (max-width: 1080px) {
   .auth-shell {
     grid-template-columns: 1fr;
   }
-
   .hero-panel {
-    min-height: 56vh;
-  }
-}
-
-@media (max-width: 640px) {
-  .hero-panel {
-    padding: 32px 22px 26px;
-  }
-
-  .form-card {
-    padding: 36px 18px 20px;
-  }
-
-  .social-row {
-    grid-template-columns: 1fr;
-  }
-
-  .footer-links {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .footer-links nav {
-    justify-content: flex-start;
+    min-height: 40vh;
   }
 }
 </style>

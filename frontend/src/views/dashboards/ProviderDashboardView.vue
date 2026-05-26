@@ -259,7 +259,7 @@ const providerInitials = computed(() => {
   return name
     .split(/\s+/)
     .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() || "")
+    .map((part: string[]) => part[0]?.toUpperCase() || "")
     .join("")
     .slice(0, 2) || "P";
 });
