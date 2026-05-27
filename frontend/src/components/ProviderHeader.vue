@@ -217,6 +217,7 @@ const providerInitials = computed(() => {
   line-height: 1.2;
 }
 
+
 .icon-btn {
   width: 40px;
   height: 40px;
