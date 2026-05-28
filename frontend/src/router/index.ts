@@ -123,22 +123,74 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
-    path: "/provider/dashboard",
-    name: "provider-dashboard",
-    component: () => import("../views/provider/ProviderDashboardView.vue"),
+    path: "/provider",
+    component: () => import("../views/dashboards/ProviderShellView.vue"),
     meta: {
-      requiresAuth: true,
+      requiresAuth: false,
       roles: ["provider"],
     },
+    children: [
+      {
+        path: "",
+        name: "provider-dashboard",
+        component: () => import("../views/dashboards/ProviderDashboardView.vue"),
+        meta: { title: "Command Center" },
+      },
+      {
+        path: "service",
+        name: "provider-service",
+        component: () => import("../views/dashboards/ServiceManagerView.vue"),
+        meta: { title: "Service Manager" },
+      },
+      {
+        path: "inventory",
+        name: "provider-inventory",
+        component: () => import("../views/dashboards/InventoryView.vue"),
+        meta: { title: "Inventory & Pricing" },
+      },
+      {
+        path: "manifest",
+        name: "provider-manifest",
+        component: () => import("../views/dashboards/ManifestView.vue"),
+        meta: { title: "Manifest" },
+      },
+      {
+        path: "ledger",
+        name: "provider-ledger",
+        component: () => import("../views/dashboards/FinancialLedgerView.vue"),
+        meta: { title: "Financial Ledger" },
+      },
+      {
+        path: "settings",
+        name: "provider-settings",
+        component: () => import("../views/dashboards/SettingsView.vue"),
+        meta: { title: "Brand & Public Profile" },
+      },
+    ],
   },
   {
-    path: "/provider/bookings",
-    name: "provider-bookings",
-    component: () => import("../views/provider/ProviderBookingsView.vue"),
-    meta: {
-      requiresAuth: true,
-      roles: ["provider"],
-    },
+    path: "/provider/dashboard",
+    redirect: { name: "provider-dashboard" },
+  },
+  {
+    path: "/provider/service",
+    redirect: { name: "provider-service" },
+  },
+  {
+    path: "/provider/inventory",
+    redirect: { name: "provider-inventory" },
+  },
+  {
+    path: "/provider/manifest",
+    redirect: { name: "provider-manifest" },
+  },
+  {
+    path: "/provider/ledger",
+    redirect: { name: "provider-ledger" },
+  },
+  {
+    path: "/provider/settings",
+    redirect: { name: "provider-settings" },
   },
   {
     path: "/customer/dashboard",

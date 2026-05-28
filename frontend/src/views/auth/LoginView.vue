@@ -22,6 +22,10 @@ const handleLogin = async () => {
     console.log("LOGIN SUCCESS:", res.data);
 
     if (res.data.success) {
+      localStorage.setItem("auth_user", JSON.stringify(res.data.user));
+      localStorage.setItem("auth_role", res.data.user.role);
+
+      // optional: save token
       setCurrentUserRole(res.data.user.role);
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
@@ -128,7 +132,7 @@ const handleLogin = async () => {
           </p>
 
           <footer class="footer-links">
-            <span>© 2024 THE HERITAGE CURATOR. ALL RIGHTS RESERVED.</span>
+            <span>© 2026 THE HERITAGE CURATOR. ALL RIGHTS RESERVED.</span>
             <nav>
               <a href="#">PRIVACY POLICY</a>
               <a href="#">TERMS OF SERVICE</a>
