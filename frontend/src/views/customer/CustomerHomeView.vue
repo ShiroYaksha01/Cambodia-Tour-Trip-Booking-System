@@ -9,7 +9,8 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const tours = ref<any[]>([])
+const allServices = ref<any[]>([])
+const displayedServices = ref<any[]>([])
 
 const handleBook = (tour: any) => {
   router.push({ name: 'booking-form', params: { id: tour.id } })
@@ -19,16 +20,67 @@ const goToDetail = (id: string) => {
   router.push({ name: 'service-detail', params: { id } })
 }
 
+function mapServiceToTour(service: any) {
+  const coverImage = service.images?.find((img: any) => img.isCover)?.imageUrl
+    || service.images?.[0]?.imageUrl
+    || 'https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=800&auto=format&fit=crop';
+
+  return {
+    id: service.id,
+    title: service.title,
+    location: service.location || 'Cambodia',
+    description: service.description || '',
+    image: coverImage,
+    rating: service.rating || 4.5,
+    reviews: Math.floor(Math.random() * 100) + 10,
+    price: typeof service.price === 'string' ? parseFloat(service.price) : service.price,
+    duration: service.duration || 'Flexible',
+  }
+}
+
+function handleSearch(filters: any) {
+  console.log("Applying filters:", filters)
+  displayedServices.value = allServices.value.filter(service => {
+    // Basic type filtering
+    if (service.serviceType !== filters.type) return false
+
+    // Tab-specific filters
+    if (filters.type === 'tour') {
+      if (filters.location && !service.location?.toLowerCase().includes(filters.location.toLowerCase())) return false
+      if (filters.title && !service.title.toLowerCase().includes(filters.title.toLowerCase())) return false
+      if (filters.date && service.tourPackage?.travelDate) {
+        const serviceDate = new Date(service.tourPackage.travelDate).toISOString().split('T')[0]
+        if (serviceDate !== filters.date) return false
+      }
+    } else if (filters.type === 'accommodation') {
+      if (filters.location && !service.location?.toLowerCase().includes(filters.location.toLowerCase())) return false
+      // Simple capacity check (mocking rooms/people logic)
+      if (filters.travelers && service.accommodation?.totalRooms < Math.ceil(filters.travelers / 2)) return false
+    } else if (filters.type === 'transportation') {
+      if (filters.from && !service.transportation?.departurePoint?.toLowerCase().includes(filters.from.toLowerCase())) return false
+      if (filters.to && !service.transportation?.destination?.toLowerCase().includes(filters.to.toLowerCase())) return false
+      if (filters.date && service.transportation?.departureTime) {
+        const serviceDate = new Date(service.transportation.departureTime).toISOString().split('T')[0]
+        if (serviceDate !== filters.date) return false
+      }
+    }
+
+    return true
+  })
+}
+
 //use try-catch to handle errors when fetching data from the API
 onMounted(async () => {
   try {
     const data = await fetchServices()
     console.log("API data:", data)
 
-    tours.value = Array.isArray(data) ? data : []
+    allServices.value = Array.isArray(data) ? data : []
+    displayedServices.value = [...allServices.value]
   } catch (error) {
     console.error("Failed to fetch services:", error)
-    tours.value = []
+    allServices.value = []
+    displayedServices.value = []
   }
 })
 </script>
@@ -87,7 +139,7 @@ onMounted(async () => {
     <!-- Search Section -->
     <section class="relative z-10 -mt-12 px-4">
       <div class="max-w-7xl mx-auto">
-        <CustomerHomePageSearch />
+        <CustomerHomePageSearch @search="handleSearch" />
       </div>
     </section>
 
@@ -121,16 +173,23 @@ onMounted(async () => {
 
         <!-- Tour Cards Grid -->
         <div
+          v-if="displayedServices.length > 0"
           class="grid grid-cols-1 gap-8 sm:grid-cols-2 xl:grid-cols-3"
         >
           <CustomerServiceCard
-            v-for="tour in tours"
-            :key="tour.id"
-            :tour="tour"
-            @click="goToDetail(tour.id)"
+            v-for="service in displayedServices"
+            :key="service.id"
+            :tour="mapServiceToTour(service)"
+            @click="goToDetail(service.id)"
             @book="handleBook"
             class="cursor-pointer"
           />
+        </div>
+        <div v-else class="text-center py-20 bg-white rounded-2xl border border-gray-100">
+          <p class="text-gray-500 text-lg">No services found matching your criteria.</p>
+          <button @click="displayedServices = [...allServices]" class="mt-4 text-emerald-600 font-semibold underline">
+            Clear all filters
+          </button>
         </div>
       </div>
     </section>
