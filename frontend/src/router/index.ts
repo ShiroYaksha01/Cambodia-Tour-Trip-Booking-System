@@ -193,9 +193,9 @@ const routes: RouteRecordRaw[] = [
     redirect: { name: "provider-settings" },
   },
   {
-    path: "/customer/dashboard",
-    name: "customer-dashboard",
-    component: () => import("../views/customer/CustomerDashboardView.vue"),
+    path: "/customer/explore",
+    name: "customer-explore",
+    component: () => import("../views/customer/CustomerExploreView.vue"),
     meta: {
       requiresAuth: true,
       roles: ["customer"],

@@ -530,7 +530,7 @@ onMounted(() => {
         </div>
       </section>
 
-      <section class="customer-dashboard">
+      <section class="customer-explore">
         <div
           class="dashboard-card unpaid-card"
           :class="{ danger: unpaidBookings.length > 0 }"
@@ -1293,7 +1293,7 @@ onMounted(() => {
   box-shadow: 0 8px 18px rgba(15, 110, 112, 0.22);
 }
 
-.customer-dashboard {
+.customer-explore {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
@@ -2125,7 +2125,7 @@ onMounted(() => {
     width: 100%;
   }
 
-  .customer-dashboard {
+  .customer-explore {
     grid-template-columns: 1fr;
   }
 
