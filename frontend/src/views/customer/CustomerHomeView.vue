@@ -21,8 +21,12 @@ const handleBook = (tour: any) => {
   router.push({ name: 'booking-form', params: { id: tour.id } })
 }
 
-const goToDetail = (id: string) => {
-  router.push({ name: 'service-detail', params: { id } })
+const goToDetail = (service: any) => {
+  const st = service?.serviceType
+  if (st === 'tour') router.push({ name: 'customer-tour-detail', params: { id: service.id } })
+  else if (st === 'accommodation') router.push({ name: 'customer-hotel-detail', params: { id: service.id } })
+  else if (st === 'transportation') router.push({ name: 'customer-transport-detail', params: { id: service.id } })
+  else router.push({ name: 'service-detail', params: { id: service.id } })
 }
 
 function mapServiceToTour(service: any) {
@@ -186,7 +190,7 @@ onMounted(async () => {
             v-for="service in displayedServices"
             :key="service.id"
             :tour="mapServiceToTour(service)"
-            @click="goToDetail(service.id)"
+            @click="goToDetail(service)"
             @book="handleBook"
             class="cursor-pointer"
           />

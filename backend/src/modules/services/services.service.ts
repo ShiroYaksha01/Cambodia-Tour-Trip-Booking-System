@@ -63,16 +63,20 @@ export class ServicesService {
   }
 
   async findOne(id: string) {
-    const service = await this.serviceRepository.findOne({ 
+    const service = await this.serviceRepository.findOne({
       where: { id },
-      relations: [
-        'provider', 
-        'inventory', 
-        'tourPackage', 
-        'accommodation', 
-        'transportation', 
-        'images'
-      ]
+      relations: {
+        provider: true,
+        inventory: true,
+        tourPackage: {
+          itineraryDays: {
+            activities: true,
+          },
+        },
+        accommodation: true,
+        transportation: true,
+        images: true,
+      },
     });
     if (!service) throw new NotFoundException('Service not found');
     return service;
