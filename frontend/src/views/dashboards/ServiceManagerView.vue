@@ -185,7 +185,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 
-const activeNav = ref("service");
 const showDatePicker = ref(false);
 const startDate = ref("2026-04-13");
 const endDate = ref("2026-04-16");
