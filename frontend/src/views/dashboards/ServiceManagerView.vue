@@ -43,16 +43,16 @@
         <div class="header-left">
           <h1>Service Manager</h1>
           <div class="header-controls">
-            <select class="month-select">
-              <option>April 2026</option>
-            </select>
-            <div class="header-buttons">
-              <button class="btn-secondary">Tours</button>
-              <button class="btn-secondary">Hotels</button>
-              <button class="btn-secondary">Transport</button>
-              <button class="btn-primary">Create New Service</button>
-            </div>
-          </div>
+                <select class="month-select">
+                  <option>April 2026</option>
+                </select>
+                <div class="header-buttons">
+                  <button class="btn-secondary">Tours</button>
+                  <button class="btn-secondary">Hotels</button>
+                  <button class="btn-secondary">Transport</button>
+                  <button class="btn-primary" @click="openCreateModal">Create New Service</button>
+                </div>
+              </div>
         </div>
         <div class="header-icons">
           <button class="icon-btn">🔔</button>
@@ -76,7 +76,7 @@
               <div class="header-cell">ACTIONS</div>
             </div>
 
-            <article v-for="item in serviceItems" :key="item.name" class="service-row service-manager-row">
+            <article v-for="(item, index) in serviceItems" :key="item.name + index" class="service-row service-manager-row">
               <div class="service-info">
                 <img :src="item.image" :alt="item.name" class="service-image" />
                 <div class="service-details">
@@ -99,7 +99,11 @@
               </div>
 
               <div class="actions">
-                <button>⋯</button>
+                <button @click.stop="toggleActionMenu(index)">⋯</button>
+                <div v-if="actionMenuIndex === index" class="action-menu">
+                  <button class="action-menu-item" @click="startEditService(index)">Update</button>
+                  <button class="action-menu-item danger" @click="deleteServiceItem(index)">Delete</button>
+                </div>
               </div>
             </article>
 
@@ -178,14 +182,15 @@
         </div>
         <button class="btn-icon-large"></button>
       </footer>
+      <ServiceModal :show="showModal" :service="selectedService" @close="showModal = false" @save="handleSaveService" />
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-
-const activeNav = ref("service");
+// @ts-ignore: Vue SFC import
+import ServiceModal from '../../components/provider/ServiceModal.vue'
 const showDatePicker = ref(false);
 const startDate = ref("2026-04-13");
 const endDate = ref("2026-04-16");
@@ -214,7 +219,78 @@ const resetDatePicker = () => {
   showDatePicker.value = false;
 };
 
-const serviceItems = [
+const showModal = ref(false)
+const selectedService = ref<any>(null)
+const editingIndex = ref<number | null>(null)
+const actionMenuIndex = ref<number | null>(null)
+
+function openCreateModal() {
+  editingIndex.value = null
+  selectedService.value = null
+  // debug: confirm click handler runs
+  // eslint-disable-next-line no-console
+  console.log('openCreateModal called')
+  showModal.value = true
+}
+
+function toggleActionMenu(i: number) {
+  actionMenuIndex.value = actionMenuIndex.value === i ? null : i
+}
+
+function startEditService(i: number) {
+  const item = serviceItems.value[i]
+  if (!item) return
+  editingIndex.value = i
+  // Transform item to modal-friendly shape
+  selectedService.value = {
+    title: item.name,
+    description: item.subtitle,
+    price: Number(String(item.price).replace(/[^0-9.]/g, '')) || 0,
+    destinations: item.destinations || [],
+    image: item.image,
+    isActive: (item.status || '').toLowerCase() === 'live'
+  }
+  showModal.value = true
+  actionMenuIndex.value = null
+}
+
+function deleteServiceItem(i: number) {
+  const item = serviceItems.value[i]
+  if (!item) return
+  const ok = window.confirm(`Delete "${item.name}"? This cannot be undone.`)
+  if (!ok) {
+    actionMenuIndex.value = null
+    return
+  }
+  serviceItems.value.splice(i, 1)
+  actionMenuIndex.value = null
+}
+
+// helper functions removed (unused) to avoid TypeScript unused-local errors
+
+// NOTE: `startUpdate` and `deleteServiceItem` were removed because they were unused in the current template.
+
+function handleSaveService(formData: any) {
+  const item = {
+    name: formData.title || 'New service',
+    subtitle: (formData.guideType === 'private' ? 'Private Guided' : 'Group') + ' • ' + (formData.duration || `${formData.durationValue} ${formData.durationUnit || 'hours'}`),
+    destinations: formData.destinations || (formData.destination ? [formData.destination] : []),
+    price: formData.price ? `$${Number(formData.price).toFixed(2)}` : '$0.00',
+    status: formData.isActive ? 'Live' : 'Draft',
+    image: formData.image || 'https://via.placeholder.com/120'
+  }
+
+  if (editingIndex.value !== null) {
+    serviceItems.value.splice(editingIndex.value, 1, item)
+  } else {
+    serviceItems.value.unshift(item)
+  }
+
+  editingIndex.value = null
+  showModal.value = false
+}
+
+const serviceItems = ref([
   {
     name: "Angkor Wat Sunrise Premium",
     subtitle: "Private Guided • 8 Hours",
@@ -239,7 +315,7 @@ const serviceItems = [
     status: "Live",
     image: "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=120&q=80",
   },
-];
+]);
 </script>
 
 <style scoped>
@@ -577,6 +653,31 @@ const serviceItems = [
   background: #fff;
   color: #5e6a73;
 }
+
+.action-menu {
+  position: absolute;
+  background: white;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  border-radius: 8px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  right: 12px;
+  z-index: 50;
+}
+.action-menu-item {
+  background: transparent;
+  border: 0;
+  padding: 8px 12px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6px;
+}
+.action-menu-item:hover { background:#f5f7f7 }
+.action-menu-item.danger { color: #c0392b }
+.actions { position: relative }
 
 .table-foot {
   display: flex;
