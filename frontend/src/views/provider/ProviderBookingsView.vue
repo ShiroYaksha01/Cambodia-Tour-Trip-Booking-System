@@ -78,6 +78,36 @@
         </article>
       </section>
 
+      <section class="earnings-panel">
+        <div class="panel-heading panel-heading--compact">
+          <div>
+            <p class="section-kicker">Provider Earnings Tracker</p>
+            <h2>Money Logic</h2>
+          </div>
+          <span class="chart-note">10% platform commission</span>
+        </div>
+
+        <div class="earnings-grid">
+          <article class="earnings-card earnings-card--teal">
+            <span>Total Revenue</span>
+            <strong>{{ formatMoney(earnings.totalRevenue) }}</strong>
+            <small>Sum of all paid bookings</small>
+          </article>
+
+          <article class="earnings-card earnings-card--gold">
+            <span>Platform Commission</span>
+            <strong>{{ formatMoney(earnings.platformCommission) }}</strong>
+            <small>Automatically reserved by the platform</small>
+          </article>
+
+          <article class="earnings-card earnings-card--forest">
+            <span>Payout Balance</span>
+            <strong>{{ formatMoney(earnings.payoutBalance) }}</strong>
+            <small>Actual money the provider earns</small>
+          </article>
+        </div>
+      </section>
+
       <section class="workspace-grid">
         <article class="chart-panel">
           <div class="panel-heading">
@@ -138,77 +168,22 @@
         </aside>
       </section>
 
-      <section class="ledger-card">
-        <div class="ledger-card__header">
-          <div>
-            <p class="section-kicker">Transaction History</p>
-            <h2>Provider Bookings</h2>
-            <p>Recent bookings, payment states, and quick settlement actions.</p>
-          </div>
-
-          <div class="ledger-card__chips">
-            <span class="ledger-chip">Status: {{ statusFilterLabel }}</span>
-            <span class="ledger-chip">Sort: {{ sortLabel }}</span>
-          </div>
-        </div>
-
-        <div v-if="loading" class="ledger-empty">Loading bookings...</div>
-        <div v-else-if="error" class="ledger-empty ledger-empty--error">{{ error }}</div>
-        <div v-else-if="filteredBookings.length === 0" class="ledger-empty">No bookings found.</div>
-
-        <div v-else class="ledger-table-wrap">
-          <table class="ledger-table">
-            <thead>
-              <tr>
-                <th>BOOKING ID</th>
-                <th>INITIATED DATE</th>
-                <th>DESTINATION</th>
-                <th>AMOUNT</th>
-                <th>STATUS</th>
-                <th>ACTION</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              <tr
-                v-for="booking in filteredBookings"
-                :key="booking.id ?? booking.booking_id ?? booking.transaction_id ?? booking.reference ?? booking.service_name"
-              >
-                <td>
-                  <strong>{{ bookingCode(booking) }}</strong>
-                </td>
-                <td>{{ formatLedgerDate(bookingDate(booking)) }}</td>
-                <td>
-                  <div class="destination-cell">
-                    <span class="destination-badge">{{ destinationInitials(booking) }}</span>
-                    <div>
-                      <strong>{{ serviceName(booking) }}</strong>
-                      <small>{{ guestLabel(booking) }}</small>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <strong>{{ formatMoney(bookingAmount(booking)) }}</strong>
-                </td>
-                <td>
-                  <span :class="statusClass(booking)" class="status-pill">{{ statusText(booking) }}</span>
-                </td>
-                <td>
-                  <button class="action-button" type="button">View Details</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <ProviderBookingsList
+        :bookings="filteredBookings"
+        :loading="loading"
+        :error="error"
+        :statusLabel="statusFilterLabel"
+        :sortLabel="sortLabel"
+      />
     </section>
   </main>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import DashboardSidebar from '../components/dashboard/DashboardSidebar.vue'
-import { getProviderBookings } from '../services/api'
+import DashboardSidebar from '../../components/dashboard/DashboardSidebar.vue'
+import ProviderBookingsList from '../../components/provider/ProviderBookingsList.vue'
+import { getProviderBookings } from '../../services/api'
 
 type BookingRecord = {
   id?: string | number
@@ -293,33 +268,6 @@ function bookingAmount(booking: BookingRecord) {
   return Number.isFinite(numericValue as number) ? Number(numericValue) : null
 }
 
-function statusText(booking: BookingRecord) {
-  const value = normalizedStatus(booking)
-
-  if (value === 'paid' || value === 'released' || value === 'success') return 'Paid'
-  if (value === 'pending' || value === 'processing' || value === 'hold') return 'Pending'
-
-  return booking.payment_status ?? booking.status ?? 'Unknown'
-}
-
-function statusClass(booking: BookingRecord) {
-  const value = normalizedStatus(booking)
-
-  if (value === 'paid' || value === 'released' || value === 'success') return 'status-pill status-pill--paid'
-  if (value === 'pending' || value === 'processing' || value === 'hold') return 'status-pill status-pill--pending'
-
-  return 'status-pill status-pill--neutral'
-}
-
-function destinationInitials(booking: BookingRecord) {
-  return serviceName(booking)
-    .split(' ')
-    .slice(0, 2)
-    .map((part) => part.charAt(0))
-    .join('')
-    .toUpperCase()
-}
-
 function formatMoney(value: number | null) {
   if (value === null) return '—'
   return new Intl.NumberFormat('en-US', {
@@ -327,13 +275,6 @@ function formatMoney(value: number | null) {
     currency: 'USD',
     maximumFractionDigits: 2,
   }).format(value)
-}
-
-function formatLedgerDate(value: string) {
-  if (!value) return '—'
-  const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) return value
-  return new Intl.DateTimeFormat('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).format(parsed)
 }
 
 async function load() {
@@ -405,6 +346,18 @@ const summary = computed(() => {
   }
 })
 
+const earnings = computed(() => {
+  const totalRevenue = summary.value.paidRevenue
+  const platformCommission = totalRevenue * 0.1
+  const payoutBalance = totalRevenue - platformCommission
+
+  return {
+    totalRevenue,
+    platformCommission,
+    payoutBalance,
+  }
+})
+
 const chartData = computed<ChartDay[]>(() => {
   const buckets = days.map((label, index) => {
     const dayBookings = bookings.value.filter((booking) => {
@@ -446,11 +399,12 @@ onMounted(() => {
 
 <style scoped>
 .provider-ledger-shell {
-  min-height: 100vh;
+  height: 100vh;
   display: grid;
   grid-template-columns: 245px minmax(0, 1fr);
   background: #202020;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .provider-ledger-content {
@@ -458,6 +412,7 @@ onMounted(() => {
   gap: 16px;
   padding: 18px;
   background: linear-gradient(180deg, #f7f7f6 0%, #f9faf9 100%);
+  overflow-y: auto;
 }
 
 .topbar {
@@ -665,6 +620,62 @@ onMounted(() => {
 .summary-card--red { border-top-color: #e03a3a; }
 .summary-card--forest { border-top-color: #4a7a65; }
 
+.earnings-panel {
+  display: grid;
+  gap: 12px;
+  padding: 18px 16px 16px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(20, 31, 31, 0.07);
+}
+
+.panel-heading--compact h2 {
+  margin-top: 0;
+  color: #1b3031;
+  font-size: 1rem;
+}
+
+.earnings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.earnings-card {
+  padding: 16px 14px 14px;
+  border-radius: 14px;
+  background: #fbfcfb;
+  border: 1px solid #eef1f0;
+  border-top: 3px solid transparent;
+}
+
+.earnings-card span {
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: #7f8b88;
+  text-transform: uppercase;
+}
+
+.earnings-card strong {
+  display: block;
+  margin-top: 8px;
+  color: #173f42;
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.earnings-card small {
+  display: block;
+  margin-top: 6px;
+  color: #6c7b77;
+  font-size: 0.78rem;
+}
+
+.earnings-card--teal { border-top-color: #1b8d90; }
+.earnings-card--gold { border-top-color: #c68a22; }
+.earnings-card--forest { border-top-color: #4a7a65; }
+
 .workspace-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) 284px;
@@ -820,161 +831,6 @@ onMounted(() => {
 .panel-card--highlight p {
   margin-top: 10px;
   opacity: 0.9;
-}
-
-.ledger-card {
-  background: #fff;
-  border-radius: 18px;
-  padding: 18px;
-  box-shadow: 0 16px 34px rgba(20, 31, 31, 0.08);
-}
-
-.ledger-card__header {
-  display: flex;
-  gap: 16px;
-  align-items: start;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.ledger-card h2 {
-  margin: 0;
-  color: #173f42;
-  font-size: 1.2rem;
-}
-
-.ledger-card p {
-  margin: 6px 0 0;
-  color: #72817d;
-  font-size: 0.84rem;
-}
-
-.ledger-card__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.ledger-chip {
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: #f0f3f2;
-  color: #5d6d6a;
-  font-size: 0.72rem;
-  font-weight: 700;
-}
-
-.ledger-empty {
-  padding: 18px;
-  border-radius: 12px;
-  background: #f7f8f7;
-  color: #4d5d5b;
-}
-
-.ledger-empty--error {
-  background: #fff4f4;
-  color: #b53d3d;
-}
-
-.ledger-table-wrap {
-  overflow-x: auto;
-  border: 1px solid #edf0ef;
-  border-radius: 14px;
-}
-
-.ledger-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 760px;
-}
-
-.ledger-table thead {
-  background: #fafafa;
-}
-
-.ledger-table th {
-  padding: 14px 16px;
-  text-align: left;
-  color: #6c7b77;
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-}
-
-.ledger-table td {
-  padding: 16px;
-  border-top: 1px solid #f0f1f0;
-  color: #263f41;
-  vertical-align: middle;
-  font-size: 0.9rem;
-}
-
-.ledger-table tbody tr:hover {
-  background: #fbfcfc;
-}
-
-.ledger-table strong {
-  color: #1b3031;
-}
-
-.destination-cell {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.destination-cell small {
-  display: block;
-  margin-top: 4px;
-  color: #71817d;
-}
-
-.destination-badge {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  display: grid;
-  place-items: center;
-  background: #edf7f6;
-  color: #0f6e70;
-  font-size: 0.72rem;
-  font-weight: 800;
-}
-
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  min-height: 26px;
-  padding: 5px 10px;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 800;
-}
-
-.status-pill--paid {
-  background: #d9f1e4;
-  color: #15613c;
-}
-
-.status-pill--pending {
-  background: #f7e7b4;
-  color: #815900;
-}
-
-.status-pill--neutral {
-  background: #edf0ef;
-  color: #5d6d6a;
-}
-
-.action-button {
-  border: 1px solid #d7dfdc;
-  background: #fff;
-  color: #0f6e70;
-  padding: 8px 12px;
-  border-radius: 10px;
-  font: inherit;
-  font-size: 0.78rem;
-  font-weight: 700;
 }
 
 @media (max-width: 1280px) {

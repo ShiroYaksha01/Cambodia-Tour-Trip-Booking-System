@@ -123,10 +123,10 @@ const goBack = () => {
   <main class="auth-page">
     <section class="auth-shell">
       <div class="hero-panel">
-        <div class="brand-mark">
+        <RouterLink to="/" class="brand-mark">
           <div class="brand-icon" aria-hidden="true">✦</div>
           <div class="brand-name">Anajak Tour</div>
-        </div>
+        </RouterLink>
 
         <div class="hero-copy">
           <div class="hero-accent"></div>
@@ -286,7 +286,7 @@ const goBack = () => {
           </div>
 
           <footer class="footer-links">
-            <span>© 2024 THE HERITAGE CURATOR. ALL RIGHTS RESERVED.</span>
+            <span>© 2026 THE HERITAGE CURATOR. ALL RIGHTS RESERVED.</span>
             <nav>
               <a href="#">PRIVACY POLICY</a>
               <a href="#">TERMS OF SERVICE</a>
@@ -361,7 +361,7 @@ const goBack = () => {
 
 .brand-mark, .hero-copy, .social-proof { position: relative; z-index: 1; }
 
-.brand-mark { display: inline-flex; align-items: center; gap: 14px; }
+.brand-mark { display: inline-flex; align-items: center; gap: 14px; text-decoration: none; }
 
 .brand-icon {
   width: 30px; height: 30px; border-radius: 6px; background: #f4a71d;

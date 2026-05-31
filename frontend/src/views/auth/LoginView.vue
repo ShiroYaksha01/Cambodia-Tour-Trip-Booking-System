@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import api from "../../services/api";
 import { useRouter } from "vue-router";
+import { setCurrentUserRole } from "../../utils/auth";
 
 const router = useRouter();
 
@@ -21,9 +22,14 @@ const handleLogin = async () => {
     console.log("LOGIN SUCCESS:", res.data);
 
     if (res.data.success) {
+      localStorage.setItem("auth_user", JSON.stringify(res.data.user));
       localStorage.setItem("auth_role", res.data.user.role);
+
+      // optional: save token
+      setCurrentUserRole(res.data.user.role);
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
+      localStorage.setItem("auth_user", JSON.stringify(res.data.user));
 
       const redirectPath = router.currentRoute.value.query.redirect as string;
       if (redirectPath) {
@@ -43,10 +49,10 @@ const handleLogin = async () => {
   <main class="auth-page">
     <section class="auth-shell">
       <div class="hero-panel">
-        <div class="brand-mark">
+        <RouterLink to="/" class="brand-mark">
           <div class="brand-icon" aria-hidden="true">✦</div>
           <div class="brand-name">Anajak Tour</div>
-        </div>
+        </RouterLink>
 
         <div class="hero-copy">
           <div class="hero-accent"></div>
@@ -103,14 +109,17 @@ const handleLogin = async () => {
               </div>
             </label>
             <p class="error-msg" v-if="message">{{ message }}</p>
-            <label class="remember-row">
+            <div class="form-actions">
+              <label class="remember-row">
               <input type="checkbox" checked />
               <span>Remember me for 30 days</span>
-            </label>
+              </label>
 
-            <button class="primary-button" type="submit">
-              Sign In to Dashboard →
-            </button>
+              <button class="primary-button" type="submit">
+                Sign In to Dashboard →
+              </button>
+            </div>
+            
           </form>
 
           <p class="signup-row">
@@ -123,7 +132,7 @@ const handleLogin = async () => {
           </p>
 
           <footer class="footer-links">
-            <span>© 2024 THE HERITAGE CURATOR. ALL RIGHTS RESERVED.</span>
+            <span>© 2026 THE HERITAGE CURATOR. ALL RIGHTS RESERVED.</span>
             <nav>
               <a href="#">PRIVACY POLICY</a>
               <a href="#">TERMS OF SERVICE</a>
@@ -272,6 +281,7 @@ const handleLogin = async () => {
   display: inline-flex;
   align-items: center;
   gap: 14px;
+  text-decoration: none;
 }
 
 .brand-icon {
@@ -421,6 +431,7 @@ const handleLogin = async () => {
   background: linear-gradient(180deg, #0e7f76, #0a6d66);
   color: #ffffff;
   font: inherit;
+  font-size: 0.95rem;
   font-weight: 700;
   border: 0;
   border-radius: 8px;
@@ -516,6 +527,13 @@ const handleLogin = async () => {
   gap: 10px;
   font-size: 0.88rem;
   color: #495459;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
 }
 
 @media (max-width: 1080px) {

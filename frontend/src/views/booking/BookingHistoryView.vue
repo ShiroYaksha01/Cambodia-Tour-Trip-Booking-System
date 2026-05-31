@@ -1,168 +1,1264 @@
-<template>
-  <div class="min-h-screen bg-gradient-to-b from-[#f9faf8] to-[#f3f4f1] py-12 px-4 sm:px-6 lg:px-8 font-sans text-[#142125]">
-    <div class="max-w-4xl mx-auto">
-      <div class="mb-10 flex items-center gap-4">
-        <div class="w-10 h-10 rounded bg-[#f4a71d] flex items-center justify-center text-xl font-bold text-[#1b2a2a] shadow-md">✦</div>
-        <div>
-          <h1 class="text-3xl font-extrabold text-[#1d2427] tracking-tight">Booking History</h1>
-          <p class="text-[0.95rem] text-[#69757a] mt-1">Review your scheduled heritage experiences.</p>
-        </div>
-      </div>
-
-      <!-- Loading State -->
-      <div v-if="isLoading" class="flex justify-center items-center py-16">
-        <svg class="animate-spin h-8 w-8 text-[#0e7f76]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-      </div>
-
-      <!-- Error State -->
-      <div v-else-if="error" class="bg-white/80 backdrop-blur border border-red-200 p-6 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.02)]">
-        <div class="flex items-start">
-          <div class="flex-shrink-0 mt-0.5">
-             <div class="w-6 h-6 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-sm">!</div>
-          </div>
-          <div class="ml-3">
-            <h3 class="text-[0.95rem] text-red-800 font-bold mb-1">Failed to retrieve dossier</h3>
-            <p class="text-[0.88rem] text-red-700 leading-relaxed">{{ error }}</p>
-            <div class="mt-4">
-               <button @click="fetchBookings" class="text-[0.85rem] font-bold text-red-700 underline hover:text-red-900 transition-colors">
-                 Try Again
-               </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Empty State -->
-      <div v-else-if="bookings.length === 0" class="bg-white/90 rounded-xl shadow-[0_12px_24px_rgba(10,109,102,0.04)] border border-[#5f6d74]/10 text-center py-20 px-4 relative overflow-hidden backdrop-blur-sm">
-        <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(245,164,28,0.03),transparent_60%)] pointer-events-none"></div>
-        <div class="w-16 h-16 mx-auto rounded-full border-2 border-[#5f6d74]/20 flex items-center justify-center text-[#8b9498] text-2xl font-serif italic mb-4">No.</div>
-        <h3 class="mt-2 text-xl font-extrabold text-[#1d2427]">No Experiences Found</h3>
-        <p class="mt-2 text-[0.95rem] text-[#69757a] max-w-sm mx-auto">You haven't scheduled any heritage tours yet. Ready to start your journey?</p>
-        <div class="mt-8">
-          <router-link to="/dashboard" class="inline-flex items-center justify-center py-2.5 px-6 rounded-lg shadow-md text-[0.95rem] font-bold text-[#1b2a2a] bg-[#f4a71d] hover:bg-[#e49b18] transition-all transform hover:-translate-y-0.5">
-            Explore Experiences →
-          </router-link>
-        </div>
-      </div>
-
-      <!-- Bookings List -->
-      <div v-else class="space-y-6">
-        <div v-for="booking in bookings" :key="booking.id" class="bg-white rounded-xl shadow-[0_8px_16px_rgba(10,109,102,0.04)] border border-[#5f6d74]/10 overflow-hidden hover:shadow-[0_12px_24px_rgba(10,109,102,0.08)] transition-all relative">
-          
-          <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#0e7f76] to-[#0a6d66]" v-if="booking.status === 'confirmed'"></div>
-          <div class="absolute left-0 top-0 bottom-0 w-1 bg-[#f4a71d]" v-if="booking.status === 'pending'"></div>
-          <div class="absolute left-0 top-0 bottom-0 w-1 bg-gray-400" v-if="booking.status === 'cancelled'"></div>
-
-          <div class="p-6 pl-8">
-            <div class="flex items-center justify-between flex-wrap gap-4 mb-4">
-              <div>
-                <p class="text-[0.75rem] text-[#8b9498] font-bold tracking-widest uppercase mb-1.5">ID: {{ booking.id }}</p>
-                <h3 class="text-[1.25rem] font-extrabold text-[#1d2427] leading-tight">{{ booking.serviceName || 'Heritage Experience' }}</h3>
-              </div>
-              <span 
-                class="px-3 py-1.5 inline-flex text-[0.75rem] tracking-wider uppercase font-bold rounded-full shadow-sm border"
-                :class="{
-                  'bg-[#fff9e6] text-[#b37400] border-[#f4a71d]/20': booking.status === 'pending',
-                  'bg-[#e6f2f1] text-[#0a6d66] border-[#0e7f76]/20': booking.status === 'confirmed',
-                  'bg-gray-50 text-gray-600 border-gray-200': booking.status === 'cancelled'
-                }"
-              >
-                {{ booking.status }}
-              </span>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[0.95rem] border-t border-[#5f6d74]/5 pt-4">
-              <div class="flex items-center text-[#69757a]">
-                <span class="mr-2 text-[#b0b7ba]">Date:</span>
-                <strong class="text-[#142125]">{{ formatDate(booking.date) }}</strong>
-              </div>
-              <div class="flex items-center text-[#69757a]">
-                <span class="mr-2 text-[#b0b7ba]">Guests:</span>
-                <strong class="text-[#142125]">{{ booking.quantity }}</strong>
-              </div>
-            </div>
-            
-            <div class="mt-5 text-right flex justify-end gap-4">
-              <router-link 
-                :to="{ name: 'booking-detail', params: { id: booking.id } }"
-                class="text-[0.85rem] font-bold text-[#0e7f76] hover:text-[#0a6d66] transition-colors"
-              >
-                Manage Reservation →
-              </router-link>
-              <button class="text-[0.85rem] font-bold text-[#bf7d10] hover:text-[#e49b18] transition-colors">
-                View Receipt
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <footer class="mt-16 text-center text-[#8d9497] text-[0.64rem] tracking-[0.14em] font-bold">
-         <span>© 2024 THE HERITAGE CURATOR. ALL RIGHTS RESERVED.</span>
-      </footer>
-
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { apiGet } from '../../utils/api'
+import { ref, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import CustomerNavbar from "../../components/customer/CustomerNavbar.vue";
+import CustomerFooter from "../../components/customer/CustomerFooter.vue";
+import api from "../../services/api";
+import { hasAuthSession } from "../../utils/auth";
 
-interface Booking {
-  id: string | number
-  serviceId: string | number
-  serviceName: string
-  date: string
-  quantity: number
-  status: 'pending' | 'confirmed' | 'cancelled'
-  totalPrice?: number
+const router = useRouter();
+const isAuthenticated = ref(hasAuthSession());
+
+interface ServiceInfo {
+  id?: string;
+  title?: string;
+  price?: number;
+  duration?: string;
+  location?: string;
+  tourLocation?: string;
+  address?: string;
+  guideName?: string;
+  guidePhone?: string;
+  guideContact?: string;
+  guideRating?: number;
+  itinerary?: string;
 }
 
-const bookings = ref<Booking[]>([])
-const isLoading = ref(true)
-const error = ref('')
+interface ProviderInfo {
+  id?: string;
+  companyName?: string;
+  phoneNumber?: string;
+  phone?: string;
+  rating?: number;
+}
 
-const mapBooking = (raw: any): Booking => ({
-  id: raw.id,
-  serviceId: raw.serviceId ?? raw.service?.id ?? 'unknown',
-  serviceName: raw.service?.title ?? raw.serviceName ?? 'Heritage Experience',
-  date: raw.bookingDate ?? raw.date ?? '',
-  quantity: raw.quantity ?? 1,
-  status: raw.status ?? 'confirmed',
-  totalPrice: raw.totalPrice,
-})
+interface Booking {
+  id: string;
+  referenceCode?: string;
+  bookingDate: string;
+  quantity: number;
+  totalAmount: number;
+  bookingStatus: string;
+  paymentStatus: string;
+  transactionId?: string;
+  createdAt?: string;
+  service?: ServiceInfo;
+  provider?: ProviderInfo;
+}
 
-const fetchBookings = async () => {
-  isLoading.value = true
-  error.value = ''
+const bookings = ref<Booking[]>([]);
+const loading = ref(false);
+const payingId = ref("");
+const cancellingId = ref("");
+const error = ref("");
+
+const search = ref("");
+const statusFilter = ref("all");
+const paymentFilter = ref("all");
+const dateFrom = ref("");
+const dateTo = ref("");
+const sortBy = ref("newest");
+const currentPage = ref(1);
+const perPage = ref(5);
+
+const expandedBookingId = ref("");
+
+const stats = computed(() => {
+  const total = bookings.value.length;
+
+  const confirmed = bookings.value.filter(
+    (booking) => booking.bookingStatus?.toLowerCase() === "confirmed",
+  ).length;
+
+  const pendingPayment = bookings.value.filter(
+    (booking) => booking.paymentStatus?.toLowerCase() === "pending",
+  ).length;
+
+  const cancelled = bookings.value.filter(
+    (booking) => booking.bookingStatus?.toLowerCase() === "cancelled",
+  ).length;
+
+  const totalSpent = bookings.value.reduce(
+    (sum, booking) => sum + Number(booking.totalAmount || 0),
+    0,
+  );
+
+  return {
+    total,
+    confirmed,
+    pendingPayment,
+    cancelled,
+    totalSpent,
+  };
+});
+
+const filteredBookings = computed(() => {
+  let list = [...bookings.value];
+
+  if (statusFilter.value !== "all") {
+    list = list.filter(
+      (booking) => booking.bookingStatus?.toLowerCase() === statusFilter.value,
+    );
+  }
+
+  if (paymentFilter.value !== "all") {
+    list = list.filter(
+      (booking) => booking.paymentStatus?.toLowerCase() === paymentFilter.value,
+    );
+  }
+
+  if (dateFrom.value) {
+    const from = new Date(dateFrom.value);
+    from.setHours(0, 0, 0, 0);
+
+    list = list.filter((booking) => {
+      const bookingDate = new Date(booking.bookingDate);
+      bookingDate.setHours(0, 0, 0, 0);
+      return bookingDate >= from;
+    });
+  }
+
+  if (dateTo.value) {
+    const to = new Date(dateTo.value);
+    to.setHours(23, 59, 59, 999);
+
+    list = list.filter((booking) => {
+      const bookingDate = new Date(booking.bookingDate);
+      return bookingDate <= to;
+    });
+  }
+
+  if (search.value.trim()) {
+    const q = search.value.toLowerCase();
+
+    list = list.filter((booking) => {
+      const serviceTitle = booking.service?.title || "";
+      const providerName = booking.provider?.companyName || "";
+      const guideName = booking.service?.guideName || "";
+      const location =
+        booking.service?.location ||
+        booking.service?.tourLocation ||
+        booking.service?.address ||
+        "";
+
+      return (
+        booking.id.toLowerCase().includes(q) ||
+        booking.referenceCode?.toLowerCase().includes(q) ||
+        serviceTitle.toLowerCase().includes(q) ||
+        providerName.toLowerCase().includes(q) ||
+        guideName.toLowerCase().includes(q) ||
+        location.toLowerCase().includes(q) ||
+        booking.transactionId?.toLowerCase().includes(q)
+      );
+    });
+  }
+
+  if (sortBy.value === "newest") {
+    list.sort(
+      (a, b) =>
+        new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime(),
+    );
+  }
+
+  if (sortBy.value === "oldest") {
+    list.sort(
+      (a, b) =>
+        new Date(a.bookingDate).getTime() - new Date(b.bookingDate).getTime(),
+    );
+  }
+
+  if (sortBy.value === "highest") {
+    list.sort(
+      (a, b) => Number(b.totalAmount || 0) - Number(a.totalAmount || 0),
+    );
+  }
+
+  if (sortBy.value === "lowest") {
+    list.sort(
+      (a, b) => Number(a.totalAmount || 0) - Number(b.totalAmount || 0),
+    );
+  }
+
+  return list;
+});
+
+const totalPages = computed(() => {
+  return Math.max(1, Math.ceil(filteredBookings.value.length / perPage.value));
+});
+
+const paginatedBookings = computed(() => {
+  const start = (currentPage.value - 1) * perPage.value;
+  return filteredBookings.value.slice(start, start + perPage.value);
+});
+
+function formatDate(date: string) {
+  if (!date) return "N/A";
+
+  return new Date(date).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatMoney(amount: number) {
+  return `$${Number(amount || 0).toLocaleString()}`;
+}
+
+function statusClass(status: string) {
+  return status?.toLowerCase() || "pending";
+}
+
+function getTourLocation(booking: Booking) {
+  return (
+    booking.service?.location ||
+    booking.service?.tourLocation ||
+    booking.service?.address ||
+    "Location not provided"
+  );
+}
+
+function getTourDuration(booking: Booking) {
+  return booking.service?.duration || "Duration not provided";
+}
+
+function getGuideName(booking: Booking) {
+  return booking.service?.guideName || "Guide not assigned";
+}
+
+function getGuideContact(booking: Booking) {
+  return (
+    booking.service?.guidePhone ||
+    booking.service?.guideContact ||
+    booking.provider?.phoneNumber ||
+    booking.provider?.phone ||
+    "Contact not provided"
+  );
+}
+
+function getGuideRating(booking: Booking) {
+  return booking.service?.guideRating || booking.provider?.rating || null;
+}
+
+function canCancelBooking(booking: Booking) {
+  const status = booking.bookingStatus?.toLowerCase();
+  const payment = booking.paymentStatus?.toLowerCase();
+
+  return status !== "cancelled" && payment !== "paid";
+}
+
+function resetFilters() {
+  search.value = "";
+  statusFilter.value = "all";
+  paymentFilter.value = "all";
+  dateFrom.value = "";
+  dateTo.value = "";
+  sortBy.value = "newest";
+  currentPage.value = 1;
+}
+
+function toggleExpand(id: string) {
+  expandedBookingId.value = expandedBookingId.value === id ? "" : id;
+}
+
+async function fetchBookings() {
+  if (!isAuthenticated.value) return;
+  loading.value = true;
+  error.value = "";
 
   try {
-    const response = await apiGet<{ success: boolean; data: any[] }>('/booking/user')
-    if (!response.success) {
-      throw new Error('Failed to load booking history.')
-    }
-    bookings.value = response.data.map(mapBooking)
-  } catch (err: any) {
-    error.value = err?.message || 'Unable to load booking history.'
+    const response = await api.get("/booking/user");
+    bookings.value = response.data.data || [];
+  } catch (err) {
+    console.error(err);
+    error.value = "Failed to load booking history.";
   } finally {
-    isLoading.value = false
+    loading.value = false;
   }
 }
 
-const formatDate = (dateString: string) => {
+async function confirmPayment(bookingId: string) {
+  const confirmed = confirm("Do you want to confirm payment for this booking?");
+  if (!confirmed) return;
+
+  payingId.value = bookingId;
+
   try {
-    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' }
-    return new Date(dateString).toLocaleDateString(undefined, options)
-  } catch (e) {
-    return dateString
+    await api.post("/booking/payment/success", {
+      bookingId,
+      transactionId: `PAY-${Date.now()}`,
+    });
+
+    alert("Payment confirmed successfully.");
+    await fetchBookings();
+  } catch (err: any) {
+    console.error(err);
+    alert(err.response?.data?.message || "Failed to confirm payment.");
+  } finally {
+    payingId.value = "";
+  }
+}
+
+async function cancelBooking(bookingId: string) {
+  const confirmed = confirm("Are you sure you want to cancel this booking?");
+  if (!confirmed) return;
+
+  cancellingId.value = bookingId;
+
+  try {
+    /*
+      Change this endpoint if your backend cancel route is different.
+      Common examples:
+      await api.patch(`/booking/${bookingId}/cancel`);
+      await api.put(`/booking/${bookingId}/cancel`);
+      await api.delete(`/booking/${bookingId}`);
+    */
+    await api.patch(`/booking/${bookingId}/cancel`);
+
+    alert("Booking cancelled successfully.");
+    await fetchBookings();
+  } catch (err: any) {
+    console.error(err);
+
+    alert(
+      err.response?.data?.message ||
+        "Failed to cancel booking. Please check your backend cancel endpoint.",
+    );
+  } finally {
+    cancellingId.value = "";
+  }
+}
+
+function viewBookingDetail(id: string) {
+  router.push({
+    name: "booking-detail",
+    params: { id },
+  });
+}
+
+function goToFeedback(id: string) {
+  router.push({
+    name: "customer-feedback",
+    params: { id },
+  });
+}
+
+function goBackToProfile() {
+  router.push("/customer/profile");
+}
+
+function nextPage() {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+  }
+}
+
+function previousPage() {
+  if (currentPage.value > 1) {
+    currentPage.value--;
   }
 }
 
 onMounted(() => {
-  fetchBookings()
-})
+  isAuthenticated.value = hasAuthSession();
+  fetchBookings();
+});
 </script>
+
+<template>
+  <div class="history-page">
+    <CustomerNavbar />
+
+    <main class="history-container">
+      <template v-if="isAuthenticated">
+        <section class="page-header">
+        <div>
+          <span>Customer Booking Center</span>
+          <h1>Booking History</h1>
+          <p>
+            Track your tours, payments, guide details, booking status, and
+            review history.
+          </p>
+        </div>
+
+        <div class="header-actions">
+          <button class="back-btn" @click="goBackToProfile">
+            Back to Profile
+          </button>
+
+          <button class="refresh-btn" @click="fetchBookings">Refresh</button>
+        </div>
+      </section>
+
+      <section class="summary-grid">
+        <div class="summary-card">
+          <span>Total Bookings</span>
+          <strong>{{ stats.total }}</strong>
+        </div>
+
+        <div class="summary-card">
+          <span>Confirmed</span>
+          <strong>{{ stats.confirmed }}</strong>
+        </div>
+
+        <div class="summary-card warning">
+          <span>Pending Payment</span>
+          <strong>{{ stats.pendingPayment }}</strong>
+        </div>
+
+        <div class="summary-card">
+          <span>Total Spent</span>
+          <strong>{{ formatMoney(stats.totalSpent) }}</strong>
+        </div>
+      </section>
+
+      <section class="filters">
+        <div class="filter-main">
+          <input
+            v-model="search"
+            type="text"
+            placeholder="Search tour name, reference code, provider, guide, location, or transaction ID"
+            @input="currentPage = 1"
+          />
+        </div>
+
+        <div class="filter-grid">
+          <select v-model="statusFilter" @change="currentPage = 1">
+            <option value="all">All Booking Status</option>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+
+          <select v-model="paymentFilter" @change="currentPage = 1">
+            <option value="all">All Payment Status</option>
+            <option value="pending">Pending</option>
+            <option value="paid">Paid</option>
+            <option value="failed">Failed</option>
+          </select>
+
+          <input v-model="dateFrom" type="date" @change="currentPage = 1" />
+
+          <input v-model="dateTo" type="date" @change="currentPage = 1" />
+
+          <select v-model="sortBy" @change="currentPage = 1">
+            <option value="newest">Sort: Newest Tour Date</option>
+            <option value="oldest">Sort: Oldest Tour Date</option>
+            <option value="highest">Sort: Highest Amount</option>
+            <option value="lowest">Sort: Lowest Amount</option>
+          </select>
+
+          <select v-model="perPage" @change="currentPage = 1">
+            <option :value="5">5 per page</option>
+            <option :value="10">10 per page</option>
+            <option :value="20">20 per page</option>
+          </select>
+        </div>
+
+        <div class="filter-footer">
+          <p>
+            Showing {{ paginatedBookings.length }} of
+            {{ filteredBookings.length }} booking(s)
+          </p>
+
+          <button @click="resetFilters">Reset Filters</button>
+        </div>
+      </section>
+
+      <section v-if="loading" class="skeleton-list">
+        <div v-for="item in 3" :key="item" class="skeleton-card">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </section>
+
+      <p v-if="error" class="error-message">{{ error }}</p>
+
+      <section v-if="!loading && !filteredBookings.length" class="empty-box">
+        <h2>No bookings found</h2>
+        <p>Try changing your search keyword or filters.</p>
+      </section>
+
+      <section v-if="!loading && paginatedBookings.length" class="booking-list">
+        <article
+          v-for="booking in paginatedBookings"
+          :key="booking.id"
+          class="booking-card"
+        >
+          <div class="booking-top">
+            <div class="booking-title">
+              <span class="reference">
+                {{ booking.referenceCode || "No Reference" }}
+              </span>
+
+              <h2>{{ booking.service?.title || "Unknown Service" }}</h2>
+
+              <p>
+                Provider:
+                <strong>
+                  {{ booking.provider?.companyName || "Unknown Provider" }}
+                </strong>
+              </p>
+            </div>
+
+            <div class="amount-box">
+              <span>Total Amount</span>
+              <strong>{{ formatMoney(booking.totalAmount) }}</strong>
+            </div>
+          </div>
+
+          <div class="booking-info-grid">
+            <div>
+              <label>Tour Date</label>
+              <p>{{ formatDate(booking.bookingDate) }}</p>
+            </div>
+
+            <div>
+              <label>Duration</label>
+              <p>{{ getTourDuration(booking) }}</p>
+            </div>
+
+            <div>
+              <label>Location</label>
+              <p>{{ getTourLocation(booking) }}</p>
+            </div>
+
+            <div>
+              <label>Quantity</label>
+              <p>{{ booking.quantity }}</p>
+            </div>
+          </div>
+
+          <div class="status-row">
+            <span :class="['status-badge', statusClass(booking.bookingStatus)]">
+              Booking: {{ booking.bookingStatus }}
+            </span>
+
+            <span
+              :class="['payment-badge', statusClass(booking.paymentStatus)]"
+            >
+              Payment: {{ booking.paymentStatus }}
+            </span>
+          </div>
+
+          <div
+            v-if="expandedBookingId === booking.id"
+            class="extra-detail-panel"
+          >
+            <div class="detail-grid">
+              <div>
+                <label>Booking ID</label>
+                <p>{{ booking.id }}</p>
+              </div>
+
+              <div>
+                <label>Transaction ID</label>
+                <p>{{ booking.transactionId || "N/A" }}</p>
+              </div>
+
+              <div>
+                <label>Tour Guide</label>
+                <p>{{ getGuideName(booking) }}</p>
+              </div>
+
+              <div>
+                <label>Guide Contact</label>
+                <p>{{ getGuideContact(booking) }}</p>
+              </div>
+
+              <div>
+                <label>Guide Rating</label>
+                <p>
+                  {{
+                    getGuideRating(booking)
+                      ? `${getGuideRating(booking)} / 5`
+                      : "No rating yet"
+                  }}
+                </p>
+              </div>
+
+              <div>
+                <label>Created At</label>
+                <p>
+                  {{ formatDate(booking.createdAt || booking.bookingDate) }}
+                </p>
+              </div>
+            </div>
+
+            <div class="itinerary-box">
+              <label>Tour Itinerary</label>
+              <p>
+                {{
+                  booking.service?.itinerary ||
+                  "Itinerary is not available for this booking."
+                }}
+              </p>
+            </div>
+          </div>
+
+          <div class="booking-actions">
+            <button @click="viewBookingDetail(booking.id)">View Ticket</button>
+
+            <button class="outline-btn" @click="toggleExpand(booking.id)">
+              {{
+                expandedBookingId === booking.id
+                  ? "Hide Details"
+                  : "More Details"
+              }}
+            </button>
+
+            <button
+              v-if="booking.bookingStatus?.toLowerCase() === 'confirmed'"
+              class="outline-btn"
+              @click="goToFeedback(booking.id)"
+            >
+              Write Review
+            </button>
+
+            <button
+              v-if="booking.paymentStatus?.toLowerCase() === 'pending'"
+              class="pay-btn"
+              :disabled="payingId === booking.id"
+              @click="confirmPayment(booking.id)"
+            >
+              {{ payingId === booking.id ? "Processing..." : "Pay Now" }}
+            </button>
+
+            <button
+              v-if="canCancelBooking(booking)"
+              class="cancel-btn"
+              :disabled="cancellingId === booking.id"
+              @click="cancelBooking(booking.id)"
+            >
+              {{
+                cancellingId === booking.id ? "Cancelling..." : "Cancel Booking"
+              }}
+            </button>
+          </div>
+        </article>
+      </section>
+
+      <section v-if="!loading && filteredBookings.length" class="pagination">
+        <button :disabled="currentPage === 1" @click="previousPage">
+          Previous
+        </button>
+
+        <span>Page {{ currentPage }} of {{ totalPages }}</span>
+
+        <button :disabled="currentPage === totalPages" @click="nextPage">
+          Next
+        </button>
+      </section>
+      </template>
+
+      <section v-else class="login-required-box">
+        <div class="text-6xl mb-6">🔒</div>
+        <h2>Login Required</h2>
+        <p>You need to be logged in to view your booking history.</p>
+        <router-link :to="{ name: 'login', query: { redirect: $route.fullPath } }" class="login-link-btn">
+          Sign In Now
+        </router-link>
+      </section>
+    </main>
+
+    <CustomerFooter />
+  </div>
+</template>
+
+<style scoped>
+.history-page {
+  min-height: 100vh;
+  background: #f5f7f8;
+  color: #152323;
+  font-family: Arial, sans-serif;
+}
+
+.history-container {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+}
+
+.page-header {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  padding: 26px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 10px 28px rgba(15, 35, 35, 0.06);
+  animation: pageEnter 0.35s ease;
+}
+
+.page-header span {
+  color: #0f6e70;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.page-header h1 {
+  margin: 6px 0;
+  font-size: 30px;
+}
+
+.page-header p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.back-btn,
+.outline-btn {
+  background: #ffffff;
+  color: #0f6e70;
+  border: 1px solid #0f6e70;
+  padding: 10px 18px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.back-btn:hover,
+.outline-btn:hover {
+  background: #eef7f7;
+}
+
+.refresh-btn,
+.booking-actions button {
+  background: #0f6e70;
+  color: #ffffff;
+  border: none;
+  padding: 10px 18px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.refresh-btn:hover,
+.booking-actions button:hover {
+  background: #0a5557;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.summary-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  padding: 18px;
+  box-shadow: 0 8px 24px rgba(15, 35, 35, 0.05);
+  transition: transform 0.2s ease;
+}
+
+.summary-card:hover {
+  transform: translateY(-3px);
+}
+
+.summary-card span {
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.summary-card strong {
+  display: block;
+  margin-top: 8px;
+  color: #0f6e70;
+  font-size: 26px;
+}
+
+.summary-card.warning strong {
+  color: #c2410c;
+}
+
+.filters {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  padding: 18px;
+  margin: 18px 0;
+  box-shadow: 0 8px 24px rgba(15, 35, 35, 0.05);
+}
+
+.filter-main {
+  margin-bottom: 12px;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+}
+
+.filters input,
+.filters select {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  padding: 11px 12px;
+  font-size: 14px;
+  outline: none;
+  background: #ffffff;
+}
+
+.filters input:focus,
+.filters select:focus {
+  border-color: #0f6e70;
+  box-shadow: 0 0 0 3px rgba(15, 110, 112, 0.12);
+}
+
+.filter-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  margin-top: 14px;
+}
+
+.filter-footer p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.filter-footer button {
+  background: #ffffff;
+  color: #0f6e70;
+  border: 1px solid #0f6e70;
+  padding: 9px 14px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.error-message {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.empty-box {
+  background: #ffffff;
+  border: 1px dashed #d1d5db;
+  padding: 38px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.empty-box h2 {
+  margin: 0 0 8px;
+  color: #111827;
+}
+
+.booking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.booking-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(15, 35, 35, 0.05);
+  animation: cardEnter 0.3s ease;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.booking-card:hover {
+  transform: translateY(-3px);
+  border-color: #0f6e70;
+  box-shadow: 0 14px 30px rgba(15, 110, 112, 0.12);
+}
+
+.booking-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.reference {
+  display: inline-block;
+  background: #eef7f7;
+  color: #0f6e70;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.booking-title h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.booking-title p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.booking-title strong {
+  color: #0f6e70;
+}
+
+.amount-box {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.amount-box span {
+  display: block;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.amount-box strong {
+  display: block;
+  color: #0f6e70;
+  font-size: 24px;
+  margin-top: 6px;
+}
+
+.booking-info-grid,
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.booking-info-grid div,
+.detail-grid div {
+  background: #fbfcfc;
+  border: 1px solid #e5e7eb;
+  padding: 12px;
+}
+
+.booking-info-grid label,
+.detail-grid label,
+.itinerary-box label {
+  display: block;
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.booking-info-grid p,
+.detail-grid p,
+.itinerary-box p {
+  margin: 0;
+  color: #111827;
+  font-size: 14px;
+  word-break: break-word;
+}
+
+.status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.status-badge,
+.payment-badge {
+  padding: 5px 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.status-badge.pending,
+.payment-badge.pending {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.status-badge.confirmed,
+.payment-badge.paid {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.status-badge.cancelled,
+.payment-badge.failed {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.extra-detail-panel {
+  margin-top: 18px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 18px;
+  animation: detailEnter 0.25s ease;
+}
+
+.itinerary-box {
+  margin-top: 14px;
+  background: #fbfcfc;
+  border: 1px solid #e5e7eb;
+  padding: 12px;
+}
+
+.booking-actions {
+  margin-top: 18px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pay-btn {
+  background: #047857 !important;
+}
+
+.pay-btn:hover {
+  background: #065f46 !important;
+}
+
+.cancel-btn {
+  background: #dc2626 !important;
+}
+
+.cancel-btn:hover {
+  background: #b91c1c !important;
+}
+
+.booking-actions button:disabled,
+.pagination button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.pagination {
+  margin-top: 22px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+}
+
+.pagination button {
+  background: #0f6e70;
+  color: #ffffff;
+  border: none;
+  padding: 10px 18px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.pagination span {
+  color: #374151;
+  font-weight: 700;
+}
+
+.login-required-box {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  padding: 80px 40px;
+  text-align: center;
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(15, 35, 35, 0.06);
+  margin-top: 40px;
+}
+
+.login-required-box h2 {
+  font-size: 2rem;
+  color: #111827;
+  margin-bottom: 12px;
+}
+
+.login-required-box p {
+  color: #6b7280;
+  margin-bottom: 30px;
+  font-size: 1.1rem;
+}
+
+.login-link-btn {
+  display: inline-block;
+  background: #0f6e70;
+  color: #ffffff;
+  padding: 12px 32px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 700;
+  transition: background 0.2s;
+}
+
+.login-link-btn:hover {
+  background: #0a5557;
+}
+
+.skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.skeleton-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  padding: 20px;
+}
+
+.skeleton-card span {
+  display: block;
+  height: 14px;
+  background: linear-gradient(90deg, #e5e7eb, #f8fafc, #e5e7eb);
+  background-size: 200% 100%;
+  animation: skeletonMove 1.1s infinite;
+  margin: 10px 0;
+}
+
+.skeleton-card span:first-child {
+  width: 50%;
+  height: 24px;
+}
+
+.skeleton-card span:nth-child(2) {
+  width: 75%;
+}
+
+.skeleton-card span:nth-child(3) {
+  width: 35%;
+}
+
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes detailEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes skeletonMove {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 1050px) {
+  .filter-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .booking-info-grid,
+  .detail-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    width: 100%;
+  }
+
+  .filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .booking-top {
+    flex-direction: column;
+  }
+
+  .amount-box {
+    text-align: left;
+  }
+
+  .booking-info-grid,
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 520px) {
+  .history-container {
+    padding: 16px 12px 32px;
+  }
+
+  .page-header,
+  .filters,
+  .booking-card,
+  .summary-card {
+    padding: 16px;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header h1 {
+    font-size: 24px;
+  }
+
+  .booking-actions button,
+  .back-btn,
+  .refresh-btn {
+    width: 100%;
+  }
+}
+</style>

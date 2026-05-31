@@ -16,7 +16,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { clearCurrentUserRole, getCurrentUserRole } from '../utils/auth'
+import { clearCurrentUserRole, getCurrentUserRole } from '../../utils/auth'
 
 const router = useRouter()
 
@@ -31,7 +31,7 @@ const dashboardTarget = computed(() => {
     return '/provider/dashboard'
   }
 
-  return '/customer/dashboard'
+  return '/customer/explore'
 })
 
 function resetRole() {

@@ -18,7 +18,7 @@ export class Transportation {
   transportType: TransportType;
 
   @Column({ name: 'vehicle_model', type: 'varchar', length: 100, nullable: true })
-  vehicleModel: string;
+  vehicleModel: string | null;
 
   // CHECK >= 1 enforced at DB level
   @Column({ name: 'total_seats', type: 'smallint' })
@@ -39,10 +39,10 @@ export class Transportation {
   departureTime: Date;
 
   @Column({ name: 'arrival_time', type: 'timestamptz', nullable: true })
-  arrivalTime: Date;
+  arrivalTime: Date | null;
 
   @Column({ name: 'pickup_notes', type: 'text', nullable: true })
-  pickupNotes: string;
+  pickupNotes: string | null;
 
   // ── Relations ─────────────────────────────────────────────────
 

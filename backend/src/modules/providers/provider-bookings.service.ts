@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 
 import { Provider } from './entities/provider.entity';
 import { Booking } from '../bookings/entities/booking.entity';
+import { PaymentStatus } from '../../shared/enums';
+import { Service } from '../services/entities/service.entity';
 
 type JwtUser = {
   userId: string;
@@ -17,6 +19,8 @@ export class ProviderBookingsService {
     private readonly providerRepository: Repository<Provider>,
     @InjectRepository(Booking)
     private readonly bookingRepository: Repository<Booking>,
+    @InjectRepository(Service)
+    private readonly serviceRepository: Repository<Service>,
   ) {}
 
   async findBookingsForProvider(user: JwtUser) {
@@ -54,6 +58,83 @@ export class ProviderBookingsService {
         (booking.service?.price !== undefined
           ? Number(booking.service.price) * booking.quantity
           : null),
+    }));
+  }
+
+  async getDashboardStats(user: JwtUser) {
+    if (user.role !== 'provider') {
+      throw new ForbiddenException('Only providers can access dashboard stats.');
+    }
+
+    const provider = await this.providerRepository.findOne({
+      where: { userId: user.userId },
+      relations: ['services', 'services.inventory'],
+    });
+
+    if (!provider) {
+      throw new NotFoundException('Provider profile not found.');
+    }
+
+    const bookings = await this.bookingRepository.find({
+      where: { providerId: provider.id },
+    });
+
+    // Calculate Occupancy (simplified: total booked / total capacity)
+    let totalCapacity = 0;
+    let totalBooked = 0;
+    provider.services.forEach((s) => {
+      if (s.inventory) {
+        totalCapacity += s.inventory.totalCapacity;
+        totalBooked += s.inventory.bookedCount;
+      }
+    });
+    const avgOccupancy = totalCapacity > 0 ? (totalBooked / totalCapacity) * 100 : 0;
+
+    // Calculate REVPAR (Total Revenue / Total Capacity)
+    const totalRevenue = bookings
+      .filter((b) => b.paymentStatus === PaymentStatus.PAID)
+      .reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+    const revpar = totalCapacity > 0 ? totalRevenue / totalCapacity : 0;
+
+    // Low stock alerts (e.g., less than 10% remaining)
+    const lowStockAlerts = provider.services.filter((s) => {
+      if (!s.inventory || s.inventory.totalCapacity === 0) return false;
+      const remaining = s.inventory.totalCapacity - s.inventory.bookedCount;
+      return (remaining / s.inventory.totalCapacity) < 0.1;
+    }).length;
+
+    return {
+      avgOccupancy: avgOccupancy.toFixed(1) + '%',
+      revpar: '$' + revpar.toFixed(2),
+      lowStockAlerts: lowStockAlerts.toString().padStart(2, '0'),
+      khmerNewYear: '98%', // Placeholder for special event
+    };
+  }
+
+  async getInventoryMatrix(user: JwtUser) {
+    if (user.role !== 'provider') {
+      throw new ForbiddenException('Only providers can access inventory matrix.');
+    }
+
+    const provider = await this.providerRepository.findOne({
+      where: { userId: user.userId },
+    });
+
+    if (!provider) {
+      throw new NotFoundException('Provider profile not found.');
+    }
+
+    const services = await this.serviceRepository.find({
+      where: { providerId: provider.id },
+      relations: ['inventory', 'tourPackage', 'accommodation', 'transportation'],
+    });
+
+    // Return current services and their inventory status
+    return services.map((s) => ({
+      ...s,
+      remaining: s.inventory ? s.inventory.totalCapacity - s.inventory.bookedCount : 0,
+      total: s.inventory ? s.inventory.totalCapacity : 0,
+      isClosed: s.inventory ? s.inventory.isClosed : false,
     }));
   }
 
