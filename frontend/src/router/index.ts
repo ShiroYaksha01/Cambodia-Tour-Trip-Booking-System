@@ -193,12 +193,11 @@ const routes: RouteRecordRaw[] = [
     redirect: { name: "provider-settings" },
   },
   {
-    path: "/customer/dashboard",
-    name: "customer-dashboard",
-    component: () => import("../views/customer/CustomerDashboardView.vue"),
+    path: "/customer/explore",
+    name: "customer-explore",
+    component: () => import("../views/customer/CustomerExploreView.vue"),
     meta: {
-      requiresAuth: true,
-      roles: ["customer"],
+      requiresAuth: false,
     },
   },
   {
@@ -206,8 +205,7 @@ const routes: RouteRecordRaw[] = [
     name: "customer-homepage",
     component: () => import("../views/customer/CustomerHomeView.vue"),
     meta: {
-      requiresAuth: true,
-      roles: ["customer"],
+      requiresAuth: false,
     },
   },
   {
@@ -232,6 +230,9 @@ const routes: RouteRecordRaw[] = [
     path: "/service/:id",
     name: "service-detail",
     component: () => import("../views/services/ServiceDetailView.vue"),
+    meta: {
+      requiresAuth: false,
+    },
   },
   {
     path: "/service/:id/book",
@@ -256,8 +257,7 @@ const routes: RouteRecordRaw[] = [
     name: "booking-history",
     component: () => import("../views/booking/BookingHistoryView.vue"),
     meta: {
-      requiresAuth: true,
-      roles: ["customer"],
+      requiresAuth: false,
     },
   },
   {

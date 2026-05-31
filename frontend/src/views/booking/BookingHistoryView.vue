@@ -4,8 +4,10 @@ import { useRouter } from "vue-router";
 import CustomerNavbar from "../../components/customer/CustomerNavbar.vue";
 import CustomerFooter from "../../components/customer/CustomerFooter.vue";
 import api from "../../services/api";
+import { hasAuthSession } from "../../utils/auth";
 
 const router = useRouter();
+const isAuthenticated = ref(hasAuthSession());
 
 interface ServiceInfo {
   id?: string;
@@ -260,6 +262,7 @@ function toggleExpand(id: string) {
 }
 
 async function fetchBookings() {
+  if (!isAuthenticated.value) return;
   loading.value = true;
   error.value = "";
 
@@ -357,6 +360,7 @@ function previousPage() {
 }
 
 onMounted(() => {
+  isAuthenticated.value = hasAuthSession();
   fetchBookings();
 });
 </script>
@@ -366,7 +370,8 @@ onMounted(() => {
     <CustomerNavbar />
 
     <main class="history-container">
-      <section class="page-header">
+      <template v-if="isAuthenticated">
+        <section class="page-header">
         <div>
           <span>Customer Booking Center</span>
           <h1>Booking History</h1>
@@ -644,6 +649,16 @@ onMounted(() => {
         <button :disabled="currentPage === totalPages" @click="nextPage">
           Next
         </button>
+      </section>
+      </template>
+
+      <section v-else class="login-required-box">
+        <div class="text-6xl mb-6">🔒</div>
+        <h2>Login Required</h2>
+        <p>You need to be logged in to view your booking history.</p>
+        <router-link :to="{ name: 'login', query: { redirect: $route.fullPath } }" class="login-link-btn">
+          Sign In Now
+        </router-link>
       </section>
     </main>
 
@@ -1049,6 +1064,43 @@ onMounted(() => {
 .pagination span {
   color: #374151;
   font-weight: 700;
+}
+
+.login-required-box {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  padding: 80px 40px;
+  text-align: center;
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(15, 35, 35, 0.06);
+  margin-top: 40px;
+}
+
+.login-required-box h2 {
+  font-size: 2rem;
+  color: #111827;
+  margin-bottom: 12px;
+}
+
+.login-required-box p {
+  color: #6b7280;
+  margin-bottom: 30px;
+  font-size: 1.1rem;
+}
+
+.login-link-btn {
+  display: inline-block;
+  background: #0f6e70;
+  color: #ffffff;
+  padding: 12px 32px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 700;
+  transition: background 0.2s;
+}
+
+.login-link-btn:hover {
+  background: #0a5557;
 }
 
 .skeleton-list {

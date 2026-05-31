@@ -31,7 +31,7 @@ const dashboardTarget = computed(() => {
     return '/provider/dashboard'
   }
 
-  return '/customer/dashboard'
+  return '/customer/explore'
 })
 
 function resetRole() {

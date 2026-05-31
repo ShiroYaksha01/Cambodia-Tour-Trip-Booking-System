@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import CustomerNavbar from "../../components/customer/CustomerNavbar.vue";
 import CustomerFooter from "../../components/customer/CustomerFooter.vue";
+import LogoutButton from "../../components/LogoutButton.vue";
 import api from "../../services/api";
 
 const router = useRouter();
@@ -462,6 +463,16 @@ function goToBookingHistory() {
   router.push("/booking/history");
 }
 
+function scrollToSettings() {
+  activeTab.value = "settings";
+  setTimeout(() => {
+    const el = document.querySelector(".main-panel");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, 100);
+}
+
 onMounted(() => {
   fetchProfile();
   fetchBookings();
@@ -524,13 +535,13 @@ onMounted(() => {
             {{ darkMode ? "Light Mode" : "Dark Mode" }}
           </button>
 
-          <button class="edit-btn" @click="activeTab = 'settings'">
+          <button class="edit-btn" @click="scrollToSettings">
             Edit Profile
           </button>
         </div>
       </section>
 
-      <section class="customer-dashboard">
+      <section class="customer-explore">
         <div
           class="dashboard-card unpaid-card"
           :class="{ danger: unpaidBookings.length > 0 }"
@@ -640,6 +651,10 @@ onMounted(() => {
           >
             Settings
           </button>
+
+          <div class="sidebar-footer">
+            <LogoutButton />
+          </div>
         </aside>
 
         <section class="main-panel">
@@ -1293,7 +1308,7 @@ onMounted(() => {
   box-shadow: 0 8px 18px rgba(15, 110, 112, 0.22);
 }
 
-.customer-dashboard {
+.customer-explore {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
@@ -1495,6 +1510,39 @@ onMounted(() => {
   background: #eef7f7;
   color: #0f6e70;
   border-left-color: #0f6e70;
+}
+
+.sidebar-footer {
+  border-top: 1px solid #e5e7eb;
+  margin-top: 10px;
+}
+
+:deep(.sidebar-footer .logout-button) {
+  width: 100%;
+  padding: 15px 18px;
+  justify-content: flex-start;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  color: #ef4444;
+  font-weight: 700;
+  font-size: inherit;
+  font-family: inherit;
+  border-left: 4px solid transparent;
+}
+
+:deep(.sidebar-footer .logout-button:hover) {
+  background: #fef2f2;
+  color: #dc2626;
+  border-left-color: #ef4444;
+}
+
+:deep(.sidebar-footer .logout-button .logout-icon) {
+  font-size: 1.1rem;
+}
+
+:deep(.sidebar-footer .logout-button .logout-text) {
+  letter-spacing: normal;
 }
 
 .main-panel {
@@ -2125,7 +2173,7 @@ onMounted(() => {
     width: 100%;
   }
 
-  .customer-dashboard {
+  .customer-explore {
     grid-template-columns: 1fr;
   }
 

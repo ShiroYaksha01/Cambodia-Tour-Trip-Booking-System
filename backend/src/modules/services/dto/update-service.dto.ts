@@ -1,5 +1,6 @@
 import { IsString, IsNumber, IsEnum, IsBoolean, IsOptional, IsUUID, IsDateString } from 'class-validator';
 import { ServiceType, TransportType } from '../../../shared/enums';
+import { IsNotInPast } from '../../../common/decorators/is-not-in-past.decorator';
 
 export class UpdateServiceDto {
   @IsOptional()
@@ -58,10 +59,12 @@ export class UpdateServiceDto {
 
   @IsOptional()
   @IsDateString()
+  @IsNotInPast()
   travelDate?: string;
 
   @IsOptional()
   @IsDateString()
+  @IsNotInPast()
   endDate?: string;
 
   @IsOptional()
@@ -128,6 +131,7 @@ export class UpdateServiceDto {
 
   @IsOptional()
   @IsDateString()
+  @IsNotInPast()
   departureTime?: string;
 
   @IsOptional()

@@ -95,6 +95,7 @@ export class ServicesService {
         location,
         duration,
         isActive,
+        image,
         ...metadata
       } = createServiceDto;
 
@@ -106,6 +107,7 @@ export class ServicesService {
         price,
         location,
         duration,
+        coverImage: image,
         isActive: isActive !== undefined ? isActive : true,
         providerId: provider.id,
       });
@@ -198,6 +200,7 @@ export class ServicesService {
         location,
         duration,
         isActive,
+        image,
         totalCapacity,
         ...metadata
       } = patchServiceDto;
@@ -211,6 +214,7 @@ export class ServicesService {
         ...(location !== undefined && { location }),
         ...(duration !== undefined && { duration }),
         ...(isActive !== undefined && { isActive }),
+        ...(image !== undefined && { coverImage: image }),
       });
 
       // 2. Update specialized metadata
