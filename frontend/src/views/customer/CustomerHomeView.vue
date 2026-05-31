@@ -7,12 +7,17 @@ import CustomerFooter from '../../components/customer/CustomerFooter.vue'
 import { fetchServices } from '../../services/api'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { hasAuthSession } from '../../utils/auth'
 
 const router = useRouter()
 const allServices = ref<any[]>([])
 const displayedServices = ref<any[]>([])
 
 const handleBook = (tour: any) => {
+  if (!hasAuthSession()) {
+    router.push({ name: 'login', query: { redirect: router.currentRoute.value.fullPath } })
+    return
+  }
   router.push({ name: 'booking-form', params: { id: tour.id } })
 }
 
@@ -21,7 +26,8 @@ const goToDetail = (id: string) => {
 }
 
 function mapServiceToTour(service: any) {
-  const coverImage = service.images?.find((img: any) => img.isCover)?.imageUrl
+  const coverImage = service.coverImage
+    || service.images?.find((img: any) => img.isCover)?.imageUrl
     || service.images?.[0]?.imageUrl
     || 'https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=800&auto=format&fit=crop';
 

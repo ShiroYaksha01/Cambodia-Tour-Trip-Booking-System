@@ -74,6 +74,9 @@ export class Service {
   @Column({ type: 'varchar', length: 100, nullable: true })
   duration: string;
 
+  @Column({ name: 'cover_image', type: 'text', nullable: true })
+  coverImage: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

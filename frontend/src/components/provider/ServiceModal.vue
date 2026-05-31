@@ -14,6 +14,7 @@ const defaultForm = () => ({
   price: 0,
   serviceType: 'tour',
   isActive: true,
+  image: '',
   location: '',
   duration: '',
   // Inventory
@@ -54,6 +55,7 @@ watch(() => props.service, (newVal) => {
     form.value = { 
       ...defaultForm(),
       ...newVal,
+      image: newVal.coverImage || '',
       ...metadata,
       // Handle Date objects from backend
       travelDate: newVal.tourPackage?.travelDate ? new Date(newVal.tourPackage.travelDate).toISOString().split('T')[0] : '',
@@ -92,6 +94,11 @@ function handleSave() {
           <div class="form-group">
             <label>Description</label>
             <textarea v-model="form.description" placeholder="Describe your service..." rows="2"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Cover Image URL</label>
+            <input v-model="form.image" type="text" placeholder="https://example.com/image.jpg" />
           </div>
 
           <div class="form-row">

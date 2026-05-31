@@ -26,7 +26,9 @@ async function logout() {
   isLoading.value = true;
   try {
     clearAuthData();
-    await router.push({ name: "login" });
+    await router.push({ name: "customer-homepage" });
+    // Force a reload or update state if necessary
+    window.location.reload(); 
   } finally {
     isLoading.value = false;
   }

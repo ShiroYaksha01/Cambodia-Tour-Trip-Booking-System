@@ -1,6 +1,6 @@
 <template>
   <header class="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 transition-all">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-16">
         <!-- Logo -->
         <router-link :to="{ name: 'customer-homepage' }" class="flex items-center gap-2 group">
@@ -15,7 +15,7 @@
         <!-- Navigation Links -->
         <nav class="hidden md:flex items-center gap-8" aria-label="Customer navigation">
           <router-link
-            v-for="link in navLinks"
+            v-for="link in filteredNavLinks"
             :key="link.name"
             :to="{ name: link.routeName }"
             class="text-sm font-medium text-gray-600 hover:text-emerald-600 transition-colors relative py-2 group"
@@ -28,19 +28,27 @@
 
         <!-- Right Side: Profile & Actions -->
         <div class="flex items-center gap-4">
-          <!-- Profile Dropdown/Link -->
-          <router-link
-            :to="{ name: 'customer-profile' }"
-            class="flex items-center gap-2 pl-2 pr-1 py-1 rounded-full border border-gray-200 hover:border-emerald-200 hover:bg-emerald-50 transition-all"
-          >
-            <span class="hidden sm:block text-sm font-medium text-gray-700 px-1">{{ userName }}</span>
-            <div class="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
-              {{ userInitial }}
-            </div>
-          </router-link>
+          <template v-if="isAuthenticated">
+            <!-- Profile Dropdown/Link -->
+            <router-link
+              :to="{ name: 'customer-profile' }"
+              class="flex items-center gap-2 pl-2 pr-1 py-1 rounded-full border border-gray-200 hover:border-emerald-200 hover:bg-emerald-50 transition-all"
+            >
+              <span class="hidden sm:block text-sm font-medium text-gray-700 px-1">{{ userName }}</span>
+              <div class="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                {{ userInitial }}
+              </div>
+            </router-link>
+          </template>
 
-          <!-- Logout -->
-          <LogoutButton />
+          <template v-else>
+            <router-link
+              :to="{ name: 'login' }"
+              class="px-6 py-2 rounded-full text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-all shadow-md hover:shadow-lg"
+            >
+              Login
+            </router-link>
+          </template>
 
           <!-- Mobile Menu Button (Optional - for future) -->
           <button @click="isMobileMenuOpen = !isMobileMenuOpen" class="md:hidden p-2 text-gray-500">
@@ -64,7 +72,7 @@
     >
       <div v-if="isMobileMenuOpen" class="md:hidden bg-white border-b border-gray-100 px-4 pt-2 pb-6 space-y-2 shadow-xl">
         <router-link
-          v-for="link in navLinks"
+          v-for="link in filteredNavLinks"
           :key="link.name"
           :to="{ name: link.routeName }"
           @click="isMobileMenuOpen = false"
@@ -73,33 +81,49 @@
         >
           {{ link.name }}
         </router-link>
+        
+        <template v-if="!isAuthenticated">
+          <router-link
+            :to="{ name: 'login' }"
+            @click="isMobileMenuOpen = false"
+            class="block px-4 py-3 text-base font-bold text-white bg-emerald-600 rounded-xl text-center"
+          >
+            Login
+          </router-link>
+        </template>
       </div>
     </transition>
   </header>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import LogoutButton from "../LogoutButton.vue";
+import { ref, onMounted, computed } from "vue";
+import { hasAuthSession } from "../../utils/auth";
 
 const userName = ref("Profile");
 const userInitial = ref("U");
 const isMobileMenuOpen = ref(false);
+const isAuthenticated = ref(hasAuthSession());
 
 const navLinks = [
-  { name: 'Home', routeName: 'customer-homepage' },
-  { name: 'Explore', routeName: 'customer-explore' },
-  { name: 'My Bookings', routeName: 'booking-history' },
+  { name: 'Home', routeName: 'customer-homepage', requiresAuth: false },
+  { name: 'Explore', routeName: 'customer-explore', requiresAuth: false },
+  { name: 'My Bookings', routeName: 'booking-history', requiresAuth: false },
 ];
 
+const filteredNavLinks = computed(() => {
+  return navLinks.filter(link => !link.requiresAuth || isAuthenticated.value);
+});
+
 onMounted(() => {
+  isAuthenticated.value = hasAuthSession();
   const rawUser = localStorage.getItem("user");
   if (rawUser) {
     try {
       const user = JSON.parse(rawUser);
-      if (user.name) {
-        userName.value = user.name;
-        userInitial.value = user.name.charAt(0).toUpperCase();
+      if (user.username || user.name) {
+        userName.value = user.username || user.name;
+        userInitial.value = (user.username || user.name).charAt(0).toUpperCase();
       }
     } catch (e) {
       console.error("Failed to parse user data", e);

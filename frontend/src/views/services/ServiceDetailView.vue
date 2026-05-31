@@ -40,8 +40,8 @@
         <!-- Image Gallery Side -->
         <div class="md:w-1/2 relative bg-[#0a3237] overflow-hidden min-h-[400px]">
            <img 
-             :src="angkorImage" 
-             alt="Angkor Wat Sunrise" 
+             :src="service.coverImage || angkorImage" 
+             :alt="service.title" 
              class="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"
            />           
         </div>
@@ -110,6 +110,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { apiGet } from '../../utils/api'
+import { hasAuthSession } from '../../utils/auth'
 import angkorImage from '../../assets/angkorwat_sunrise.jpg'
 
 const router = useRouter()
@@ -134,6 +135,10 @@ const fetchService = async () => {
 onMounted(fetchService)
 
 const handleBookNow = () => {
+  if (!hasAuthSession()) {
+    router.push({ name: 'login', query: { redirect: route.fullPath } })
+    return
+  }
   const id = service.value?.id || '19f3d5e8-040f-407f-9386-bdeabab7591e'
   router.push({ name: 'booking-form', params: { id } })
 }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, reactive } from 'vue'
 import { useRouter } from 'vue-router'
+import { hasAuthSession } from '../../utils/auth'
 import CustomerNavbar from '../../components/customer/CustomerNavbar.vue'
 import CustomerFooter from '../../components/customer/CustomerFooter.vue'
 import CustomerServiceCard from '../../components/customer/CustomerServiceCard.vue'
@@ -104,7 +105,8 @@ const filteredServices = computed(() => {
 })
 
 function mapServiceToTour(service: any) {
-  const coverImage = service.images?.find((img: any) => img.isCover)?.imageUrl
+  const coverImage = service.coverImage
+    || service.images?.find((img: any) => img.isCover)?.imageUrl
     || service.images?.[0]?.imageUrl
     || 'https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=800&auto=format&fit=crop';
 
@@ -122,6 +124,10 @@ function mapServiceToTour(service: any) {
 }
 
 function handleBook(tour: any) {
+  if (!hasAuthSession()) {
+    router.push({ name: 'login', query: { redirect: router.currentRoute.value.fullPath } })
+    return
+  }
   router.push({ name: 'booking-form', params: { id: tour.id } })
 }
 
