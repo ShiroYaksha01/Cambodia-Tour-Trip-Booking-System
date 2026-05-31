@@ -1,0 +1,16 @@
+# Gemini CLI & Agent Skills
+.agents/
+.gemini/
+skills-lock.json
+
+# Node & Package Managers
+node_modules/
+package-lock.json
+
+# Environment Variables
+.env
+*.env
+
+# OS specific files
+.DS_Store
+Thumbs.db
