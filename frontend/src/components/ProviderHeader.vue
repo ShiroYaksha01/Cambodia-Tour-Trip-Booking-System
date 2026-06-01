@@ -16,7 +16,7 @@
       </div>
     </div>
     <div class="header-icons">
-      <div class="provider-profile">
+      <RouterLink :to="{ name: 'provider-settings' }" class="provider-profile provider-profile-link" aria-label="Open profile settings">
         <div v-if="providerProfileImage" class="avatar avatar--image">
           <img :src="providerProfileImage" :alt="providerName" />
         </div>
@@ -27,7 +27,7 @@
           <strong>{{ providerName }}</strong>
           <span>{{ providerRoleLabel }}</span>
         </div>
-      </div>
+      </RouterLink>
       <button class="icon-btn">🔔</button>
       <button class="icon-btn">❓</button>
     </div>
@@ -166,6 +166,11 @@ const providerInitials = computed(() => {
   border-radius: 12px;
   cursor: pointer;
   transition: background 0.3s ease;
+}
+
+.provider-profile-link {
+  color: inherit;
+  text-decoration: none;
 }
 
 .provider-profile:hover {

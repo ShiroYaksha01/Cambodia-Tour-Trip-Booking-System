@@ -10,15 +10,15 @@
       </div>
 
       <nav class="sidebar-nav">
-        <RouterLink class="nav-item" :to="{ name: 'provider-dashboard' }" active-class="active">
+        <RouterLink class="nav-item" :to="{ name: 'provider-dashboard' }" exact-active-class="active">
           <span>🗓️</span>
           Inventory
         </RouterLink>
-        <RouterLink class="nav-item" :to="{ name: 'provider-service' }" active-class="active">
+        <RouterLink class="nav-item" :to="{ name: 'provider-service' }" exact-active-class="active">
           <span>👥</span>
           Manifest
         </RouterLink>
-        <RouterLink class="nav-item" :to="{ name: 'provider-dashboard' }" active-class="active">
+        <RouterLink class="nav-item" :to="{ name: 'provider-dashboard' }" exact-active-class="active">
           <span>💳</span>
           Finance
         </RouterLink>
@@ -44,14 +44,6 @@
       <header class="topbar">
         <div class="topbar-title">Inventory & Pricing</div>
         <div class="sync-pill">⟳ Syncing: All OTAs</div>
-        <div class="topbar-user">
-          <span class="bell">🔔</span>
-          <div class="user-meta">
-            <strong>The Heritage Curator</strong>
-            <span>Master Admin</span>
-          </div>
-          <img class="avatar" src="https://via.placeholder.com/40" alt="User avatar" />
-        </div>
       </header>
 
       <section class="metrics-row">
@@ -101,7 +93,7 @@
               </div>
 
               <button
-                v-for="item in inventoryItems"
+                v-for="item in filteredInventoryItems"
                 :key="item.name"
                 class="inventory-row"
                 @click="selectedItem = item"
@@ -210,7 +202,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
+
+const props = withDefaults(
+  defineProps<{
+    searchQuery?: string;
+  }>(),
+  {
+    searchQuery: "",
+  },
+);
 
 type InventoryDay = {
   label: string;
@@ -265,6 +266,25 @@ const inventoryItems: InventoryItem[] = [
     ],
   },
 ];
+
+const filteredInventoryItems = computed(() => {
+  if (!props.searchQuery.trim()) {
+    return inventoryItems;
+  }
+
+  const query = props.searchQuery.toLowerCase();
+  return inventoryItems.filter(
+    (item) =>
+      item.name.toLowerCase().includes(query) ||
+      item.subtitle.toLowerCase().includes(query) ||
+      item.days.some(
+        (day) =>
+          day.label.toLowerCase().includes(query) ||
+          day.price.toLowerCase().includes(query) ||
+          day.status.toLowerCase().includes(query),
+      ),
+  );
+});
 </script>
 
 <style scoped>
@@ -379,7 +399,7 @@ const inventoryItems: InventoryItem[] = [
 
 .topbar {
   display: grid;
-  grid-template-columns: auto auto 1fr;
+  grid-template-columns: auto auto;
   align-items: center;
   gap: 16px;
   margin-bottom: 12px;
@@ -395,45 +415,13 @@ const inventoryItems: InventoryItem[] = [
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 12px;
+  justify-self: start;
+  width: fit-content;
+  padding: 4px 10px;
   border-radius: 999px;
   background: #f1f3f2;
   color: #6a757d;
-  font-size: 12px;
-}
-
-.topbar-user {
-  justify-self: end;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.bell {
-  font-size: 16px;
-  color: #64727b;
-}
-
-.user-meta {
-  display: grid;
-  line-height: 1.1;
-  text-align: right;
-}
-
-.user-meta strong {
-  font-size: 13px;
-}
-
-.user-meta span {
   font-size: 11px;
-  color: #7f8a92;
-}
-
-.avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  object-fit: cover;
 }
 
 .metrics-row {
@@ -942,10 +930,6 @@ const inventoryItems: InventoryItem[] = [
   .metrics-row,
   .two-col {
     grid-template-columns: 1fr;
-  }
-
-  .topbar-user {
-    justify-self: start;
   }
 
   .legend-row {

@@ -7,27 +7,27 @@
       </div>
 
       <nav class="sidebar-nav">
-        <RouterLink class="nav-item" :to="{ name: 'provider-dashboard' }" active-class="active">
+        <RouterLink class="nav-item" :to="{ name: 'provider-dashboard' }" exact-active-class="active">
           <span class="icon">⚙️</span>
           Command Center
         </RouterLink>
-        <RouterLink class="nav-item" :to="{ name: 'provider-service' }" active-class="active">
+        <RouterLink class="nav-item" :to="{ name: 'provider-service' }" exact-active-class="active">
           <span class="icon">🛠️</span>
           Service Manager
         </RouterLink>
-        <RouterLink class="nav-item" :to="{ name: 'provider-inventory' }" active-class="active">
+        <RouterLink class="nav-item" :to="{ name: 'provider-inventory' }" exact-active-class="active">
           <span class="icon">📊</span>
           Inventory & Pricing
         </RouterLink>
-        <RouterLink class="nav-item" :to="{ name: 'provider-manifest' }" active-class="active">
+        <RouterLink class="nav-item" :to="{ name: 'provider-manifest' }" exact-active-class="active">
           <span class="icon">👥</span>
           Guest Manifest
         </RouterLink>
-        <RouterLink class="nav-item" :to="{ name: 'provider-ledger' }" active-class="active">
+        <RouterLink class="nav-item" :to="{ name: 'provider-ledger' }" exact-active-class="active">
           <span class="icon">💰</span>
           Financial Ledger
         </RouterLink>
-        <RouterLink class="nav-item" :to="{ name: 'provider-settings' }" active-class="active">
+        <RouterLink class="nav-item" :to="{ name: 'provider-settings' }" exact-active-class="active">
           <span class="icon">⚙️</span>
           Settings
         </RouterLink>
@@ -35,12 +35,16 @@
     </aside>
 
     <main class="shell-content">
-      <ProviderHeader :title="route.meta.title || ''" />
+      <ProviderHeader
+        v-model:searchQuery="searchQuery"
+        :title="route.meta.title || ''"
+      />
 
       <RouterView v-slot="{ Component }">
         <component
           :is="Component"
           :key="$route.fullPath"
+          :search-query="searchQuery"
         />
       </RouterView>
     </main>
@@ -48,10 +52,12 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
 import { useRoute } from "vue-router";
 import ProviderHeader from "@/components/ProviderHeader.vue";
 
 const route = useRoute();
+const searchQuery = ref("");
 </script>
 
 <style scoped>

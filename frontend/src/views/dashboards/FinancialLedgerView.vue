@@ -147,6 +147,15 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 
+const props = withDefaults(
+  defineProps<{
+    searchQuery?: string;
+  }>(),
+  {
+    searchQuery: "",
+  },
+);
+
 interface Transaction {
   id: string;
   date: string;
@@ -155,7 +164,6 @@ interface Transaction {
   status: string;
 }
 
-const searchQuery = ref("");
 const statusFilter = ref("");
 const sortBy = ref("newest");
 
@@ -257,8 +265,8 @@ const filteredTransactions = computed(() => {
     result = result.filter((t) => t.status.toLowerCase() === statusFilter.value);
   }
 
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
+  if (props.searchQuery) {
+    const query = props.searchQuery.toLowerCase();
     result = result.filter(
       (t) =>
         t.id.toLowerCase().includes(query) ||

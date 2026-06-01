@@ -184,6 +184,15 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 
+const props = withDefaults(
+  defineProps<{
+    searchQuery?: string;
+  }>(),
+  {
+    searchQuery: "",
+  },
+);
+
 type ServiceRow = {
   id: number;
   name: string;
@@ -228,41 +237,6 @@ const endDate = ref("2026-04-16");
 const draftStartDate = ref(startDate.value);
 const draftEndDate = ref(endDate.value);
 const activeCategory = ref<CategoryKey>("tours");
-const searchQuery = ref("");
-
-const authUser = computed(() => {
-  try {
-    const rawUser = localStorage.getItem("auth_user");
-    return rawUser ? JSON.parse(rawUser) : null;
-  } catch {
-    return null;
-  }
-});
-
-const providerName = computed(() => authUser.value?.username || "Provider");
-const providerRoleLabel = computed(() => {
-  if (!authUser.value?.role) {
-    return "Provider";
-  }
-
-  return String(authUser.value.role)
-    .replace(/[-_]+/g, " ")
-    .replace(/\b\w/g, (char: string) => char.toUpperCase());
-});
-const providerProfileImage = computed(() => authUser.value?.profilePicture || "");
-const providerInitials = computed(() => {
-  const name = providerName.value.trim();
-  if (!name) {
-    return "P";
-  }
-
-  return name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part: string[]) => part[0]?.toUpperCase() || "")
-    .join("")
-    .slice(0, 2) || "P";
-});
 
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat("en-US", {
@@ -276,10 +250,10 @@ const selectedDateRangeSubtitle = computed(() => "Khmer New Year Period");
 
 const filteredServices = computed(() => {
   const services = activeCategoryData.value.services;
-  if (!searchQuery.value.trim()) {
+  if (!props.searchQuery.trim()) {
     return services;
   }
-  const query = searchQuery.value.toLowerCase();
+  const query = props.searchQuery.toLowerCase();
   return services.filter(
     (service) =>
       service.name.toLowerCase().includes(query) ||

@@ -164,7 +164,7 @@ const routes: RouteRecordRaw[] = [
         path: "settings",
         name: "provider-settings",
         component: () => import("../views/dashboards/SettingsView.vue"),
-        meta: { title: "Brand & Public Profile" },
+        meta: { title: "Profile Settings" },
       },
     ],
   },

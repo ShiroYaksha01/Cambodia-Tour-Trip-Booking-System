@@ -78,6 +78,15 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 
+const props = withDefaults(
+  defineProps<{
+    searchQuery?: string;
+  }>(),
+  {
+    searchQuery: "",
+  },
+);
+
 interface Guest {
   id: string;
   name: string;
@@ -90,7 +99,6 @@ interface Guest {
   checked: boolean;
 }
 
-const searchQuery = ref("");
 const bookingCode = ref("");
 const verificationMessage = ref<{
   type: string;
@@ -150,10 +158,10 @@ const guests: Guest[] = [
 ];
 
 const filteredGuests = computed(() => {
-  if (!searchQuery.value.trim()) {
+  if (!props.searchQuery.trim()) {
     return guests;
   }
-  const query = searchQuery.value.toLowerCase();
+  const query = props.searchQuery.toLowerCase();
   return guests.filter(
     (guest) =>
       guest.name.toLowerCase().includes(query) ||
