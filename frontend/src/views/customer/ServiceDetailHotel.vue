@@ -28,36 +28,42 @@
 
     <!-- Content -->
     <main v-else-if="service" class="detail-main">
+      <!-- Category label + hotel name + star rating + address + tags (Moved outside for alignment) -->
+      <section class="hero-section hero-full-width">
+        <div class="category-row">
+          <span class="category-label">Accommodation</span>
+          <span class="meta-divider">·</span>
+          <div class="stars-row">
+            <span v-for="s in 5" :key="s" class="star" :class="{ filled: s <= (accommodation?.star_rating || 0) }">★</span>
+          </div>
+        </div>
+        <h1 class="service-title">{{ accommodation?.hotel_name || service.title }}</h1>
+        <div class="address-meta">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 8 13 8 13s8-7.6 8-13a8 8 0 0 0-8-8z"/></svg>
+          <span>{{ accommodation?.address || service.location || 'Address not specified' }}</span>
+        </div>
+        <div class="tags-row">
+          <span v-for="tag in displayTags" :key="tag" class="tag-pill">{{ tag }}</span>
+        </div>
+      </section>
+
       <div class="two-col">
         <!-- ========== LEFT COLUMN ========== -->
         <div class="left-col">
-          <!-- Category label + hotel name + star rating + address + tags -->
-          <section class="hero-section">
-            <div class="category-row">
-              <span class="category-label">Accommodation</span>
-              <span class="meta-divider">·</span>
-              <div class="stars-row">
-                <span v-for="s in 5" :key="s" class="star" :class="{ filled: s <= (accommodation?.star_rating || 0) }">★</span>
-              </div>
-            </div>
-            <h1 class="service-title">{{ accommodation?.hotel_name || service.title }}</h1>
-            <div class="address-meta">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 8 13 8 13s8-7.6 8-13a8 8 0 0 0-8-8z"/></svg>
-              <span>{{ accommodation?.address || service.location || 'Address not specified' }}</span>
-            </div>
-            <div class="tags-row">
-              <span v-for="tag in displayTags" :key="tag" class="tag-pill">{{ tag }}</span>
-            </div>
-          </section>
-
           <!-- Photo Gallery -->
           <section class="gallery-section">
-            <div class="gallery-grid">
-              <div class="gallery-cover">
-                <img :src="coverImage" :alt="accommodation?.hotel_name || service.title" />
+            <div class="gallery-layout">
+              <div class="gallery-main">
+                <img :src="currentMainImage" :alt="accommodation?.hotel_name || service.title" />
               </div>
-              <div class="gallery-thumbs">
-                <div v-for="(img, i) in thumbImages" :key="i" class="gallery-thumb">
+              <div class="gallery-sidebar">
+                <div 
+                  v-for="(img, i) in galleryImages" 
+                  :key="i" 
+                  class="sidebar-thumb"
+                  :class="{ active: currentMainImage === img }"
+                  @click="activeImageUrl = img"
+                >
                   <img :src="img" :alt="'Hotel photo ' + (i + 1)" />
                 </div>
               </div>
@@ -282,6 +288,7 @@ const checkInDate = ref('')
 const checkOutDate = ref('')
 const rooms = ref(1)
 const hotelGuests = ref(1)
+const activeImageUrl = ref<string | null>(null)
 
 const accommodation = computed(() => service.value?.accommodation)
 const provider = computed(() => service.value?.provider)
@@ -317,19 +324,26 @@ const displayTags = computed(() => {
   return tags
 })
 
-const coverImage = computed(() => {
-  const img = service.value?.images?.find(i => i.is_cover)
-  return img?.image_url || service.value?.coverImage || 'https://placehold.co/800x500/006566/ffffff?text=Hotel'
+const galleryImages = computed(() => {
+  if (!service.value) return []
+  const imgs = service.value.images || []
+  
+  const sorted = [...imgs].sort((a, b) => {
+    if (a.is_cover) return -1
+    if (b.is_cover) return 1
+    return (a.sort_order || 0) - (b.sort_order || 0)
+  })
+
+  const results = sorted.map(i => i.image_url)
+  
+  while (results.length < 4) {
+    results.push(`https://placehold.co/800x600/006566/ffffff?text=Hotel+Photo+${results.length + 1}`)
+  }
+  
+  return results
 })
 
-const thumbImages = computed(() => {
-  const imgs = service.value?.images?.filter(i => !i.is_cover) || []
-  const thumbnails = imgs.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map(i => i.image_url)
-  while (thumbnails.length < 3) {
-    thumbnails.push(`https://placehold.co/400x300/006566/ffffff?text=Photo+${thumbnails.length + 1}`)
-  }
-  return thumbnails.slice(0, 3)
-})
+const currentMainImage = computed(() => activeImageUrl.value || galleryImages.value[0])
 
 const fetchService = async () => {
   isLoading.value = true
@@ -413,7 +427,7 @@ h1, h2, h3, h4 {
 
 /* ── Main Layout ── */
 .detail-main { padding: 1.75rem; max-width: 1200px; margin: 0 auto; }
-.two-col { display: grid; grid-template-columns: 1.5fr 360px; gap: 1.75rem; align-items: start; }
+.two-col { display: grid; grid-template-columns: 1.5fr 360px; gap: 1.75rem; }
 
 @media (max-width: 1024px) {
   .two-col { grid-template-columns: 1fr; }
@@ -422,8 +436,12 @@ h1, h2, h3, h4 {
 /* ── Left Column ── */
 .left-col { display: flex; flex-direction: column; gap: 1.75rem; }
 
+/* ── Right Column ── */
+.right-col { position: relative; height: 100%; }
+
 /* ── Hero Section ── */
-.hero-section { display: flex; flex-direction: column; gap: 0.6rem; }
+.hero-section { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 2rem; }
+.hero-full-width { grid-column: 1 / -1; }
 .category-row { display: flex; align-items: center; gap: 0.5rem; }
 .category-label {
   font-family: 'Plus Jakarta Sans', sans-serif;
@@ -460,12 +478,58 @@ h1, h2, h3, h4 {
 }
 
 /* ── Gallery ── */
-.gallery-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 0.5rem; border-radius: 12px; overflow: hidden; }
-.gallery-cover { border-radius: 12px; overflow: hidden; aspect-ratio: 4/3; }
-.gallery-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.gallery-thumbs { display: flex; flex-direction: column; gap: 0.5rem; }
-.gallery-thumb { flex: 1; border-radius: 12px; overflow: hidden; }
-.gallery-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gallery-layout { 
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem; 
+}
+.gallery-main { 
+  height: 480px;
+  border-radius: 12px; 
+  overflow: hidden; 
+  background: var(--surface-container-high);
+}
+.gallery-main img { 
+  width: 100%; 
+  height: 100%; 
+  object-fit: cover; 
+  display: block;
+  transition: opacity 0.3s ease;
+}
+.gallery-sidebar { 
+  display: flex; 
+  flex-direction: row; 
+  gap: 0.5rem; 
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+/* Custom scrollbar for sidebar */
+.gallery-sidebar::-webkit-scrollbar { height: 4px; }
+.gallery-sidebar::-webkit-scrollbar-track { background: transparent; }
+.gallery-sidebar::-webkit-scrollbar-thumb { background: var(--outline-variant); border-radius: 10px; }
+
+.sidebar-thumb { 
+  width: 80px;
+  height: 60px;
+  border-radius: 8px; 
+  overflow: hidden; 
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  background: var(--surface-container-high);
+}
+.sidebar-thumb:hover { opacity: 0.8; }
+.sidebar-thumb.active { 
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(0, 101, 102, 0.2);
+}
+.sidebar-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+@media (max-width: 640px) {
+  .gallery-main { height: 300px; }
+  .sidebar-thumb { width: 70px; height: 52px; }
+}
 
 /* ── Content Sections ── */
 .content-section { background: var(--surface-container-lowest); border-radius: 12px; padding: 0.9rem; }
@@ -520,17 +584,19 @@ h1, h2, h3, h4 {
 .provider-link:hover { opacity: 0.7; }
 
 /* ── Booking Panel ── */
-.right-col { position: relative; }
+.right-col { position: relative; height: 100%; }
 .booking-panel {
   background: var(--surface-container-lowest);
   border-radius: 12px;
   padding: 1.5rem;
   position: sticky;
   top: 5rem;
+  height: 552px; /* Matches gallery height (480 + 12 gap + 60 thumbs) */
   box-shadow: 0 0 24px -4px rgba(25, 28, 29, 0.06);
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  z-index: 10;
 }
 .booking-price { display: flex; align-items: baseline; gap: 0.3rem; }
 .price-value { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 2rem; font-weight: 800; color: var(--on-surface); }
@@ -546,20 +612,22 @@ h1, h2, h3, h4 {
 .field-input:focus { border-color: var(--primary); }
 .steppers-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 .stepper {
-  display: flex; align-items: center;
+  display: flex; align-items: center; gap: 0;
   background: var(--surface-container-low); border-radius: 6px;
   overflow: hidden; width: fit-content;
 }
 .stepper-btn {
-  width: 34px; height: 32px; border: none; background: transparent;
-  font-size: 1rem; font-weight: 600; color: var(--on-surface);
+  width: 38px; height: 36px; border: none; background: transparent;
+  font-size: 1.1rem; font-weight: 600; color: var(--on-surface);
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   transition: background 0.15s;
 }
 .stepper-btn:hover:not(:disabled) { background: var(--surface-container-high); }
 .stepper-btn:disabled { color: var(--outline-variant); cursor: not-allowed; }
-.stepper-value { min-width: 32px; text-align: center; font-weight: 600; font-size: 0.9rem; }
-
+.stepper-value {
+  min-width: 40px; text-align: center;
+  font-weight: 600; font-size: 0.95rem;
+}
 .price-breakdown { border-top: 1px solid rgba(189, 201, 200, 0.2); padding-top: 0.75rem; }
 .breakdown-row { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--on-surface-variant); }
 .total-row {
@@ -568,12 +636,6 @@ h1, h2, h3, h4 {
   font-weight: 700; font-size: 1.1rem;
   padding-top: 0.75rem; border-top: 1px solid rgba(189, 201, 200, 0.2);
 }
-.btn-cta {
-  padding: 10px 24px; border-radius: 6px; font-weight: 600; font-size: 0.9rem;
-  border: none; cursor: pointer; color: #fff;
-  background: linear-gradient(135deg, #006566, #117f81);
-  transition: opacity 0.2s;
-}
 .btn-cta-full {
   width: 100%; padding: 12px; border-radius: 6px; font-weight: 700; font-size: 0.95rem;
   font-family: 'Plus Jakarta Sans', sans-serif;
@@ -581,5 +643,5 @@ h1, h2, h3, h4 {
   background: linear-gradient(135deg, #006566, #117f81);
   transition: opacity 0.2s;
 }
-.btn-cta-full:hover, .btn-cta:hover { opacity: 0.9; }
+.btn-cta-full:hover { opacity: 0.9; }
 </style>

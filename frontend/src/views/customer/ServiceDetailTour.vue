@@ -28,41 +28,47 @@
 
     <!-- Content -->
     <main v-else-if="service" class="detail-main">
+      <!-- Category label + title + tags + destination meta (Moved outside for alignment) -->
+      <section class="hero-section hero-full-width">
+        <div class="category-row">
+          <span class="category-label">Tour Package</span>
+          <span class="meta-divider">·</span>
+          <span class="duration-badge">{{ tourPackage?.num_days || 1 }} Days</span>
+        </div>
+        <h1 class="service-title">{{ service.title }}</h1>
+        <div class="destination-meta">
+          <span class="meta-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 8 13 8 13s8-7.6 8-13a8 8 0 0 0-8-8z"/></svg>
+            {{ tourPackage?.departure_point || 'Departure' }}
+          </span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          <span class="meta-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 8 13 8 13s8-7.6 8-13a8 8 0 0 0-8-8z"/></svg>
+            {{ tourPackage?.destination || 'Destination' }}
+          </span>
+        </div>
+        <div class="tags-row">
+          <span v-for="tag in displayTags" :key="tag" class="tag-pill">{{ tag }}</span>
+        </div>
+      </section>
+
       <div class="two-col">
         <!-- ========== LEFT COLUMN ========== -->
         <div class="left-col">
-          <!-- Category label + title + tags + destination meta -->
-          <section class="hero-section">
-            <div class="category-row">
-              <span class="category-label">Tour Package</span>
-              <span class="meta-divider">·</span>
-              <span class="duration-badge">{{ tourPackage?.num_days || 1 }} Days</span>
-            </div>
-            <h1 class="service-title">{{ service.title }}</h1>
-            <div class="destination-meta">
-              <span class="meta-item">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 8 13 8 13s8-7.6 8-13a8 8 0 0 0-8-8z"/></svg>
-                {{ tourPackage?.departure_point || 'Departure' }}
-              </span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-              <span class="meta-item">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 8 13 8 13s8-7.6 8-13a8 8 0 0 0-8-8z"/></svg>
-                {{ tourPackage?.destination || 'Destination' }}
-              </span>
-            </div>
-            <div class="tags-row">
-              <span v-for="tag in displayTags" :key="tag" class="tag-pill">{{ tag }}</span>
-            </div>
-          </section>
-
           <!-- Photo Gallery -->
           <section class="gallery-section">
-            <div class="gallery-grid">
-              <div class="gallery-cover">
-                <img :src="coverImage" :alt="service.title" />
+            <div class="gallery-layout">
+              <div class="gallery-main">
+                <img :src="currentMainImage" :alt="service.title" />
               </div>
-              <div class="gallery-thumbs">
-                <div v-for="(img, i) in thumbImages" :key="i" class="gallery-thumb">
+              <div class="gallery-sidebar">
+                <div 
+                  v-for="(img, i) in galleryImages" 
+                  :key="i" 
+                  class="sidebar-thumb"
+                  :class="{ active: currentMainImage === img }"
+                  @click="activeImageUrl = img"
+                >
                   <img :src="img" :alt="service.title + ' ' + (i + 1)" />
                 </div>
               </div>
@@ -309,6 +315,7 @@ const service = ref<Service | null>(null)
 const isLoading = ref(true)
 const fetchError = ref('')
 const guests = ref(1)
+const activeImageUrl = ref<string | null>(null)
 
 const tourPackage = computed(() => service.value?.tourPackage)
 const provider = computed(() => service.value?.provider)
@@ -334,19 +341,26 @@ const displayTags = computed(() => {
   return tags
 })
 
-const coverImage = computed(() => {
-  const img = service.value?.images?.find(i => i.is_cover)
-  return img?.image_url || service.value?.coverImage || 'https://placehold.co/800x500/006566/ffffff?text=Tour'
+const galleryImages = computed(() => {
+  if (!service.value) return []
+  const imgs = service.value.images || []
+  
+  const sorted = [...imgs].sort((a, b) => {
+    if (a.is_cover) return -1
+    if (b.is_cover) return 1
+    return (a.sort_order || 0) - (b.sort_order || 0)
+  })
+
+  const results = sorted.map(i => i.image_url)
+  
+  while (results.length < 4) {
+    results.push(`https://placehold.co/800x600/006566/ffffff?text=Tour+Photo+${results.length + 1}`)
+  }
+  
+  return results
 })
 
-const thumbImages = computed(() => {
-  const imgs = service.value?.images?.filter(i => !i.is_cover) || []
-  const thumbnails = imgs.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map(i => i.image_url)
-  while (thumbnails.length < 3) {
-    thumbnails.push(`https://placehold.co/400x300/006566/ffffff?text=Image+${thumbnails.length + 1}`)
-  }
-  return thumbnails.slice(0, 3)
-})
+const currentMainImage = computed(() => activeImageUrl.value || galleryImages.value[0])
 
 function formatDate(dateStr?: string): string {
   if (!dateStr) return 'N/A'
@@ -443,7 +457,7 @@ h1, h2, h3, h4 {
 
 /* ── Main Layout ── */
 .detail-main { padding: 1.75rem; max-width: 1200px; margin: 0 auto; }
-.two-col { display: grid; grid-template-columns: 1.5fr 360px; gap: 1.75rem; align-items: start; }
+.two-col { display: grid; grid-template-columns: 1.5fr 360px; gap: 1.75rem; }
 
 @media (max-width: 1024px) {
   .two-col { grid-template-columns: 1fr; }
@@ -452,8 +466,12 @@ h1, h2, h3, h4 {
 /* ── Left Column ── */
 .left-col { display: flex; flex-direction: column; gap: 1.75rem; }
 
+/* ── Right Column ── */
+.right-col { position: relative; height: 100%; }
+
 /* ── Hero Section ── */
-.hero-section { display: flex; flex-direction: column; gap: 0.6rem; }
+.hero-section { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 2rem; }
+.hero-full-width { grid-column: 1 / -1; }
 .category-row { display: flex; align-items: center; gap: 0.5rem; }
 .category-label {
   font-family: 'Plus Jakarta Sans', sans-serif;
@@ -494,12 +512,58 @@ h1, h2, h3, h4 {
 }
 
 /* ── Gallery ── */
-.gallery-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 0.5rem; border-radius: 12px; overflow: hidden; }
-.gallery-cover { border-radius: 12px; overflow: hidden; aspect-ratio: 4/3; }
-.gallery-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.gallery-thumbs { display: flex; flex-direction: column; gap: 0.5rem; }
-.gallery-thumb { flex: 1; border-radius: 12px; overflow: hidden; }
-.gallery-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gallery-layout { 
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem; 
+}
+.gallery-main { 
+  height: 480px;
+  border-radius: 12px; 
+  overflow: hidden; 
+  background: var(--surface-container-high);
+}
+.gallery-main img { 
+  width: 100%; 
+  height: 100%; 
+  object-fit: cover; 
+  display: block;
+  transition: opacity 0.3s ease;
+}
+.gallery-sidebar { 
+  display: flex; 
+  flex-direction: row; 
+  gap: 0.5rem; 
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+/* Custom scrollbar for sidebar */
+.gallery-sidebar::-webkit-scrollbar { height: 4px; }
+.gallery-sidebar::-webkit-scrollbar-track { background: transparent; }
+.gallery-sidebar::-webkit-scrollbar-thumb { background: var(--outline-variant); border-radius: 10px; }
+
+.sidebar-thumb { 
+  width: 80px;
+  height: 60px;
+  border-radius: 8px; 
+  overflow: hidden; 
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  background: var(--surface-container-high);
+}
+.sidebar-thumb:hover { opacity: 0.8; }
+.sidebar-thumb.active { 
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(0, 101, 102, 0.2);
+}
+.sidebar-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+@media (max-width: 640px) {
+  .gallery-main { height: 300px; }
+  .sidebar-thumb { width: 70px; height: 52px; }
+}
 
 /* ── Content Sections ── */
 .content-section { background: var(--surface-container-lowest); border-radius: 12px; padding: 0.9rem; }
@@ -588,17 +652,19 @@ h1, h2, h3, h4 {
 .provider-link:hover { opacity: 0.7; }
 
 /* ── Booking Panel ── */
-.right-col { position: relative; }
+.right-col { position: relative; height: 100%; }
 .booking-panel {
   background: var(--surface-container-lowest);
   border-radius: 12px;
   padding: 1.5rem;
   position: sticky;
   top: 5rem;
+  height: 552px; /* Matches gallery height (480 + 12 gap + 60 thumbs) */
   box-shadow: 0 0 24px -4px rgba(25, 28, 29, 0.06);
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  z-index: 10;
 }
 .booking-price { display: flex; align-items: baseline; gap: 0.3rem; }
 .price-value { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 2rem; font-weight: 800; color: var(--on-surface); }
