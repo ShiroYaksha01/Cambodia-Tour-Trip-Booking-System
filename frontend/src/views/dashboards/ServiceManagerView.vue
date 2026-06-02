@@ -192,11 +192,7 @@
 import { computed, ref, onMounted } from "vue";
 import ServiceModal from "@/components/provider/ServiceModal.vue";
 import { fetchMyServices, createService, updateService, deleteService } from "@/services/api";
-import { getCurrentUserRole } from "@/utils/auth";
-import { useRouter } from "vue-router";
 
-const router = useRouter();
-const activeNav = ref("service");
 const showDatePicker = ref(false);
 const startDate = ref("2026-04-13");
 const endDate = ref("2026-04-16");
@@ -236,7 +232,7 @@ const resetDatePicker = () => {
 const loadServices = async () => {
   isLoading.value = true;
   try {
-    const data = await fetchServices();
+    const data = await fetchMyServices();
     serviceItems.value = data;
   } catch (error) {
     console.error("Failed to fetch services:", error);
