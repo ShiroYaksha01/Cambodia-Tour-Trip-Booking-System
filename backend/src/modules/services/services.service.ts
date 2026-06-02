@@ -59,7 +59,20 @@ export class ServicesService {
       });
     }
 
+    if (filter.providerId) {
+      query.andWhere('service.providerId = :providerId', {
+        providerId: filter.providerId,
+      });
+    }
+
     return query.getMany();
+  }
+
+  async findProviderServices(userId: string) {
+    const provider = await this.providerRepository.findOne({ where: { userId } });
+    if (!provider) throw new ForbiddenException('Provider profile not found');
+
+    return this.findAll({ providerId: provider.id });
   }
 
   async findOne(id: string) {

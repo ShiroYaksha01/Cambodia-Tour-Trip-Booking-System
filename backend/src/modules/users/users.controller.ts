@@ -11,30 +11,28 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { memoryStorage } from 'multer';
 
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UpdateUserDto } from '../users/dto/update-user.dto';
+import { SupabaseService } from '../../common/services/supabase.service';
 
 @Controller('/users')
 export class UsersController {
-  constructor(private usersService: UsersService) {}
+  constructor(
+    private usersService: UsersService,
+    private supabaseService: SupabaseService,
+  ) {}
  
   @UseGuards(JwtAuthGuard)
   @Put(':id')
   @UseInterceptors(
     FileInterceptor('profilePicture', {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, cb) => {
-          const name = Date.now() + '-' + file.originalname;
-          cb(null, name);
-        },
-      }),
+      storage: memoryStorage(),
     }),
   )
-  updateUser(
+  async updateUser(
     @Param('id') id: string,
     @UploadedFile() file: any,
     @Body() dto: UpdateUserDto,
@@ -53,9 +51,14 @@ export class UsersController {
       }
     }
 
+    let profilePictureUrl = updateData.profilePicture;
+    if (file) {
+      profilePictureUrl = await this.supabaseService.uploadImage(file, 'users');
+    }
+
     return this.usersService.updateUser(id, {
       ...updateData,
-      profilePicture: file?.filename,  
+      profilePicture: profilePictureUrl,  
     });
   }
 

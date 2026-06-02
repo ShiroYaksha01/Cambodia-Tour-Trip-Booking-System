@@ -132,6 +132,7 @@ import { computed, defineComponent, onMounted, reactive, ref } from 'vue'
 import { fetchServices } from '../../services/api'
 import CustomerServiceCard, { type Tour } from './CustomerServiceCard.vue'
 import { useRouter } from 'vue-router'
+import { resolveImageUrl } from '../../utils/api'
 
 export default defineComponent({
   name: 'CustomerSearchEngine',
@@ -261,8 +262,10 @@ export default defineComponent({
     })
 
     function mapServiceToTour(service: any): Tour {
-      const coverImage = service.images?.find((img: any) => img.isCover)?.imageUrl
-        || service.images?.[0]?.imageUrl
+      const rawImage = service.images?.find((img: any) => img.isCover)?.imageUrl
+        || service.images?.[0]?.imageUrl;
+
+      const coverImage = resolveImageUrl(rawImage)
         || 'https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=800&auto=format&fit=crop';
 
       return {

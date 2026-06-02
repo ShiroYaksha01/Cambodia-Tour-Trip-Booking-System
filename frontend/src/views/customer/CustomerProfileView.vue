@@ -5,6 +5,7 @@ import CustomerNavbar from "../../components/customer/CustomerNavbar.vue";
 import CustomerFooter from "../../components/customer/CustomerFooter.vue";
 import LogoutButton from "../../components/LogoutButton.vue";
 import api from "../../services/api";
+import { resolveImageUrl } from "../../utils/api";
 
 const router = useRouter();
 
@@ -332,6 +333,10 @@ async function fetchProfile() {
         : "2026",
     };
 
+    if (profile.profilePicture) {
+      profileImage.value = profile.profilePicture;
+    }
+
     editForm.value = { ...user.value };
   } catch (err) {
     console.error(err);
@@ -490,7 +495,7 @@ onMounted(() => {
           <div class="profile-photo-wrap">
             <img
               v-if="profileImage"
-              :src="profileImage"
+              :src="resolveImageUrl(profileImage)"
               alt="Customer profile"
               class="profile-photo"
             />

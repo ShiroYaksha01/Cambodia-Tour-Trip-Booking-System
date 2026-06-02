@@ -7,41 +7,41 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { memoryStorage } from 'multer';
  
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { SupabaseService } from '../../common/services/supabase.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private supabaseService: SupabaseService,
+  ) {}
 
   @Post('register')
   @UseInterceptors(
     FileInterceptor('profilePicture', {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, cb) => {
-          const filename = Date.now() + '-' + file.originalname;
-          cb(null, filename);
-        },
-      }),
+      storage: memoryStorage(),
     }),
   )
-  register(
+  async register(
     @UploadedFile() file: any,
     @Body() dto: RegisterDto,
   ) {
-    console.log('FILE:', file);
-    console.log('BODY:', dto);
+    let profilePictureUrl: string | undefined = undefined;
+    if (file) {
+      profilePictureUrl = await this.supabaseService.uploadImage(file, 'users');
+    }
 
     return this.authService.register(
       dto.username,
       dto.email,
       dto.password,
       dto.phoneNumber,
-      file?.filename,
+      profilePictureUrl,
       dto.role,
     );
   }
