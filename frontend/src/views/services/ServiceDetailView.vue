@@ -40,7 +40,7 @@
         <!-- Image Gallery Side -->
         <div class="md:w-1/2 relative bg-[#0a3237] overflow-hidden min-h-[400px]">
            <img 
-             :src="service.coverImage || angkorImage" 
+             :src="resolveImageUrl(service.coverImage) || angkorImage" 
              :alt="service.title" 
              class="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"
            />           
@@ -109,7 +109,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { apiGet } from '../../utils/api'
+import { apiGet, resolveImageUrl } from '../../utils/api'
 import { hasAuthSession } from '../../utils/auth'
 import angkorImage from '../../assets/angkorwat_sunrise.jpg'
 

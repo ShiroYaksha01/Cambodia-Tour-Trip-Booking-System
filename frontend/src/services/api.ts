@@ -48,6 +48,11 @@ export const fetchServices = async () => {
   return res.data;
 };
 
+export const fetchMyServices = async () => {
+  const res = await api.get("/services/my");
+  return res.data;
+};
+
 export const getProviderBookings = (params?: any) => api.get(`/provider/bookings`, { params }).catch(async (err) => {
   // If the request fails (network error, auth missing, or server error), return a local mock for quick preview
   const isAuthError = err && err.response && (err.response.status === 401 || err.response.status === 403)

@@ -76,26 +76,27 @@
               <div class="header-cell">ACTIONS</div>
             </div>
 
-            <article v-for="(item, index) in serviceItems" :key="item.name + index" class="service-row service-manager-row">
+            <article v-for="(item, index) in serviceItems" :key="item.id || index" class="service-row service-manager-row">
               <div class="service-info">
-                <img :src="item.image" :alt="item.name" class="service-image" />
+                <img :src="item.coverImage || 'https://via.placeholder.com/120'" :alt="item.title" class="service-image" />
                 <div class="service-details">
-                  <h3>{{ item.name }}</h3>
-                  <p>{{ item.subtitle }}</p>
+                  <h3>{{ item.title }}</h3>
+                  <p>{{ item.serviceType?.toUpperCase() }} • {{ item.duration || 'N/A' }}</p>
                 </div>
               </div>
 
               <div class="destinations">
-                <span v-for="destination in item.destinations" :key="destination">{{ destination }}</span>
+                <span v-if="item.location">{{ item.location }}</span>
+                <span v-else-if="item.tourPackage?.destination">{{ item.tourPackage.destination }}</span>
               </div>
 
               <div class="pricing">
-                <strong>{{ item.price }}</strong>
+                <strong>${{ Number(item.price).toFixed(2) }}</strong>
                 <p>Per ticket</p>
               </div>
 
               <div class="status">
-                <span class="status-pill" :class="item.status.toLowerCase()">{{ item.status }}</span>
+                <span class="status-pill" :class="item.isActive ? 'live' : 'draft'">{{ item.isActive ? 'Live' : 'Draft' }}</span>
               </div>
 
               <div class="actions">
@@ -108,10 +109,10 @@
             </article>
 
             <div class="table-foot service-manager-foot">
-              <p>Showing 1 to 3 of 12 tour packages</p>
+              <p>Showing {{ serviceItems.length }} service(s)</p>
               <div>
-                <button class="page-btn">Previous</button>
-                <button class="page-btn">Next</button>
+                <button class="page-btn" disabled>Previous</button>
+                <button class="page-btn" disabled>Next</button>
               </div>
             </div>
           </div>
@@ -188,14 +189,27 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
-// @ts-ignore: Vue SFC import
-import ServiceModal from '../../components/provider/ServiceModal.vue'
+import { computed, ref, onMounted } from "vue";
+import ServiceModal from "@/components/provider/ServiceModal.vue";
+import { fetchMyServices, createService, updateService, deleteService } from "@/services/api";
+import { getCurrentUserRole } from "@/utils/auth";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+const activeNav = ref("service");
 const showDatePicker = ref(false);
 const startDate = ref("2026-04-13");
 const endDate = ref("2026-04-16");
 const draftStartDate = ref(startDate.value);
 const draftEndDate = ref(endDate.value);
+
+const serviceItems = ref<any[]>([]);
+const isLoading = ref(false);
+
+const showModal = ref(false)
+const selectedService = ref<any>(null)
+const editingId = ref<string | null>(null)
+const actionMenuIndex = ref<number | null>(null)
 
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat("en-US", {
@@ -219,17 +233,25 @@ const resetDatePicker = () => {
   showDatePicker.value = false;
 };
 
-const showModal = ref(false)
-const selectedService = ref<any>(null)
-const editingIndex = ref<number | null>(null)
-const actionMenuIndex = ref<number | null>(null)
+const loadServices = async () => {
+  isLoading.value = true;
+  try {
+    const data = await fetchServices();
+    serviceItems.value = data;
+  } catch (error) {
+    console.error("Failed to fetch services:", error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+onMounted(() => {
+  loadServices();
+});
 
 function openCreateModal() {
-  editingIndex.value = null
+  editingId.value = null
   selectedService.value = null
-  // debug: confirm click handler runs
-  // eslint-disable-next-line no-console
-  console.log('openCreateModal called')
   showModal.value = true
 }
 
@@ -240,82 +262,44 @@ function toggleActionMenu(i: number) {
 function startEditService(i: number) {
   const item = serviceItems.value[i]
   if (!item) return
-  editingIndex.value = i
-  // Transform item to modal-friendly shape
-  selectedService.value = {
-    title: item.name,
-    description: item.subtitle,
-    price: Number(String(item.price).replace(/[^0-9.]/g, '')) || 0,
-    destinations: item.destinations || [],
-    image: item.image,
-    isActive: (item.status || '').toLowerCase() === 'live'
-  }
+  editingId.value = item.id
+  selectedService.value = item
   showModal.value = true
   actionMenuIndex.value = null
 }
 
-function deleteServiceItem(i: number) {
+async function deleteServiceItem(i: number) {
   const item = serviceItems.value[i]
   if (!item) return
-  const ok = window.confirm(`Delete "${item.name}"? This cannot be undone.`)
+  const ok = window.confirm(`Delete "${item.title}"? This cannot be undone.`)
   if (!ok) {
     actionMenuIndex.value = null
     return
   }
-  serviceItems.value.splice(i, 1)
+  try {
+    await deleteService(item.id)
+    serviceItems.value.splice(i, 1)
+  } catch (error) {
+    console.error("Failed to delete service:", error)
+  }
   actionMenuIndex.value = null
 }
 
-// helper functions removed (unused) to avoid TypeScript unused-local errors
-
-// NOTE: `startUpdate` and `deleteServiceItem` were removed because they were unused in the current template.
-
-function handleSaveService(formData: any) {
-  const item = {
-    name: formData.title || 'New service',
-    subtitle: (formData.guideType === 'private' ? 'Private Guided' : 'Group') + ' • ' + (formData.duration || `${formData.durationValue} ${formData.durationUnit || 'hours'}`),
-    destinations: formData.destinations || (formData.destination ? [formData.destination] : []),
-    price: formData.price ? `$${Number(formData.price).toFixed(2)}` : '$0.00',
-    status: formData.isActive ? 'Live' : 'Draft',
-    image: formData.image || 'https://via.placeholder.com/120'
+async function handleSaveService(formData: any) {
+  try {
+    if (editingId.value) {
+      await updateService(editingId.value, formData)
+    } else {
+      await createService(formData)
+    }
+    await loadServices()
+    showModal.value = false
+    editingId.value = null
+  } catch (error) {
+    console.error("Failed to save service:", error)
   }
-
-  if (editingIndex.value !== null) {
-    serviceItems.value.splice(editingIndex.value, 1, item)
-  } else {
-    serviceItems.value.unshift(item)
-  }
-
-  editingIndex.value = null
-  showModal.value = false
 }
 
-const serviceItems = ref([
-  {
-    name: "Angkor Wat Sunrise Premium",
-    subtitle: "Private Guided • 8 Hours",
-    destinations: ["Angkor Wat", "Bayon"],
-    price: "$125.00",
-    status: "Live",
-    image: "https://images.unsplash.com/photo-1506461883276-594a12b11cf3?auto=format&fit=crop&w=120&q=80",
-  },
-  {
-    name: "Banteay Srei & Countryside",
-    subtitle: "Full Day Expedition",
-    destinations: ["Banteay Srei"],
-    price: "$85.00",
-    status: "Draft",
-    image: "https://images.unsplash.com/photo-1528184039939-bd03972bd974?auto=format&fit=crop&w=120&q=80",
-  },
-  {
-    name: "Spiritual Alms Giving & Pagoda",
-    subtitle: "Cultural Walk • 3 Hours",
-    destinations: ["Local Pagoda"],
-    price: "$45.00",
-    status: "Live",
-    image: "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=120&q=80",
-  },
-]);
 </script>
 
 <style scoped>
