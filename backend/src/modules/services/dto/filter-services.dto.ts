@@ -21,4 +21,8 @@ export class FilterServicesDto {
   @IsOptional()
   @IsBoolean({ message: 'isActive must be a boolean' })
   isActive?: boolean;
+
+  @IsOptional()
+  @IsString({ message: 'providerId must be a string' })
+  providerId?: string;
 }

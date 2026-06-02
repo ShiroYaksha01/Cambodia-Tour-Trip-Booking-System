@@ -36,6 +36,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { resolveImageUrl } from "../utils/api";
 
 interface Props {
   title: string;
@@ -64,7 +65,7 @@ const authUser = computed(() => {
 });
 
 const providerName = computed(() => authUser.value?.username || "Provider");
-const providerProfileImage = computed(() => authUser.value?.profilePicture || "");
+const providerProfileImage = computed(() => resolveImageUrl(authUser.value?.profilePicture));
 const providerRoleLabel = computed(() => {
   const role = authUser.value?.role || "";
   const roleLabels: Record<string, string> = {

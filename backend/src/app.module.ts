@@ -12,6 +12,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { ProvidersModule } from './modules/providers/providers.module';
 import { BookingsModule } from './modules/bookings/bookings.module';
+import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { BookingsModule } from './modules/bookings/bookings.module';
         configService.get('typeorm')!,
     }),
 
+    CommonModule,
     AuthModule,
     UsersModule,
     ProvidersModule,
