@@ -76,7 +76,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, onMounted } from "vue";
+import { getProviderBookings } from "../../services/api";
 
 const props = withDefaults(
   defineProps<{
@@ -110,59 +111,65 @@ const verificationMessage = ref<{
 
 const bookingCodeDigits = computed(() => bookingCode.value.split(""));
 
-const guests: Guest[] = [
-  {
-    id: "1",
-    name: "Chen Srey-Mom",
-    package: "PAX 2",
-    bookingCode: "BT-8022",
-    time: "09:30 AM",
-    status: "Arrival Expected",
-    statusClass: "arrival",
-    avatar: "https://picsum.photos/40/40?random=1",
-    checked: false,
-  },
-  {
-    id: "2",
-    name: "Liam Henderson",
-    package: "PAX 1",
-    bookingCode: "BT-8045",
-    time: "CHECKED IN 08:12",
-    status: "Sunrise Meditation",
-    statusClass: "checked-in",
-    avatar: "https://picsum.photos/40/40?random=2",
-    checked: true,
-  },
-  {
-    id: "3",
-    name: "Elena Rodriguez",
-    package: "PAX 4",
-    bookingCode: "BT-9112",
-    time: "Delayed",
-    status: "Arriving 10:15",
-    statusClass: "delayed",
-    avatar: "https://picsum.photos/40/40?random=3",
-    checked: false,
-  },
-  {
-    id: "4",
-    name: "Marcus Weber",
-    package: "PAX 2",
-    bookingCode: "BT-9140",
-    time: "11:00 AM",
-    status: "Angkor Archeology Tour",
-    statusClass: "tour",
-    avatar: "https://picsum.photos/40/40?random=4",
-    checked: false,
-  },
+const guests = ref<Guest[]>([]);
+const isLoading = ref(true);
+
+function mapBookingToGuest(booking: any): Guest {
+  const bkDate = new Date(booking.date);
+  const hours = bkDate.getHours();
+  const minutes = bkDate.getMinutes();
+  const ampm = hours >= 12 ? "PM" : "AM";
+  const h12 = hours % 12 || 12;
+  const timeStr = `${h12}:${String(minutes).padStart(2, "0")} ${ampm}`;
+
+  const bkStatus = (booking.booking_status || "").toLowerCase();
+  const statusMap: Record<string, { status: string; statusClass: string }> = {
+    confirmed: { status: "Arrival Expected", statusClass: "arrival" },
+    pending: { status: "Pending", statusClass: "arrival" },
+    cancelled: { status: "Cancelled", statusClass: "delayed" },
+    completed: { status: "Completed", statusClass: "checked-in" },
+    refunded: { status: "Refunded", statusClass: "delayed" },
+  };
+  const mapped = statusMap[bkStatus] || { status: "Arrival Expected", statusClass: "arrival" };
+
+  return {
+    id: booking.id,
+    name: booking.user?.name || booking.user?.email || "Unknown",
+    package: `PAX ${booking.quantity || 1}${booking.service_name ? " · " + booking.service_name : ""}`,
+    bookingCode: booking.reference_code || "N/A",
+    time: timeStr,
+    status: mapped.status,
+    statusClass: mapped.statusClass,
+    avatar: booking.user?.profile_picture || `https://picsum.photos/40/40?random=${Math.random()}`,
+    checked: bkStatus === "completed",
+  };
+}
+
+const mockFallback = () => [
+  { id: "1", name: "Chen Srey-Mom", package: "PAX 2", bookingCode: "BT-8022", time: "09:30 AM", status: "Arrival Expected", statusClass: "arrival", avatar: "https://picsum.photos/40/40?random=1", checked: false },
+  { id: "2", name: "Liam Henderson", package: "PAX 1", bookingCode: "BT-8045", time: "CHECKED IN 08:12", status: "Sunrise Meditation", statusClass: "checked-in", avatar: "https://picsum.photos/40/40?random=2", checked: true },
+  { id: "3", name: "Elena Rodriguez", package: "PAX 4", bookingCode: "BT-9112", time: "Delayed", status: "Arriving 10:15", statusClass: "delayed", avatar: "https://picsum.photos/40/40?random=3", checked: false },
+  { id: "4", name: "Marcus Weber", package: "PAX 2", bookingCode: "BT-9140", time: "11:00 AM", status: "Angkor Archeology Tour", statusClass: "tour", avatar: "https://picsum.photos/40/40?random=4", checked: false },
 ];
+
+onMounted(async () => {
+  try {
+    const res = await getProviderBookings();
+    const list = res?.data || [];
+    guests.value = list.map(mapBookingToGuest);
+  } catch {
+    guests.value = mockFallback();
+  } finally {
+    isLoading.value = false;
+  }
+});
 
 const filteredGuests = computed(() => {
   if (!props.searchQuery.trim()) {
-    return guests;
+    return guests.value;
   }
   const query = props.searchQuery.toLowerCase();
-  return guests.filter(
+  return guests.value.filter(
     (guest) =>
       guest.name.toLowerCase().includes(query) ||
       guest.bookingCode.toLowerCase().includes(query)
@@ -191,13 +198,16 @@ function verifyCode() {
     return;
   }
 
-  // Mock verification - if code is 729 with any ending, it passes
-  if (bookingCode.value.startsWith("729")) {
+  const match = guests.value.find(
+    (g) => g.bookingCode.replace(/[^A-Z0-9]/gi, "").toUpperCase() === bookingCode.value.toUpperCase()
+  );
+
+  if (match) {
     verificationMessage.value = {
       type: "success",
-      icon: "⚙",
+      icon: "✓",
       title: "Guest Successfully Verified",
-      description: "Sovan Rathana • Group of 4 • Sunrise Spiritual Tour",
+      description: `${match.name} • ${match.package} ${match.bookingCode ? "• #" + match.bookingCode : ""}`,
       undoBtn: true,
     };
   } else {

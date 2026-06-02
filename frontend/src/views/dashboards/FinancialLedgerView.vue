@@ -23,7 +23,7 @@
           <div class="card earnings-card">
             <div class="card-header">
               <h3>Earnings Breakdown</h3>
-              <span class="period-badge">CURRENT PERIOD: JULY 2023</span>
+              <span class="period-badge">CURRENT PERIOD: {{ currentPeriodLabel }}</span>
             </div>
             <div class="card-content">
               <div class="earning-item">
@@ -145,7 +145,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, onMounted } from "vue";
+import { getProviderBookings } from "../../services/api";
 
 const props = withDefaults(
   defineProps<{
@@ -171,9 +172,49 @@ const sortBy = ref("newest");
 
 // providerName is available in header component via localStorage; keep authUser for potential use
 
-const totalSales = "12,450.00";
-const platformFee = "1,867.50";
-const netPayout = "10,582.50";
+const transactions = ref<Transaction[]>([]);
+const isLoading = ref(true);
+const currentPeriodLabel = computed(() => {
+  const d = transactions.value.length
+    ? new Date(transactions.value[0].date)
+    : new Date();
+  if (isNaN(d.getTime())) return new Date().toLocaleDateString("en-US", { year: "numeric", month: "long" }).toUpperCase();
+  return d.toLocaleDateString("en-US", { year: "numeric", month: "long" }).toUpperCase();
+});
+
+function fmt(n: number): string {
+  return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtDate(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+}
+
+function mapPaymentStatus(status: string): string {
+  const s = (status || "").toLowerCase();
+  if (s === "paid") return "Released";
+  if (s === "pending") return "Pending";
+  if (s === "processing") return "Processing";
+  if (s === "refunded") return "Processing";
+  return "Pending";
+}
+
+function mapBookingToTransaction(b: any): Transaction {
+  const amt = typeof b.amount === "number" ? b.amount : 0;
+  return {
+    id: `#TXN-${(b.reference_code || b.id || "").toString().toUpperCase().slice(0, 7)}`,
+    date: fmtDate(b.date),
+    destination: b.service_name || "Booking Payment",
+    amount: fmt(amt),
+    status: mapPaymentStatus(b.payment_status),
+  };
+}
+
+const totalSales = computed(() => fmt(transactions.value.reduce((s, t) => s + parseFloat(t.amount.replace(/,/g, "")), 0)));
+const platformFee = computed(() => fmt(parseFloat(totalSales.value.replace(/,/g, "")) * 0.15));
+const netPayout = computed(() => fmt(parseFloat(totalSales.value.replace(/,/g, "")) - parseFloat(platformFee.value.replace(/,/g, ""))));
 
 // compute last 6 months based on latest transaction and aggregate amounts
 const monthlyTotals = computed(() => {
@@ -183,7 +224,7 @@ const monthlyTotals = computed(() => {
   };
 
   // get latest transaction date, fall back to now
-  const dates = transactions
+  const dates = transactions.value
     .map((t) => new Date(t.date))
     .filter((d) => !Number.isNaN(d.getTime()));
   const latest = dates.length ? new Date(Math.max(...dates.map((d) => d.getTime()))) : new Date();
@@ -199,7 +240,7 @@ const monthlyTotals = computed(() => {
   }
 
   const sums = months.map((m) =>
-    transactions.reduce((acc, t) => {
+    transactions.value.reduce((acc, t) => {
       const d = new Date(t.date);
       if (d.getFullYear() === m.year && d.getMonth() === m.month) {
         return acc + parseAmount(t.amount);
@@ -213,53 +254,31 @@ const monthlyTotals = computed(() => {
   return months.map((m, idx) => ({ label: m.label, height: Math.round((sums[idx] / max) * 100), value: sums[idx] }));
 });
 
-const transactions: Transaction[] = [
-  {
-    id: "#TXN-90214",
-    date: "July 18, 2023",
-    destination: "ABA Bank •••• 4492",
-    amount: "4,820.00",
-    status: "Released",
-  },
-  {
-    id: "#TXN-88431",
-    date: "July 10, 2023",
-    destination: "ABA Bank •••• 4492",
-    amount: "3,150.00",
-    status: "Released",
-  },
-  {
-    id: "#TXN-87299",
-    date: "July 02, 2023",
-    destination: "ABA Bank •••• 4492",
-    amount: "1,200.00",
-    status: "Processing",
-  },
-  {
-    id: "#TXN-86532",
-    date: "June 25, 2023",
-    destination: "ABA Bank •••• 4492",
-    amount: "2,900.00",
-    status: "Released",
-  },
-  {
-    id: "#TXN-85641",
-    date: "June 18, 2023",
-    destination: "ABA Bank •••• 4492",
-    amount: "3,450.00",
-    status: "Released",
-  },
-  {
-    id: "#TXN-84729",
-    date: "June 10, 2023",
-    destination: "ABA Bank •••• 4492",
-    amount: "2,100.00",
-    status: "Pending",
-  },
+const mockTransactions = (): Transaction[] => [
+  { id: "#TXN-90214", date: "July 18, 2023", destination: "ABA Bank •••• 4492", amount: "4,820.00", status: "Released" },
+  { id: "#TXN-88431", date: "July 10, 2023", destination: "ABA Bank •••• 4492", amount: "3,150.00", status: "Released" },
+  { id: "#TXN-87299", date: "July 02, 2023", destination: "ABA Bank •••• 4492", amount: "1,200.00", status: "Processing" },
+  { id: "#TXN-86532", date: "June 25, 2023", destination: "ABA Bank •••• 4492", amount: "2,900.00", status: "Released" },
+  { id: "#TXN-85641", date: "June 18, 2023", destination: "ABA Bank •••• 4492", amount: "3,450.00", status: "Released" },
+  { id: "#TXN-84729", date: "June 10, 2023", destination: "ABA Bank •••• 4492", amount: "2,100.00", status: "Pending" },
 ];
 
+onMounted(async () => {
+  try {
+    const res = await getProviderBookings();
+    const list: any[] = res?.data || [];
+    transactions.value = list
+      .filter((b) => b.payment_status === "paid")
+      .map(mapBookingToTransaction);
+  } catch {
+    transactions.value = mockTransactions();
+  } finally {
+    isLoading.value = false;
+  }
+});
+
 const filteredTransactions = computed(() => {
-  let result = transactions;
+  let result = transactions.value;
 
   if (statusFilter.value) {
     result = result.filter((t) => t.status.toLowerCase() === statusFilter.value);
