@@ -8,7 +8,7 @@ dotenvConfig({ path: '.env' });
 const commonConfig = {
     type: 'postgres' as const,
     entities: ["dist/**/*.entity{.ts,.js}"],
-    migrations: ["dist/migrations/*{.ts,.js}"],
+    migrations: ["dist/database/migrations/*{.ts,.js}"],
     autoLoadEntities: true,
     synchronize: false,
 }
