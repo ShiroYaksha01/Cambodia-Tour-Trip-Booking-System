@@ -148,6 +148,11 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: "/customer/provider/:id",
+    name: "provider-detail",
+    component: () => import("../views/customer/ProviderDetail.vue"),
+  },
+  {
     path: "/customer/feedback/:id",
     name: "customer-feedback",
     component: () => import("../views/customer/Feedback.vue"),

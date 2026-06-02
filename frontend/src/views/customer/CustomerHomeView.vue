@@ -1,36 +1,49 @@
 <script setup lang="ts">
-import CustomerNavbar from '../../components/customer/CustomerNavbar.vue'
-import CustomerHomePageSearch from '../../components/customer/CustomerHomePageSearch.vue'
-import CustomerServiceCard from '../../components/customer/CustomerServiceCard.vue'
-import CustomerFooter from '../../components/customer/CustomerFooter.vue'
+import CustomerNavbar from "../../components/customer/CustomerNavbar.vue";
+import CustomerHomePageSearch from "../../components/customer/CustomerHomePageSearch.vue";
+import CustomerServiceCard from "../../components/customer/CustomerServiceCard.vue";
+import CustomerFooter from "../../components/customer/CustomerFooter.vue";
 
-import { fetchServices } from '../../services/api'
-import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { fetchServices } from "../../services/api";
+import { onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
 
-const router = useRouter()
-const tours = ref([])
+const router = useRouter();
+const tours = ref<any[]>([]);
 
 const handleBook = (tour: any) => {
-  router.push({ name: 'booking-form', params: { id: tour.id } })
-}
+  router.push({ name: "booking-form", params: { id: tour.id } });
+};
 
 const goToDetail = (id: string) => {
-  router.push({ name: 'service-detail', params: { id } })
-}
+  router.push({ name: "service-detail", params: { id } });
+};
 
-//use try-catch to handle errors when fetching data from the API
+const goToProviderDetail = (tour: any) => {
+  const providerId = tour.provider?.id || tour.providerId || tour.provider_id;
+
+  if (!providerId) {
+    console.error("Provider ID not found in tour:", tour);
+    return;
+  }
+
+  router.push({
+    name: "provider-detail",
+    params: { id: providerId },
+  });
+};
+
 onMounted(async () => {
   try {
-    const data = await fetchServices()
-    console.log("API data:", data)
+    const data = await fetchServices();
+    console.log("API data:", data);
 
-    tours.value = Array.isArray(data) ? data : []
+    tours.value = Array.isArray(data) ? data : [];
   } catch (error) {
-    console.error("Failed to fetch services:", error)
-    tours.value = []
+    console.error("Failed to fetch services:", error);
+    tours.value = [];
   }
-})
+});
 </script>
 
 <template>
@@ -46,9 +59,7 @@ onMounted(async () => {
         class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=1600&auto=format&fit=crop')] bg-cover bg-center opacity-20"
       />
 
-      <div
-        class="relative max-w-7xl mx-auto px-6 lg:px-8 py-24 lg:py-32"
-      >
+      <div class="relative max-w-7xl mx-auto px-6 lg:px-8 py-24 lg:py-32">
         <div class="max-w-3xl">
           <p
             class="inline-flex items-center rounded-full bg-white/20 px-4 py-2 text-sm font-medium backdrop-blur"
@@ -98,7 +109,9 @@ onMounted(async () => {
           class="mb-12 flex flex-col gap-4 md:flex-row md:items-end md:justify-between"
         >
           <div>
-            <p class="text-sm font-semibold uppercase tracking-wide text-emerald-600">
+            <p
+              class="text-sm font-semibold uppercase tracking-wide text-emerald-600"
+            >
               Popular Packages
             </p>
 
@@ -120,15 +133,14 @@ onMounted(async () => {
         </div>
 
         <!-- Tour Cards Grid -->
-        <div
-          class="grid grid-cols-1 gap-8 sm:grid-cols-2 xl:grid-cols-3"
-        >
+        <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 xl:grid-cols-3">
           <CustomerServiceCard
             v-for="tour in tours"
             :key="tour.id"
             :tour="tour"
             @click="goToDetail(tour.id)"
             @book="handleBook"
+            @provider-detail="goToProviderDetail"
             class="cursor-pointer"
           />
         </div>
@@ -139,7 +151,9 @@ onMounted(async () => {
     <section class="bg-white py-20 px-4">
       <div class="max-w-7xl mx-auto">
         <div class="text-center max-w-3xl mx-auto">
-          <p class="text-sm font-semibold uppercase tracking-wide text-emerald-600">
+          <p
+            class="text-sm font-semibold uppercase tracking-wide text-emerald-600"
+          >
             Why Choose Us
           </p>
 
@@ -163,9 +177,7 @@ onMounted(async () => {
               ✈️
             </div>
 
-            <h3 class="text-xl font-semibold text-gray-900">
-              Easy Booking
-            </h3>
+            <h3 class="text-xl font-semibold text-gray-900">Easy Booking</h3>
 
             <p class="mt-3 text-gray-600 leading-relaxed">
               Book your favorite tours quickly with a smooth and secure process.
@@ -199,9 +211,7 @@ onMounted(async () => {
               ⭐
             </div>
 
-            <h3 class="text-xl font-semibold text-gray-900">
-              Trusted Reviews
-            </h3>
+            <h3 class="text-xl font-semibold text-gray-900">Trusted Reviews</h3>
 
             <p class="mt-3 text-gray-600 leading-relaxed">
               Real traveler reviews help you choose the best experiences.
@@ -217,9 +227,7 @@ onMounted(async () => {
               💬
             </div>
 
-            <h3 class="text-xl font-semibold text-gray-900">
-              24/7 Support
-            </h3>
+            <h3 class="text-xl font-semibold text-gray-900">24/7 Support</h3>
 
             <p class="mt-3 text-gray-600 leading-relaxed">
               Our support team is available anytime to help your journey.
@@ -231,9 +239,7 @@ onMounted(async () => {
 
     <!-- Destination Banner -->
     <section class="px-4 pb-20">
-      <div
-        class="relative max-w-7xl mx-auto overflow-hidden rounded-[32px]"
-      >
+      <div class="relative max-w-7xl mx-auto overflow-hidden rounded-[32px]">
         <img
           src="https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?q=80&w=1600&auto=format&fit=crop"
           alt="Cambodia"
@@ -244,9 +250,7 @@ onMounted(async () => {
           class="absolute inset-0 bg-gradient-to-r from-black/70 to-black/20"
         />
 
-        <div
-          class="absolute inset-0 flex items-center px-8 md:px-16"
-        >
+        <div class="absolute inset-0 flex items-center px-8 md:px-16">
           <div class="max-w-2xl text-white">
             <p class="text-sm font-semibold uppercase tracking-widest">
               Discover Cambodia
