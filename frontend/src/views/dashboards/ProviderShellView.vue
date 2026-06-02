@@ -35,7 +35,7 @@
     </aside>
 
     <main class="shell-content">
-      <ProviderHeader :title="route.meta.title || ''" />
+      <ProviderHeader :title="String(route.meta.title || '')" />
 
       <RouterView v-slot="{ Component }">
         <component
