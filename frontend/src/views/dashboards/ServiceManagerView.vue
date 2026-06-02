@@ -43,16 +43,16 @@
         <div class="header-left">
           <h1>Service Manager</h1>
           <div class="header-controls">
-            <select class="month-select">
-              <option>April 2026</option>
-            </select>
-            <div class="header-buttons">
-              <button class="btn-secondary">Tours</button>
-              <button class="btn-secondary">Hotels</button>
-              <button class="btn-secondary">Transport</button>
-              <button class="btn-primary">Create New Service</button>
-            </div>
-          </div>
+                <select class="month-select">
+                  <option>April 2026</option>
+                </select>
+                <div class="header-buttons">
+                  <button class="btn-secondary">Tours</button>
+                  <button class="btn-secondary">Hotels</button>
+                  <button class="btn-secondary">Transport</button>
+                  <button class="btn-primary" @click="openCreateModal">Create New Service</button>
+                </div>
+              </div>
         </div>
         <div class="header-icons">
           <button class="icon-btn">🔔</button>
@@ -76,38 +76,43 @@
               <div class="header-cell">ACTIONS</div>
             </div>
 
-            <article v-for="item in serviceItems" :key="item.name" class="service-row service-manager-row">
+            <article v-for="(item, index) in serviceItems" :key="item.id || index" class="service-row service-manager-row">
               <div class="service-info">
-                <img :src="item.image" :alt="item.name" class="service-image" />
+                <img :src="item.coverImage || 'https://via.placeholder.com/120'" :alt="item.title" class="service-image" />
                 <div class="service-details">
-                  <h3>{{ item.name }}</h3>
-                  <p>{{ item.subtitle }}</p>
+                  <h3>{{ item.title }}</h3>
+                  <p>{{ item.serviceType?.toUpperCase() }} • {{ item.duration || 'N/A' }}</p>
                 </div>
               </div>
 
               <div class="destinations">
-                <span v-for="destination in item.destinations" :key="destination">{{ destination }}</span>
+                <span v-if="item.location">{{ item.location }}</span>
+                <span v-else-if="item.tourPackage?.destination">{{ item.tourPackage.destination }}</span>
               </div>
 
               <div class="pricing">
-                <strong>{{ item.price }}</strong>
+                <strong>${{ Number(item.price).toFixed(2) }}</strong>
                 <p>Per ticket</p>
               </div>
 
               <div class="status">
-                <span class="status-pill" :class="item.status.toLowerCase()">{{ item.status }}</span>
+                <span class="status-pill" :class="item.isActive ? 'live' : 'draft'">{{ item.isActive ? 'Live' : 'Draft' }}</span>
               </div>
 
               <div class="actions">
-                <button>⋯</button>
+                <button @click.stop="toggleActionMenu(index)">⋯</button>
+                <div v-if="actionMenuIndex === index" class="action-menu">
+                  <button class="action-menu-item" @click="startEditService(index)">Update</button>
+                  <button class="action-menu-item danger" @click="deleteServiceItem(index)">Delete</button>
+                </div>
               </div>
             </article>
 
             <div class="table-foot service-manager-foot">
-              <p>Showing 1 to 3 of 12 tour packages</p>
+              <p>Showing {{ serviceItems.length }} service(s)</p>
               <div>
-                <button class="page-btn">Previous</button>
-                <button class="page-btn">Next</button>
+                <button class="page-btn" disabled>Previous</button>
+                <button class="page-btn" disabled>Next</button>
               </div>
             </div>
           </div>
@@ -178,19 +183,33 @@
         </div>
         <button class="btn-icon-large"></button>
       </footer>
+      <ServiceModal :show="showModal" :service="selectedService" @close="showModal = false" @save="handleSaveService" />
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, onMounted } from "vue";
+import ServiceModal from "@/components/provider/ServiceModal.vue";
+import { fetchMyServices, createService, updateService, deleteService } from "@/services/api";
+import { getCurrentUserRole } from "@/utils/auth";
+import { useRouter } from "vue-router";
 
+const router = useRouter();
 const activeNav = ref("service");
 const showDatePicker = ref(false);
 const startDate = ref("2026-04-13");
 const endDate = ref("2026-04-16");
 const draftStartDate = ref(startDate.value);
 const draftEndDate = ref(endDate.value);
+
+const serviceItems = ref<any[]>([]);
+const isLoading = ref(false);
+
+const showModal = ref(false)
+const selectedService = ref<any>(null)
+const editingId = ref<string | null>(null)
+const actionMenuIndex = ref<number | null>(null)
 
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat("en-US", {
@@ -214,32 +233,73 @@ const resetDatePicker = () => {
   showDatePicker.value = false;
 };
 
-const serviceItems = [
-  {
-    name: "Angkor Wat Sunrise Premium",
-    subtitle: "Private Guided • 8 Hours",
-    destinations: ["Angkor Wat", "Bayon"],
-    price: "$125.00",
-    status: "Live",
-    image: "https://images.unsplash.com/photo-1506461883276-594a12b11cf3?auto=format&fit=crop&w=120&q=80",
-  },
-  {
-    name: "Banteay Srei & Countryside",
-    subtitle: "Full Day Expedition",
-    destinations: ["Banteay Srei"],
-    price: "$85.00",
-    status: "Draft",
-    image: "https://images.unsplash.com/photo-1528184039939-bd03972bd974?auto=format&fit=crop&w=120&q=80",
-  },
-  {
-    name: "Spiritual Alms Giving & Pagoda",
-    subtitle: "Cultural Walk • 3 Hours",
-    destinations: ["Local Pagoda"],
-    price: "$45.00",
-    status: "Live",
-    image: "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=120&q=80",
-  },
-];
+const loadServices = async () => {
+  isLoading.value = true;
+  try {
+    const data = await fetchServices();
+    serviceItems.value = data;
+  } catch (error) {
+    console.error("Failed to fetch services:", error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+onMounted(() => {
+  loadServices();
+});
+
+function openCreateModal() {
+  editingId.value = null
+  selectedService.value = null
+  showModal.value = true
+}
+
+function toggleActionMenu(i: number) {
+  actionMenuIndex.value = actionMenuIndex.value === i ? null : i
+}
+
+function startEditService(i: number) {
+  const item = serviceItems.value[i]
+  if (!item) return
+  editingId.value = item.id
+  selectedService.value = item
+  showModal.value = true
+  actionMenuIndex.value = null
+}
+
+async function deleteServiceItem(i: number) {
+  const item = serviceItems.value[i]
+  if (!item) return
+  const ok = window.confirm(`Delete "${item.title}"? This cannot be undone.`)
+  if (!ok) {
+    actionMenuIndex.value = null
+    return
+  }
+  try {
+    await deleteService(item.id)
+    serviceItems.value.splice(i, 1)
+  } catch (error) {
+    console.error("Failed to delete service:", error)
+  }
+  actionMenuIndex.value = null
+}
+
+async function handleSaveService(formData: any) {
+  try {
+    if (editingId.value) {
+      await updateService(editingId.value, formData)
+    } else {
+      await createService(formData)
+    }
+    await loadServices()
+    showModal.value = false
+    editingId.value = null
+  } catch (error) {
+    console.error("Failed to save service:", error)
+  }
+}
+
 </script>
 
 <style scoped>
@@ -577,6 +637,31 @@ const serviceItems = [
   background: #fff;
   color: #5e6a73;
 }
+
+.action-menu {
+  position: absolute;
+  background: white;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  border-radius: 8px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  right: 12px;
+  z-index: 50;
+}
+.action-menu-item {
+  background: transparent;
+  border: 0;
+  padding: 8px 12px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6px;
+}
+.action-menu-item:hover { background:#f5f7f7 }
+.action-menu-item.danger { color: #c0392b }
+.actions { position: relative }
 
 .table-foot {
   display: flex;

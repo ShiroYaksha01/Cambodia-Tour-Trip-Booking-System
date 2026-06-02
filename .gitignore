@@ -2,6 +2,7 @@
 .agents/
 .gemini/
 skills-lock.json
+.mcp.json
 
 # Node & Package Managers
 node_modules/

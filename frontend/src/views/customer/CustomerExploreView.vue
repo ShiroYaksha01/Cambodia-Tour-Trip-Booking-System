@@ -2,6 +2,7 @@
 import { ref, onMounted, computed, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { hasAuthSession } from '../../utils/auth'
+import { resolveImageUrl } from '../../utils/api'
 import CustomerNavbar from '../../components/customer/CustomerNavbar.vue'
 import CustomerFooter from '../../components/customer/CustomerFooter.vue'
 import CustomerServiceCard from '../../components/customer/CustomerServiceCard.vue'
@@ -105,9 +106,11 @@ const filteredServices = computed(() => {
 })
 
 function mapServiceToTour(service: any) {
-  const coverImage = service.coverImage
+  const rawImage = service.coverImage
     || service.images?.find((img: any) => img.isCover)?.imageUrl
-    || service.images?.[0]?.imageUrl
+    || service.images?.[0]?.imageUrl;
+  
+  const coverImage = resolveImageUrl(rawImage)
     || 'https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=800&auto=format&fit=crop';
 
   return {

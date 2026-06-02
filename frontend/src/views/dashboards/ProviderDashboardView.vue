@@ -230,40 +230,6 @@ const draftEndDate = ref(endDate.value);
 const activeCategory = ref<CategoryKey>("tours");
 const searchQuery = ref("");
 
-const authUser = computed(() => {
-  try {
-    const rawUser = localStorage.getItem("auth_user");
-    return rawUser ? JSON.parse(rawUser) : null;
-  } catch {
-    return null;
-  }
-});
-
-const providerName = computed(() => authUser.value?.username || "Provider");
-const providerRoleLabel = computed(() => {
-  if (!authUser.value?.role) {
-    return "Provider";
-  }
-
-  return String(authUser.value.role)
-    .replace(/[-_]+/g, " ")
-    .replace(/\b\w/g, (char: string) => char.toUpperCase());
-});
-const providerProfileImage = computed(() => authUser.value?.profilePicture || "");
-const providerInitials = computed(() => {
-  const name = providerName.value.trim();
-  if (!name) {
-    return "P";
-  }
-
-  return name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part: string[]) => part[0]?.toUpperCase() || "")
-    .join("")
-    .slice(0, 2) || "P";
-});
-
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat("en-US", {
     month: "short",
