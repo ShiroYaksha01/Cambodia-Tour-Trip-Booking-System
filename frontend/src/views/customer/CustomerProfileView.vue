@@ -245,6 +245,9 @@ function goToUnpaidBookings() {
   activeTab.value = "bookings";
   bookingFilter.value = "pending";
 }
+function goToChangePassword() {
+  router.push("/customer/change-password");
+}
 
 function handleProfileImageUpload(event: Event) {
   const input = event.target as HTMLInputElement;
@@ -1113,10 +1116,26 @@ onMounted(() => {
                 <section class="settings-section danger-section">
                   <div class="settings-title">
                     <h3>Account Safety</h3>
-                    <p>Important actions for your customer account.</p>
+                    <p>
+                      Manage password and important actions for your customer
+                      account.
+                    </p>
                   </div>
 
                   <div class="danger-box">
+                    <strong>Change Password</strong>
+                    <p>
+                      Update your account password to keep your account secure.
+                    </p>
+
+                    <div class="settings-actions">
+                      <button class="save-btn" @click="goToChangePassword">
+                        Change Password
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="danger-box" style="margin-top: 14px">
                     <strong>Delete Account</strong>
                     <p>
                       Account deletion is not available yet. Contact support if

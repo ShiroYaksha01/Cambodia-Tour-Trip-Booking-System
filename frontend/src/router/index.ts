@@ -139,6 +139,11 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: "/customer/change-password",
+    name: "customer-change-password",
+    component: () => import("../views/Customer/ChangePassword.vue"),
+  },
+  {
     path: "/customer/profile",
     name: "customer-profile",
     component: () => import("../views/customer/CustomerProfileView.vue"),
