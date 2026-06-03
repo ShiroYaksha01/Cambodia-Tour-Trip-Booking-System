@@ -38,7 +38,6 @@
       <div class="brand-block">
         <div class="brand-mark" aria-hidden="true">A</div>
         <div>
-          <p class="eyebrow">{{ roleLabel }} Central</p>
           <strong>Tour Booking System</strong>
           <small>System Supervisor</small>
         </div>
