@@ -48,6 +48,12 @@ export class UsersService {
     return this.userRepo.save(user); // ← return is outside the loop
   }
 
+  async updatePassword(id: string, passwordHash: string) {
+    const user = await this.findById(id);
+    user.passwordHash = passwordHash;
+    return this.userRepo.save(user);
+  }
+
   async findAll() {
     return this.userRepo.find({
       select: ['id', 'email', 'username', 'phoneNumber', 'profilePicture', 'role', 'status', 'emailVerifiedAt', 'lastLoginAt'],
