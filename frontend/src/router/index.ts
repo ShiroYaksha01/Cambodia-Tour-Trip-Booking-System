@@ -227,6 +227,30 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: "/customer/tour/:id",
+    name: "customer-tour-detail",
+    component: () => import("../views/customer/ServiceDetailTour.vue"),
+    meta: {
+      requiresAuth: false,
+    },
+  },
+  {
+    path: "/customer/hotel/:id",
+    name: "customer-hotel-detail",
+    component: () => import("../views/customer/ServiceDetailHotel.vue"),
+    meta: {
+      requiresAuth: false,
+    },
+  },
+  {
+    path: "/customer/transport/:id",
+    name: "customer-transport-detail",
+    component: () => import("../views/customer/ServiceDetailTransport.vue"),
+    meta: {
+      requiresAuth: false,
+    },
+  },
+  {
     path: "/service/:id",
     name: "service-detail",
     component: () => import("../views/services/ServiceDetailView.vue"),
@@ -292,6 +316,13 @@ const routes: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition;
+    } else {
+      return { top: 0 };
+    }
+  },
 });
 
 router.beforeEach((to) => {
