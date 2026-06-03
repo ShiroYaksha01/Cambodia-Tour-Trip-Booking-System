@@ -37,7 +37,7 @@
     <main class="shell-content">
       <ProviderHeader
         v-model:searchQuery="searchQuery"
-        :title="route.meta.title || ''"
+        :title="(route.meta.title as string) || ''"
       />
 
       <RouterView v-slot="{ Component }">

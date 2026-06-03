@@ -376,7 +376,7 @@ function formatTime(timeStr?: string): string {
   return `${h12}:${m} ${ampm}`
 }
 
-function isLastActivity(dayIdx: number, actIdx: number, activities: ItineraryActivity[]): boolean {
+function isLastActivity(_dayIdx: number, actIdx: number, activities: ItineraryActivity[]): boolean {
   return actIdx === activities.length - 1
 }
 

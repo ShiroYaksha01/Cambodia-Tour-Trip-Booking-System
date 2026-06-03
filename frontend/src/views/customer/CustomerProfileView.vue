@@ -254,6 +254,12 @@ function handleProfileImageUpload(event: Event) {
 
   if (!file) return;
 
+  if (file.size > 10 * 1024 * 1024) {
+    alert("File is too large. Please select an image smaller than 10MB.");
+    input.value = "";
+    return;
+  }
+
   if (!file.type.startsWith("image/")) {
     alert("Please upload an image file.");
     return;

@@ -111,6 +111,17 @@ export const createService = (data: any) => api.post('/services', data);
 export const updateService = (id: string, data: any) => api.patch(`/services/${id}`, data);
 export const deleteService = (id: string) => api.delete(`/services/${id}`);
 
+export const uploadImage = async (file: File) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await api.post('/uploads/image', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return res.data;
+};
+
 /**
  * Get all services + inventory slots for the authenticated provider
  * GET /inventory/provider
