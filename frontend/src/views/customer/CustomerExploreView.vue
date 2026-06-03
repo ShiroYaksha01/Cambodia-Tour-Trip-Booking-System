@@ -73,7 +73,7 @@ function mapServiceToTour(service: any) {
     || service.images?.[0]?.imageUrl;
   
   const coverImage = resolveImageUrl(rawImage)
-    || 'https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=800&auto=format&fit=crop';
+    || 'https://freedomdestinations.co.uk/wp-content/uploads/Angkor-Wat-Cambodia-4.jpg';
 
   return {
     id: service.id,
@@ -123,7 +123,7 @@ onMounted(async () => {
     <main class="flex-grow">
       <!-- Search Header -->
       <section class="relative overflow-hidden bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-500 text-white py-20 px-4">
-        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=1600&auto=format&fit=crop')] bg-cover bg-center opacity-20" />
+        <div class="absolute inset-0 bg-[url('https://freedomdestinations.co.uk/wp-content/uploads/Angkor-Wat-Cambodia-4.jpg')] bg-cover bg-center opacity-20" />
         
         <div class="relative max-w-7xl mx-auto text-center">
           <h1 class="text-3xl md:text-5xl font-bold mb-4">Explore Your Next Adventure</h1>
