@@ -13,6 +13,8 @@ import { UsersModule } from './modules/users/users.module';
 import { ProvidersModule } from './modules/providers/providers.module';
 import { BookingsModule } from './modules/bookings/bookings.module';
 import { CommonModule } from './common/common.module';
+import { SettingsModule } from './modules/settings/settings.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 
 @Module({
   imports: [
@@ -33,6 +35,8 @@ import { CommonModule } from './common/common.module';
     ProvidersModule,
     BookingsModule,
     ServicesModule,
+    SettingsModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
