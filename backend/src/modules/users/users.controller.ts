@@ -30,6 +30,9 @@ export class UsersController {
   @UseInterceptors(
     FileInterceptor('profilePicture', {
       storage: memoryStorage(),
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB
+      },
     }),
   )
   async updateUser(

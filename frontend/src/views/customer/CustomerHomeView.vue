@@ -22,8 +22,19 @@ const handleBook = (tour: any) => {
   router.push({ name: 'booking-form', params: { id: tour.id } })
 }
 
-const goToDetail = (id: string) => {
-  router.push({ name: 'service-detail', params: { id } })
+const goToDetail = (service: any) => {
+  const st = service?.serviceType
+  if (st === 'tour') router.push({ name: 'customer-tour-detail', params: { id: service.id } })
+  else if (st === 'accommodation') router.push({ name: 'customer-hotel-detail', params: { id: service.id } })
+  else if (st === 'transportation') router.push({ name: 'customer-transport-detail', params: { id: service.id } })
+  else router.push({ name: 'service-detail', params: { id: service.id } })
+}
+
+const scrollToBottom = () => {
+  window.scrollTo({
+    top: document.documentElement.scrollHeight,
+    behavior: 'smooth'
+  })
 }
 
 function mapServiceToTour(service: any) {
@@ -32,7 +43,7 @@ function mapServiceToTour(service: any) {
     || service.images?.[0]?.imageUrl;
   
   const coverImage = resolveImageUrl(rawImage)
-    || 'https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=800&auto=format&fit=crop';
+    || 'https://freedomdestinations.co.uk/wp-content/uploads/Angkor-Wat-Cambodia-4.jpg';
 
   return {
     id: service.id,
@@ -50,10 +61,15 @@ function mapServiceToTour(service: any) {
 function handleSearch(filters: any) {
   console.log("Applying filters:", filters)
   displayedServices.value = allServices.value.filter(service => {
-    // Basic type filtering
-    if (service.serviceType !== filters.type) return false
+    // Skip type filtering if 'all' is selected
+    if (filters.type !== 'all' && service.serviceType !== filters.type) return false
 
     // Tab-specific filters
+    if (filters.type === 'all') {
+      if (filters.title && !service.title.toLowerCase().includes(filters.title.toLowerCase())) return false
+      return true
+    }
+
     if (filters.type === 'tour') {
       if (filters.location && !service.location?.toLowerCase().includes(filters.location.toLowerCase())) return false
       if (filters.title && !service.title.toLowerCase().includes(filters.title.toLowerCase())) return false
@@ -104,7 +120,7 @@ onMounted(async () => {
       class="relative overflow-hidden bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-500 text-white"
     >
       <div
-        class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=1600&auto=format&fit=crop')] bg-cover bg-center opacity-20"
+        class="absolute inset-0 bg-[url('https://freedomdestinations.co.uk/wp-content/uploads/Angkor-Wat-Cambodia-4.jpg')] bg-cover bg-center opacity-20"
       />
 
       <div
@@ -130,12 +146,14 @@ onMounted(async () => {
 
           <div class="mt-8 flex flex-wrap gap-4">
             <button
+              @click="router.push({ name: 'customer-explore' })"
               class="rounded-xl bg-white px-6 py-3 font-semibold text-emerald-700 shadow-lg transition hover:-translate-y-1 hover:shadow-2xl"
             >
               Explore Tours
             </button>
 
             <button
+              @click="scrollToBottom"
               class="rounded-xl border border-white/40 bg-white/10 px-6 py-3 font-semibold backdrop-blur transition hover:bg-white/20"
             >
               Learn More
@@ -189,7 +207,7 @@ onMounted(async () => {
             v-for="service in displayedServices"
             :key="service.id"
             :tour="mapServiceToTour(service)"
-            @click="goToDetail(service.id)"
+            @click="goToDetail(service)"
             @book="handleBook"
             class="cursor-pointer"
           />
@@ -303,7 +321,7 @@ onMounted(async () => {
         class="relative max-w-7xl mx-auto overflow-hidden rounded-[32px]"
       >
         <img
-          src="https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?q=80&w=1600&auto=format&fit=crop"
+          src="https://freedomdestinations.co.uk/wp-content/uploads/Angkor-Wat-Cambodia-4.jpg"
           alt="Cambodia"
           class="h-[420px] w-full object-cover"
         />
@@ -330,6 +348,7 @@ onMounted(async () => {
             </p>
 
             <button
+              @click="router.push({ name: 'customer-explore' })"
               class="mt-8 rounded-xl bg-emerald-500 px-6 py-3 font-semibold transition hover:bg-emerald-400"
             >
               Start Booking

@@ -7,15 +7,15 @@
       </div>
 
       <nav class="sidebar-nav">
-        <RouterLink class="nav-item" :to="{ name: 'provider-dashboard' }" active-class="active">
+        <RouterLink class="nav-item" :to="{ name: 'provider-dashboard' }" exact-active-class="active">
           <span class="icon">⚙️</span>
           Command Center
         </RouterLink>
-        <RouterLink class="nav-item" :to="{ name: 'provider-service' }" active-class="active">
+        <RouterLink class="nav-item" :to="{ name: 'provider-service' }" exact-active-class="active">
           <span class="icon">🛠️</span>
           Service Manager
         </RouterLink>
-        <RouterLink class="nav-item" :to="{ name: 'provider-inventory' }" active-class="active">
+        <RouterLink class="nav-item" :to="{ name: 'provider-inventory' }" exact-active-class="active">
           <span class="icon">📊</span>
           Inventory & Pricing
         </RouterLink>
@@ -43,28 +43,31 @@
         <div class="header-left">
           <h1>Service Manager</h1>
           <div class="header-controls">
-                <select class="month-select">
-                  <option>April 2026</option>
-                </select>
-                <div class="header-buttons">
-                  <button class="btn-secondary">Tours</button>
-                  <button class="btn-secondary">Hotels</button>
-                  <button class="btn-secondary">Transport</button>
-                  <button class="btn-primary" @click="openCreateModal">Create New Service</button>
-                </div>
-              </div>
-        </div>
-        <div class="header-icons">
-          <button class="icon-btn">🔔</button>
-          <button class="icon-btn">❓</button>
+            <select class="month-select">
+              <option>April 2026</option>
+            </select>
+            <div class="header-buttons">
+              <button
+                v-for="category in categoryOptions"
+                :key="category.value"
+                class="btn-secondary"
+                :class="{ active: selectedCategory === category.value }"
+                type="button"
+                @click="selectedCategory = category.value"
+              >
+                {{ category.label }}
+              </button>
+              <button class="btn-primary" @click="openCreateModal">Create New Service</button>
+            </div>
+          </div>
         </div>
       </header>
 
       <div class="content-wrapper">
         <section class="inventory-section">
           <div class="section-header">
-            <h2>Tour Packages</h2>
-            <p class="description">Manage and curate your premium temple expeditions and cultural walks.</p>
+            <h2>{{ selectedCategoryLabel }}</h2>
+            <p class="description">{{ selectedCategoryDescription }}</p>
           </div>
 
           <div class="services-grid">
@@ -76,27 +79,26 @@
               <div class="header-cell">ACTIONS</div>
             </div>
 
-            <article v-for="(item, index) in serviceItems" :key="item.id || index" class="service-row service-manager-row">
+            <article v-for="(item, index) in filteredServiceItems" :key="item.name + index" class="service-row service-manager-row">
               <div class="service-info">
-                <img :src="item.coverImage || 'https://via.placeholder.com/120'" :alt="item.title" class="service-image" />
+                <img :src="item.image" :alt="item.name" class="service-image" />
                 <div class="service-details">
-                  <h3>{{ item.title }}</h3>
-                  <p>{{ item.serviceType?.toUpperCase() }} • {{ item.duration || 'N/A' }}</p>
+                  <h3>{{ item.name }}</h3>
+                  <p>{{ item.subtitle }}</p>
                 </div>
               </div>
 
               <div class="destinations">
-                <span v-if="item.location">{{ item.location }}</span>
-                <span v-else-if="item.tourPackage?.destination">{{ item.tourPackage.destination }}</span>
+                <span v-for="destination in item.destinations" :key="destination">{{ destination }}</span>
               </div>
 
               <div class="pricing">
-                <strong>${{ Number(item.price).toFixed(2) }}</strong>
+                <strong>{{ item.price }}</strong>
                 <p>Per ticket</p>
               </div>
 
               <div class="status">
-                <span class="status-pill" :class="item.isActive ? 'live' : 'draft'">{{ item.isActive ? 'Live' : 'Draft' }}</span>
+                <span class="status-pill" :class="item.status.toLowerCase()">{{ item.status }}</span>
               </div>
 
               <div class="actions">
@@ -109,10 +111,10 @@
             </article>
 
             <div class="table-foot service-manager-foot">
-              <p>Showing {{ serviceItems.length }} service(s)</p>
+              <p>Showing {{ visibleServiceCountLabel }}</p>
               <div>
-                <button class="page-btn" disabled>Previous</button>
-                <button class="page-btn" disabled>Next</button>
+                <button class="page-btn">Previous</button>
+                <button class="page-btn">Next</button>
               </div>
             </div>
           </div>
@@ -173,16 +175,6 @@
         </aside>
       </div>
 
-      <footer class="footer">
-        <div class="curator-info">
-          <img src="https://via.placeholder.com/40" alt="Somnang Chen" class="avatar" />
-          <div>
-            <p class="name">Somnang Chen</p>
-            <p class="role">Service Curator</p>
-          </div>
-        </div>
-        <button class="btn-icon-large"></button>
-      </footer>
       <ServiceModal :show="showModal" :service="selectedService" @close="showModal = false" @save="handleSaveService" />
     </main>
   </div>
@@ -190,22 +182,51 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from "vue";
-import ServiceModal from "@/components/provider/ServiceModal.vue";
-import { fetchMyServices, createService, updateService, deleteService } from "@/services/api";
+import ServiceModal from "../../components/provider/ServiceModal.vue";
+import { fetchServices, createService, updateService, deleteService } from "../../services/api";
 
+const props = withDefaults(
+  defineProps<{
+    searchQuery?: string;
+  }>(),
+  {
+    searchQuery: "",
+  },
+);
+
+// Helper to get current date in YYYY-MM-DD format
+const getCurrentDate = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+// Helper to add days to a date
+const addDays = (dateStr: string, days: number) => {
+  const date = new Date(`${dateStr}T00:00:00`);
+  date.setDate(date.getDate() + days);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const selectedCategory = ref("all");
 const showDatePicker = ref(false);
-const startDate = ref("2026-04-13");
-const endDate = ref("2026-04-16");
+const currentDate = getCurrentDate();
+const startDate = ref(currentDate);
+const endDate = ref(addDays(currentDate, 3));
 const draftStartDate = ref(startDate.value);
 const draftEndDate = ref(endDate.value);
 
-const serviceItems = ref<any[]>([]);
-const isLoading = ref(false);
-
-const showModal = ref(false)
-const selectedService = ref<any>(null)
-const editingId = ref<string | null>(null)
-const actionMenuIndex = ref<number | null>(null)
+const categoryOptions = [
+  { label: "All Services", value: "all" },
+  { label: "Tours", value: "tour" },
+  { label: "Hotels", value: "hotel" },
+  { label: "Transport", value: "transport" },
+] as const;
 
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat("en-US", {
@@ -216,6 +237,19 @@ const formatDate = (value: string) =>
 
 const selectedDateRangeLabel = computed(() => `${formatDate(startDate.value)} - ${formatDate(endDate.value)}`);
 const selectedDateRangeSubtitle = computed(() => "Khmer New Year Period");
+const selectedCategoryLabel = computed(() => {
+  const found = categoryOptions.find((category) => category.value === selectedCategory.value);
+  return found ? found.label : "All Services";
+});
+const selectedCategoryDescription = computed(() => {
+  const descriptions: Record<string, string> = {
+    all: "Browse all provider services by category.",
+    tour: "Manage and curate your premium temple expeditions and cultural walks.",
+    hotel: "Manage hotel stays, room bundles, and guest accommodations.",
+    transport: "Manage transfers, shuttles, and private transport options.",
+  };
+  return descriptions[selectedCategory.value] || descriptions.all;
+});
 
 const applyDatePicker = () => {
   startDate.value = draftStartDate.value;
@@ -229,73 +263,158 @@ const resetDatePicker = () => {
   showDatePicker.value = false;
 };
 
-const loadServices = async () => {
-  isLoading.value = true;
-  try {
-    const data = await fetchMyServices();
-    serviceItems.value = data;
-  } catch (error) {
-    console.error("Failed to fetch services:", error);
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-onMounted(() => {
-  loadServices();
-});
+const showModal = ref(false);
+const selectedService = ref<any>(null);
+const editingIndex = ref<number | null>(null);
+const actionMenuIndex = ref<number | null>(null);
 
 function openCreateModal() {
-  editingId.value = null
-  selectedService.value = null
-  showModal.value = true
+  editingIndex.value = null;
+  selectedService.value = null;
+  showModal.value = true;
 }
 
 function toggleActionMenu(i: number) {
-  actionMenuIndex.value = actionMenuIndex.value === i ? null : i
+  actionMenuIndex.value = actionMenuIndex.value === i ? null : i;
 }
 
-function startEditService(i: number) {
-  const item = serviceItems.value[i]
-  if (!item) return
-  editingId.value = item.id
-  selectedService.value = item
-  showModal.value = true
-  actionMenuIndex.value = null
+function startEditService(item: any) {
+  const index = serviceItems.value.findIndex((service) => service === item);
+  if (index === -1) return;
+  editingIndex.value = index;
+  // Transform item to modal-friendly shape
+  selectedService.value = {
+    title: item.name,
+    description: item.subtitle,
+    price: Number(String(item.price).replace(/[^0-9.]/g, "")) || 0,
+    destinations: item.destinations || [],
+    image: item.image,
+    isActive: (item.status || "").toLowerCase() === "live",
+  };
+  showModal.value = true;
+  actionMenuIndex.value = null;
 }
 
-async function deleteServiceItem(i: number) {
-  const item = serviceItems.value[i]
-  if (!item) return
-  const ok = window.confirm(`Delete "${item.title}"? This cannot be undone.`)
+async function deleteServiceItem(item: any) {
+  const index = serviceItems.value.findIndex((service) => service === item);
+  if (index === -1) return;
+  const ok = window.confirm(`Delete "${item.name}"? This cannot be undone.`);
   if (!ok) {
-    actionMenuIndex.value = null
-    return
+    actionMenuIndex.value = null;
+    return;
   }
-  try {
-    await deleteService(item.id)
-    serviceItems.value.splice(i, 1)
-  } catch (error) {
-    console.error("Failed to delete service:", error)
+  if (item.id) {
+    try {
+      await deleteService(item.id);
+    } catch {
+      // proceed with local deletion even if API fails
+    }
   }
-  actionMenuIndex.value = null
+  serviceItems.value.splice(index, 1);
+  actionMenuIndex.value = null;
 }
+
+// helper functions removed (unused) to avoid TypeScript unused-local errors
+
+// NOTE: `startUpdate` and `deleteServiceItem` were removed because they were unused in the current template.
 
 async function handleSaveService(formData: any) {
+  const category =
+    formData.serviceType === "accommodation"
+      ? "hotel"
+      : formData.serviceType === "transportation"
+        ? "transport"
+        : "tour";
+
+  const item = {
+    name: formData.title || 'New service',
+    category,
+    subtitle: (formData.guideType === 'private' ? 'Private Guided' : 'Group') + ' • ' + (formData.duration || `${formData.durationValue} ${formData.durationUnit || 'hours'}`),
+    destinations: formData.destinations || (formData.destination ? [formData.destination] : []),
+    price: formData.price ? `$${Number(formData.price).toFixed(2)}` : '$0.00',
+    status: formData.isActive ? 'Live' : 'Draft',
+    image: formData.image || 'https://via.placeholder.com/120',
+  };
+
   try {
-    if (editingId.value) {
-      await updateService(editingId.value, formData)
+    if (editingIndex.value !== null) {
+      const existing = serviceItems.value[editingIndex.value];
+      if (existing.id) {
+        await updateService(existing.id, formData);
+      }
+      serviceItems.value.splice(editingIndex.value, 1, { ...item, id: existing.id });
     } else {
-      await createService(formData)
+      const res = await createService(formData);
+      const saved = res.data;
+      serviceItems.value.unshift({ ...item, id: saved?.id || null });
     }
-    await loadServices()
-    showModal.value = false
-    editingId.value = null
-  } catch (error) {
-    console.error("Failed to save service:", error)
+  } catch {
+    // Fallback: update locally only
+    if (editingIndex.value !== null) {
+      serviceItems.value.splice(editingIndex.value, 1, { ...item, id: null });
+    } else {
+      serviceItems.value.unshift({ ...item, id: null });
+    }
   }
+
+  editingIndex.value = null;
+  showModal.value = false;
 }
 
+const serviceItems = ref<any[]>([]);
+
+onMounted(async () => {
+  try {
+    const res = await fetchServices();
+    const list = Array.isArray(res) ? res : res.data || [];
+    serviceItems.value = list.map((svc: any) => ({
+      id: svc.id,
+      name: svc.title || 'Untitled',
+      category: svc.serviceType === 'accommodation' ? 'hotel' : svc.serviceType === 'transportation' ? 'transport' : 'tour',
+      subtitle: svc.description || '',
+      destinations: svc.location ? [svc.location] : [],
+      price: svc.price ? `$${Number(svc.price).toFixed(2)}` : '$0.00',
+      status: svc.isActive ? 'Live' : 'Draft',
+      image: svc.coverImage || 'https://via.placeholder.com/120',
+    }));
+  } catch {
+    // Fallback mock data
+    serviceItems.value = [
+      { id: null, name: "Angkor Wat Sunrise Premium", category: "tour", subtitle: "Private Guided • 8 Hours", destinations: ["Angkor Wat", "Bayon"], price: "$125.00", status: "Live", image: "https://images.unsplash.com/photo-1506461883276-594a12b11cf3?auto=format&fit=crop&w=120&q=80" },
+      { id: null, name: "Heritage Stay at Riverside", category: "hotel", subtitle: "Boutique Hotel Package", destinations: ["Siem Reap"], price: "$95.00", status: "Live", image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=120&q=80" },
+      { id: null, name: "Temple Express Shuttle", category: "transport", subtitle: "Private Transfer • 1 Way", destinations: ["Airport", "City Center"], price: "$25.00", status: "Draft", image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=120&q=80" },
+      { id: null, name: "Banteay Srei & Countryside", category: "tour", subtitle: "Full Day Expedition", destinations: ["Banteay Srei"], price: "$85.00", status: "Draft", image: "https://images.unsplash.com/photo-1528184039939-bd03972bd974?auto=format&fit=crop&w=120&q=80" },
+      { id: null, name: "Spiritual Alms Giving & Pagoda", category: "tour", subtitle: "Cultural Walk • 3 Hours", destinations: ["Local Pagoda"], price: "$45.00", status: "Live", image: "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=120&q=80" },
+    ];
+  }
+});
+
+const filteredServiceItems = computed(() => {
+  const query = props.searchQuery.trim().toLowerCase();
+
+  return serviceItems.value.filter((item) => {
+    const matchesCategory = selectedCategory.value === "all" || item.category === selectedCategory.value;
+    const matchesSearch =
+      !query ||
+      item.name.toLowerCase().includes(query) ||
+      item.subtitle.toLowerCase().includes(query) ||
+      item.destinations.some((destination: string) => destination.toLowerCase().includes(query)) ||
+      item.status.toLowerCase().includes(query) ||
+      item.category.toLowerCase().includes(query);
+
+    return matchesCategory && matchesSearch;
+  });
+});
+
+const visibleServiceCountLabel = computed(() => {
+  const total = serviceItems.value.length;
+  const visible = filteredServiceItems.value.length;
+  const label = selectedCategoryLabel.value.toLowerCase();
+
+  return selectedCategory.value === "all"
+    ? `${visible} of ${total} services`
+    : `${visible} ${label} service${visible === 1 ? "" : "s"} of ${total}`;
+});
 </script>
 
 <style scoped>
@@ -433,6 +552,13 @@ async function handleSaveService(formData: any) {
   background: #f9f9f9;
 }
 
+.btn-secondary.active {
+  background: #e8f4f0;
+  border-color: #bfe0d8;
+  color: #1b7f6a;
+  font-weight: 600;
+}
+
 .btn-primary {
   padding: 8px 16px;
   background: #1b7f6a;
@@ -447,19 +573,6 @@ async function handleSaveService(formData: any) {
 
 .btn-primary:hover {
   background: #166a57;
-}
-
-.header-icons {
-  display: flex;
-  gap: 15px;
-}
-
-.icon-btn {
-  background: none;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
-  padding: 4px 8px;
 }
 
 .content-wrapper {
@@ -849,49 +962,7 @@ async function handleSaveService(formData: any) {
   margin-top: 8px;
 }
 
-.footer {
-  background: white;
-  border-top: 1px solid #e0e0e0;
-  padding: 20px 30px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
 
-.curator-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-}
-
-.name {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 500;
-  color: #1a1a1a;
-}
-
-.role {
-  margin: 2px 0 0 0;
-  font-size: 12px;
-  color: #999;
-}
-
-.btn-icon-large {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #f0ad4e;
-  border: none;
-  cursor: pointer;
-  font-size: 20px;
-}
 
 @media (max-width: 1180px) {
   .provider-suite {

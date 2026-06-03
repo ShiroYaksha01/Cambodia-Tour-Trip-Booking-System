@@ -10,15 +10,15 @@
       </div>
 
       <nav class="sidebar-nav">
-        <RouterLink class="nav-item" :to="{ name: 'provider-dashboard' }" active-class="active">
+        <RouterLink class="nav-item" :to="{ name: 'provider-dashboard' }" exact-active-class="active">
           <span>🗓️</span>
           Inventory
         </RouterLink>
-        <RouterLink class="nav-item" :to="{ name: 'provider-service' }" active-class="active">
+        <RouterLink class="nav-item" :to="{ name: 'provider-service' }" exact-active-class="active">
           <span>👥</span>
           Manifest
         </RouterLink>
-        <RouterLink class="nav-item" :to="{ name: 'provider-dashboard' }" active-class="active">
+        <RouterLink class="nav-item" :to="{ name: 'provider-dashboard' }" exact-active-class="active">
           <span>💳</span>
           Finance
         </RouterLink>
@@ -43,37 +43,33 @@
     <main class="inventory-main">
       <header class="topbar">
         <div class="topbar-title">Inventory & Pricing</div>
-        <div class="sync-pill">⟳ Syncing: All OTAs</div>
-        <div class="topbar-user">
-          <span class="bell">🔔</span>
-          <div class="user-meta">
-            <strong>The Heritage Curator</strong>
-            <span>Master Admin</span>
-          </div>
-          <img class="avatar" src="https://via.placeholder.com/40" alt="User avatar" />
+        <div class="topbar-actions">
+          <span v-if="hasChanges" class="unsaved-badge">Unsaved changes</span>
+          <button v-if="hasChanges" class="save-btn" @click="saveAll">Save All Changes</button>
+          <div class="sync-pill">⟳ Syncing: All OTAs</div>
         </div>
       </header>
 
       <section class="metrics-row">
         <article class="metric-card metric-teal">
           <p>AVG. OCCUPANCY</p>
-          <h3>84.2%</h3>
+          <h3>{{ avgOccupancy }}%</h3>
           <span>+12% from March</span>
         </article>
         <article class="metric-card metric-gold">
           <p>REVPAR</p>
-          <h3>$142.50</h3>
+          <h3>${{ revpar }}</h3>
           <span>Optimal Pricing Active</span>
         </article>
         <article class="metric-card metric-red">
           <p>LOW STOCK ALERTS</p>
-          <h3>04</h3>
-          <span>1 Action required: April 14</span>
+          <h3>{{ lowStockCount }}</h3>
+          <span>{{ lowStockAlerts }}</span>
         </article>
         <article class="metric-card metric-neutral">
-          <p>KHMER NEW YEAR</p>
-          <h3>98%</h3>
-          <span>Peak Demand Season</span>
+          <p>SUMMER DEMAND</p>
+          <h3>76%</h3>
+          <span>Early Summer Booking Trend</span>
         </article>
       </section>
 
@@ -81,49 +77,91 @@
         <div class="left-panel">
           <div class="calendar-card">
             <div class="calendar-header">
-              <button class="icon-btn">‹</button>
-              <h2>April 2026</h2>
-              <button class="icon-btn">›</button>
+              <button class="icon-btn" @click="shiftWeek(-1)">‹</button>
+              <h2>{{ currentMonthLabel }}</h2>
+              <button class="icon-btn" @click="shiftWeek(1)">›</button>
+              <div class="date-scheduler">
+                <input v-model="scheduleDate" type="date" class="date-picker-input" @change="goToDate" />
+              </div>
               <div class="view-toggle">
                 <button>Month</button>
                 <button class="active">Fortnight</button>
               </div>
             </div>
 
-            <div class="inventory-table">
+              <div class="inventory-table">
               <div class="inventory-head">
                 <span>PRODUCT / SERVICE</span>
-                <span>TUE 10</span>
-                <span>TUE 11</span>
-                <span>TUE 12</span>
-                <span>SAT 13</span>
-                <span>SUN 14</span>
+                <span v-for="i in 5" :key="i">SCHEDULE {{ i }}</span>
               </div>
 
-              <button
-                v-for="item in inventoryItems"
+              <div
+                v-for="(item, itemIdx) in filteredInventoryItems"
                 :key="item.name"
                 class="inventory-row"
-                @click="selectedItem = item"
               >
-                <div class="item-info">
+                <div class="item-info" @click="openDrawer(itemIdx)">
                   <img :src="item.image" :alt="item.name" />
                   <div>
                     <h3>{{ item.name }}</h3>
                     <p>{{ item.subtitle }}</p>
                   </div>
                 </div>
-                <div v-for="(day, index) in item.days" :key="index" class="day-cell" :class="day.status">
-                  <strong>{{ day.label }}</strong>
-                  <span>{{ day.price }}</span>
+                <div
+                  v-for="(day, dayIdx) in item.days"
+                  :key="dayIdx"
+                  class="day-cell"
+                  :class="day.status"
+                  @click="startEdit(itemIdx, dayIdx)"
+                >
+                  <template v-if="editingItemIdx === itemIdx && editingDayIdx === dayIdx">
+                    <input
+                      v-model="editDate"
+                      type="date"
+                      class="cell-input cell-date"
+                      @click.stop
+                      @keyup.enter="confirmEdit(itemIdx, dayIdx)"
+                      @keyup.escape="cancelEdit"
+                    />
+                    <input
+                      v-model.number="editSlots"
+                      type="number"
+                      min="0"
+                      class="cell-input"
+                      placeholder="slots"
+                      @click.stop
+                      @keyup.enter="confirmEdit(itemIdx, dayIdx)"
+                      @keyup.escape="cancelEdit"
+                    />
+                    <input
+                      v-model.number="editPrice"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      class="cell-input"
+                      placeholder="price"
+                      @click.stop
+                      @keyup.enter="confirmEdit(itemIdx, dayIdx)"
+                      @keyup.escape="cancelEdit"
+                    />
+                    <div class="cell-actions">
+                      <button class="cell-save" @click.stop="confirmEdit(itemIdx, dayIdx)">✓</button>
+                      <button class="cell-cancel" @click.stop="cancelEdit">✕</button>
+                    </div>
+                  </template>
+                  <template v-else>
+                    <span class="day-date-label">{{ formatShortDate(day.date) }}</span>
+                    <strong>{{ dayLabel(day) }}</strong>
+                    <span>{{ dayPrice(day) }}</span>
+                  </template>
                 </div>
-              </button>
+              </div>
             </div>
 
             <div class="legend-row">
               <div><span class="dot available"></span> Available</div>
               <div><span class="dot low"></span> Low Stock (&lt;10%)</div>
-              <div><span class="dot peak"></span> Khmer New Year (Peak)</div>
+              <div><span class="dot peak"></span> Peak Demand</div>
               <a href="#">Export Matrix</a>
             </div>
           </div>
@@ -134,74 +172,108 @@
             <h3>Pricing Engine</h3>
             <div class="field-group">
               <label>Rule Type</label>
-              <select>
-                <option>Add % Markup</option>
+              <select v-model="pricingRuleType">
+                <option value="markup">Add % Markup</option>
+                <option value="discount">Apply Discount</option>
+                <option value="fixed">Set Fixed Price</option>
               </select>
             </div>
             <div class="field-group">
               <label>Value</label>
-              <input type="text" value="25" />
+              <input v-model.number="pricingValue" type="number" />
+            </div>
+            <div class="field-group">
+              <label>Target Product</label>
+              <select v-model="pricingTarget">
+                <option value="all">All Products</option>
+                <option v-for="item in inventoryItems" :key="item.name" :value="item.name">{{ item.name }}</option>
+              </select>
             </div>
             <div class="field-group switch-row">
               <label>Auto-Apply Logic</label>
               <div class="switch-on">Apply only when stock &lt; 20%</div>
             </div>
-            <button class="primary-action amber">Update Market Prices</button>
+            <button class="primary-action amber" @click="applyPricing">Update Market Prices</button>
           </div>
 
           <div class="panel-card">
             <h3>Inventory Controller</h3>
             <div class="notice-box">
-              <strong>KRH New Year Focus</strong>
-              <p>Apr 13-16 is designated as a high-demand peak period.</p>
+              <strong>Summer Scheduling</strong>
+              <p>June–August is the early summer booking window. Adjust inventory accordingly.</p>
             </div>
             <div class="two-col">
               <div class="field-group">
                 <label>Start Date</label>
-                <input type="text" value="04/13/2026" />
+                <input v-model="controllerStartDate" type="text" placeholder="MM/DD/YYYY" />
               </div>
               <div class="field-group">
                 <label>End Date</label>
-                <input type="text" value="04/16/2026" />
+                <input v-model="controllerEndDate" type="text" placeholder="MM/DD/YYYY" />
               </div>
             </div>
             <div class="field-group">
               <label>Max Pax / Daily Limit</label>
-              <input type="text" value="15" />
+              <input v-model.number="controllerMaxPax" type="number" />
               <small>Value auto-triggers at 100% occupancy.</small>
             </div>
-            <button class="secondary-action">Batch Process Dates</button>
+            <button class="secondary-action" @click="batchProcess">Batch Process Dates</button>
           </div>
 
           <div class="panel-card small">
             <h3>Recent Changes</h3>
             <ul class="changes-list">
-              <li><span class="bullet teal"></span> Price Override Applied</li>
-              <li><span class="bullet amber"></span> Auto-Close Triggered</li>
+              <li v-for="(change, i) in recentChanges" :key="i">
+                <span class="bullet" :class="change.type"></span>
+                {{ change.text }}
+              </li>
+              <li v-if="recentChanges.length === 0" style="color: #7b8a91; font-size: 12px;">No changes yet</li>
             </ul>
           </div>
         </aside>
       </section>
 
-      <button class="floating-save">💾</button>
+      <button v-if="hasChanges" class="floating-save" @click="saveAll">💾</button>
 
-      <div v-if="selectedItem" class="detail-drawer" @click.self="selectedItem = null">
+      <div v-if="selectedItem" class="detail-drawer" @click.self="cancelDrawer">
         <div class="drawer-card">
           <div class="drawer-header">
             <div>
               <p>Selected Item</p>
               <h3>{{ selectedItem.name }}</h3>
             </div>
-            <button class="icon-btn" @click="selectedItem = null">✕</button>
+            <button class="icon-btn" @click="cancelDrawer">✕</button>
           </div>
           <img :src="selectedItem.image" :alt="selectedItem.name" class="drawer-image" />
           <p class="drawer-subtitle">{{ selectedItem.subtitle }}</p>
           <div class="drawer-grid">
-            <div v-for="(day, index) in selectedItem.days" :key="index" class="drawer-day">
-              <strong>{{ day.label }}</strong>
-              <span>{{ day.price }}</span>
-              <small>{{ day.status }}</small>
+            <div v-for="(_, index) in drawerDays" :key="index" class="drawer-day">
+              <div class="drawer-field">
+                <label>Date</label>
+                <input v-model="drawerDays[index].date" type="date" class="drawer-date-input" />
+              </div>
+              <div class="drawer-field">
+                <label>Slots</label>
+                <input v-model.number="drawerDays[index].slots" type="number" min="0" />
+              </div>
+              <div class="drawer-field">
+                <label>Price ($)</label>
+                <input v-model.number="drawerDays[index].price" type="number" min="0" step="0.01" />
+              </div>
+              <div class="drawer-field">
+                <label>Status</label>
+                <select v-model="drawerDays[index].status">
+                  <option value="available">Available</option>
+                  <option value="low">Low Stock</option>
+                  <option value="peak">Peak</option>
+                  <option value="closed">Closed</option>
+                </select>
+              </div>
             </div>
+          </div>
+          <div class="drawer-footer">
+            <button class="drawer-save-btn" @click="saveDrawer">Save Changes</button>
+            <button class="drawer-cancel-btn" @click="cancelDrawer">Cancel</button>
           </div>
         </div>
       </div>
@@ -210,15 +282,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref, onMounted } from "vue";
+import {
+  getProviderInventory,
+  updateInventorySlot,
+} from "../../services/api";
+
+const props = withDefaults(
+  defineProps<{
+    searchQuery?: string;
+  }>(),
+  {
+    searchQuery: "",
+  },
+);
 
 type InventoryDay = {
-  label: string;
-  price: string;
+  id: string | null;
+  date: string;
+  slots: number;
+  price: number;
   status: string;
 };
 
 type InventoryItem = {
+  id: string | null;
   name: string;
   subtitle: string;
   image: string;
@@ -226,45 +314,357 @@ type InventoryItem = {
 };
 
 const selectedItem = ref<InventoryItem | null>(null);
+const selectedItemIndex = ref<number | null>(null);
+const drawerDays = ref<InventoryDay[]>([]);
 
-const inventoryItems: InventoryItem[] = [
-  {
-    name: "Angkor Wat Sunrise Premium",
-    subtitle: "Daily Departures (4am)",
-    image: "https://images.unsplash.com/photo-1506461883276-594a12b11cf3?auto=format&fit=crop&w=120&q=80",
-    days: [
-      { label: "19 left", price: "$85", status: "available" },
-      { label: "12 left", price: "$85", status: "available" },
-      { label: "19 left", price: "$85", status: "available" },
-      { label: "8 left", price: "$120", status: "peak" },
-      { label: "2 left", price: "$120", status: "low" },
-    ],
-  },
-  {
-    name: "Floating Village Photography",
-    subtitle: "Afternoons Boat Tour",
-    image: "https://images.unsplash.com/photo-1528184039939-bd03972bd974?auto=format&fit=crop&w=120&q=80",
-    days: [
-      { label: "14 left", price: "$45", status: "available" },
-      { label: "27 left", price: "$45", status: "available" },
-      { label: "10 left", price: "$45", status: "available" },
-      { label: "29 left", price: "$45", status: "available" },
-      { label: "17 left", price: "$45", status: "available" },
-    ],
-  },
-  {
-    name: "Khmer Cooking Masterclass",
-    subtitle: "Limited to 12 Pax",
-    image: "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=120&q=80",
-    days: [
-      { label: "7 left", price: "$65", status: "available" },
-      { label: "8 left", price: "$65", status: "available" },
-      { label: "CLOSED", price: "$65", status: "closed" },
-      { label: "5 left", price: "$65", status: "available" },
-      { label: "5 left", price: "$65", status: "available" },
-    ],
-  },
-];
+// Editing state
+const editingItemIdx = ref<number | null>(null);
+const editingDayIdx = ref<number | null>(null);
+const editDate = ref("");
+const editSlots = ref(0);
+const editPrice = ref(0);
+
+// Panel state
+const pricingRuleType = ref("markup");
+const pricingValue = ref(25);
+const pricingTarget = ref("all");
+const controllerStartDate = ref("04/13/2026");
+const controllerEndDate = ref("04/16/2026");
+const controllerMaxPax = ref(15);
+const recentChanges = ref<{ type: string; text: string }[]>([]);
+const hasChanges = ref(false);
+
+// Date scheduling
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+const monday = new Date(today);
+const dow = monday.getDay();
+monday.setDate(monday.getDate() + (dow === 0 ? -6 : 1 - dow));
+
+const currentStartDate = ref<Date>(monday);
+const scheduleDate = ref(formatDateInput(monday));
+
+function formatDateInput(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function getMonday(date: Date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
+  return d;
+}
+
+function getInitialDates(): string[] {
+  const result: string[] = [];
+  for (let i = 0; i < 5; i++) {
+    const d = new Date(monday);
+    d.setDate(d.getDate() + i);
+    result.push(formatDateInput(d));
+  }
+  return result;
+}
+
+const initialDates = getInitialDates();
+
+function goToDate() {
+  if (!scheduleDate.value) return;
+  const d = new Date(scheduleDate.value + "T00:00:00");
+  if (isNaN(d.getTime())) return;
+  currentStartDate.value = getMonday(d);
+}
+
+function shiftWeek(dir: number) {
+  const d = new Date(currentStartDate.value);
+  d.setDate(d.getDate() + dir * 7);
+  currentStartDate.value = d;
+  scheduleDate.value = formatDateInput(d);
+}
+
+const currentDates = computed(() => {
+  const result: Date[] = [];
+  for (let i = 0; i < 5; i++) {
+    const d = new Date(currentStartDate.value);
+    d.setDate(d.getDate() + i);
+    result.push(d);
+  }
+  return result;
+});
+
+const currentMonthLabel = computed(() => {
+  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const d = currentDates.value[2] || new Date();
+  return `${months[d.getMonth()]} ${d.getFullYear()}`;
+});
+
+function formatShortDate(dateStr: string) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr + "T00:00:00");
+  if (isNaN(d.getTime())) return dateStr;
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `${months[d.getMonth()]} ${d.getDate()}`;
+}
+
+function dayLabel(day: InventoryDay) {
+  if (day.status === "closed") return "CLOSED";
+  return `${day.slots} left`;
+}
+
+function dayPrice(day: InventoryDay) {
+  return `$${day.price}`;
+}
+
+const inventoryItems = ref<InventoryItem[]>([]);
+
+onMounted(async () => {
+  try {
+    const res = await getProviderInventory();
+    const data = Array.isArray(res.data) ? res.data : res.data?.data || [];
+    inventoryItems.value = data.map((svc: any) => ({
+      id: svc.id,
+      name: svc.title || "Untitled",
+      subtitle: svc.description || "",
+      image: svc.coverImage || "https://via.placeholder.com/120",
+      days: (svc.slots || []).map((slot: any) => ({
+        id: slot.id,
+        date: typeof slot.date === "string" ? slot.date.slice(0, 10) : "",
+        slots: slot.availableSlots ?? 0,
+        price: Number(slot.price) || 0,
+        status: slot.status === "low_stock" ? "low" : slot.status === "peak_demand" ? "peak" : (slot.status || "available"),
+      })),
+    }));
+  } catch {
+    loadMockData();
+  }
+});
+
+function loadMockData() {
+  inventoryItems.value = [
+    {
+      id: null,
+      name: "Angkor Wat Sunrise Premium",
+      subtitle: "Daily Departures (4am)",
+      image: "https://images.unsplash.com/photo-1506461883276-594a12b11cf3?auto=format&fit=crop&w=120&q=80",
+      days: initialDates.map((date, i) => ({
+        id: null,
+        date,
+        slots: [19, 12, 19, 8, 2][i],
+        price: [85, 85, 85, 120, 120][i],
+        status: ["available", "available", "available", "peak", "low"][i],
+      })),
+    },
+    {
+      id: null,
+      name: "Floating Village Photography",
+      subtitle: "Afternoons Boat Tour",
+      image: "https://images.unsplash.com/photo-1528184039939-bd03972bd974?auto=format&fit=crop&w=120&q=80",
+      days: initialDates.map((date, i) => ({
+        id: null,
+        date,
+        slots: [14, 27, 10, 29, 17][i],
+        price: [45, 45, 45, 45, 45][i],
+        status: ["available", "available", "available", "available", "available"][i],
+      })),
+    },
+    {
+      id: null,
+      name: "Khmer Cooking Masterclass",
+      subtitle: "Limited to 12 Pax",
+      image: "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=120&q=80",
+      days: initialDates.map((date, i) => ({
+        id: null,
+        date,
+        slots: [7, 8, 0, 5, 5][i],
+        price: [65, 65, 65, 65, 65][i],
+        status: ["available", "available", "closed", "available", "available"][i],
+      })),
+    },
+  ];
+}
+
+// Computed metrics
+const avgOccupancy = computed(() => {
+  const total = inventoryItems.value.reduce((sum, item) => sum + item.days.length, 0);
+  const filled = inventoryItems.value.reduce((sum, item) => sum + item.days.filter((d) => d.slots > 0).length, 0);
+  return total ? Math.round((filled / total) * 100) : 0;
+});
+
+const revpar = computed(() => {
+  const prices = inventoryItems.value.flatMap((item) => item.days.map((d) => d.price));
+  const avg = prices.length ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
+  return avg.toFixed(2);
+});
+
+const lowStockCount = computed(() => {
+  return inventoryItems.value.reduce((sum, item) => sum + item.days.filter((d) => d.status === "low" || (d.slots > 0 && d.slots <= 3)).length, 0);
+});
+
+const lowStockAlerts = computed(() => {
+  const urgent = inventoryItems.value.filter((item) => item.days.some((d) => d.status === "low" || (d.slots > 0 && d.slots <= 3)));
+  if (urgent.length === 0) return "No alerts";
+  return `${urgent.length} product${urgent.length > 1 ? "s" : ""} need${urgent.length === 1 ? "s" : ""} attention`;
+});
+
+function startEdit(itemIdx: number, dayIdx: number) {
+  const day = inventoryItems.value[itemIdx].days[dayIdx];
+  editingItemIdx.value = itemIdx;
+  editingDayIdx.value = dayIdx;
+  editDate.value = day.date;
+  editSlots.value = day.slots;
+  editPrice.value = day.price;
+}
+
+function confirmEdit(itemIdx: number, dayIdx: number) {
+  if (editingItemIdx.value !== itemIdx || editingDayIdx.value !== dayIdx) return;
+  const day = inventoryItems.value[itemIdx].days[dayIdx];
+  day.date = editDate.value;
+  day.slots = editSlots.value;
+  day.price = editPrice.value;
+  if (day.slots <= 0 && day.status !== "closed") {
+    day.status = "low";
+  }
+  if (day.slots === 0) {
+    day.status = "closed";
+  }
+  hasChanges.value = true;
+  cancelEdit();
+  // Sync to backend
+  if (day.id) {
+    updateInventorySlot(day.id, {
+      date: editDate.value,
+      availableSlots: editSlots.value,
+      price: editPrice.value,
+      status: day.status,
+    }).catch(() => {});
+  }
+}
+
+function cancelEdit() {
+  editingItemIdx.value = null;
+  editingDayIdx.value = null;
+}
+
+function openDrawer(itemIdx: number) {
+  const item = inventoryItems.value[itemIdx];
+  if (!item) return;
+  selectedItemIndex.value = itemIdx;
+  drawerDays.value = JSON.parse(JSON.stringify(item.days));
+  selectedItem.value = item;
+}
+
+function saveDrawer() {
+  if (selectedItemIndex.value === null || !selectedItem.value) return;
+  const oldDays = inventoryItems.value[selectedItemIndex.value].days;
+  const newDays = JSON.parse(JSON.stringify(drawerDays.value));
+  inventoryItems.value[selectedItemIndex.value].days = newDays;
+  hasChanges.value = true;
+  selectedItem.value = null;
+  selectedItemIndex.value = null;
+  // Sync each changed slot to backend
+  for (let i = 0; i < newDays.length; i++) {
+    const nd = newDays[i];
+    const od = oldDays[i];
+    if (nd.id && (
+      nd.date !== od.date ||
+      nd.slots !== od.slots ||
+      nd.price !== od.price ||
+      nd.status !== od.status
+    )) {
+      updateInventorySlot(nd.id, {
+        date: nd.date,
+        availableSlots: nd.slots,
+        price: nd.price,
+        status: nd.status,
+      }).catch(() => {});
+    }
+  }
+}
+
+function cancelDrawer() {
+  selectedItem.value = null;
+  selectedItemIndex.value = null;
+  drawerDays.value = [];
+}
+
+function saveAll() {
+  recentChanges.value.unshift({
+    type: "teal",
+    text: `Inventory saved — ${new Date().toLocaleTimeString()}`,
+  });
+  hasChanges.value = false;
+}
+
+function applyPricing() {
+  const value = pricingValue.value;
+  const targetItems = pricingTarget.value === "all"
+    ? inventoryItems.value
+    : inventoryItems.value.filter((item) => item.name === pricingTarget.value);
+
+  for (const item of targetItems) {
+    for (const day of item.days) {
+      let newPrice = day.price;
+      if (pricingRuleType.value === "markup") {
+        newPrice = Math.round(day.price * (1 + value / 100) * 100) / 100;
+      } else if (pricingRuleType.value === "discount") {
+        newPrice = Math.round(day.price * (1 - value / 100) * 100) / 100;
+      } else if (pricingRuleType.value === "fixed") {
+        newPrice = value;
+      }
+      day.price = newPrice;
+      // Sync to backend
+      if (day.id) {
+        updateInventorySlot(day.id, { price: newPrice }).catch(() => {});
+      }
+    }
+  }
+
+  hasChanges.value = true;
+  recentChanges.value.unshift({
+    type: "amber",
+    text: `Pricing ${pricingRuleType.value} of ${value}% applied to ${pricingTarget.value === "all" ? "all products" : pricingTarget.value}`,
+  });
+}
+
+function batchProcess() {
+  const maxPax = controllerMaxPax.value;
+  for (const item of inventoryItems.value) {
+    for (const day of item.days) {
+      if (day.slots > maxPax) {
+        day.slots = maxPax;
+        if (day.id) {
+          updateInventorySlot(day.id, { availableSlots: maxPax }).catch(() => {});
+        }
+      }
+    }
+  }
+  hasChanges.value = true;
+  recentChanges.value.unshift({
+    type: "teal",
+    text: `Batch processed: max ${maxPax} pax limit applied`,
+  });
+}
+
+const filteredInventoryItems = computed(() => {
+  if (!props.searchQuery.trim()) {
+    return inventoryItems.value;
+  }
+
+  const query = props.searchQuery.toLowerCase();
+  return inventoryItems.value.filter(
+    (item) =>
+      item.name.toLowerCase().includes(query) ||
+      item.subtitle.toLowerCase().includes(query) ||
+      item.days.some(
+        (day) =>
+          String(day.slots).includes(query) ||
+          String(day.price).includes(query) ||
+          day.status.toLowerCase().includes(query),
+      ),
+  );
+});
 </script>
 
 <style scoped>
@@ -378,9 +778,9 @@ const inventoryItems: InventoryItem[] = [
 }
 
 .topbar {
-  display: grid;
-  grid-template-columns: auto auto 1fr;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 16px;
   margin-bottom: 12px;
 }
@@ -391,49 +791,38 @@ const inventoryItems: InventoryItem[] = [
   color: #26444b;
 }
 
-.sync-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: #f1f3f2;
-  color: #6a757d;
-  font-size: 12px;
-}
-
-.topbar-user {
-  justify-self: end;
+.topbar-actions {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.bell {
-  font-size: 16px;
-  color: #64727b;
-}
-
-.user-meta {
-  display: grid;
-  line-height: 1.1;
-  text-align: right;
-}
-
-.user-meta strong {
-  font-size: 13px;
-}
-
-.user-meta span {
+.unsaved-badge {
   font-size: 11px;
-  color: #7f8a92;
+  color: #c33a31;
+  font-weight: 600;
 }
 
-.avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  object-fit: cover;
+.save-btn {
+  border: 0;
+  border-radius: 6px;
+  padding: 6px 14px;
+  background: #0f7c7f;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sync-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f1f3f2;
+  color: #6a757d;
+  font-size: 11px;
 }
 
 .metrics-row {
@@ -524,7 +913,7 @@ const inventoryItems: InventoryItem[] = [
 
 .calendar-header {
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: auto 1fr auto auto auto;
   align-items: center;
   gap: 10px;
   padding: 14px 16px 10px;
@@ -561,6 +950,27 @@ const inventoryItems: InventoryItem[] = [
 .view-toggle button.active {
   background: #0f7c7f;
   color: #fff;
+}
+
+.date-scheduler {
+  display: flex;
+  align-items: center;
+}
+
+.date-picker-input {
+  border: 1px solid #e6eae7;
+  background: #f9fbfa;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: #20313a;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.date-picker-input:focus {
+  outline: none;
+  border-color: #0f7c7f;
 }
 
 .inventory-table {
@@ -601,6 +1011,7 @@ const inventoryItems: InventoryItem[] = [
   display: flex;
   align-items: center;
   gap: 12px;
+  cursor: pointer;
 }
 
 .item-info img {
@@ -623,12 +1034,30 @@ const inventoryItems: InventoryItem[] = [
 }
 
 .day-cell {
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
   min-height: 56px;
   border-radius: 8px;
   background: #fbfbfa;
   color: #51656f;
+  cursor: pointer;
+  transition: box-shadow 0.15s;
+  padding: 4px;
+  position: relative;
+}
+
+.day-cell:hover {
+  box-shadow: inset 0 0 0 2px #0f7c7f;
+}
+
+.day-date-label {
+  font-size: 10px;
+  color: #5d6e76;
+  font-weight: 600;
+  margin-bottom: 1px;
 }
 
 .day-cell strong {
@@ -660,6 +1089,43 @@ const inventoryItems: InventoryItem[] = [
 
 .day-cell.closed {
   background: #f0f2f3;
+}
+
+.cell-input {
+  width: 100%;
+  border: 1px solid #0f7c7f;
+  background: white;
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 11px;
+  text-align: center;
+  outline: none;
+}
+
+.cell-actions {
+  display: flex;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.cell-save,
+.cell-cancel {
+  border: 0;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 10px;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.cell-save {
+  background: #0f7c7f;
+  color: white;
+}
+
+.cell-cancel {
+  background: #e8ebea;
+  color: #4f666f;
 }
 
 .legend-row {
@@ -849,7 +1315,10 @@ const inventoryItems: InventoryItem[] = [
   border-radius: 12px;
   background: #0f7c7f;
   color: #fff;
+  font-size: 18px;
   box-shadow: 0 14px 28px rgba(15, 124, 127, 0.3);
+  cursor: pointer;
+  z-index: 20;
 }
 
 .detail-drawer {
@@ -912,11 +1381,36 @@ const inventoryItems: InventoryItem[] = [
   border-radius: 10px;
   background: #f8faf9;
   display: grid;
-  gap: 2px;
+  gap: 6px;
 }
 
-.drawer-day strong {
+.drawer-day > strong {
   font-size: 13px;
+  margin-bottom: 2px;
+}
+
+.drawer-field {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.drawer-field label {
+  font-size: 11px;
+  color: #7b8a91;
+  font-weight: 600;
+}
+
+.drawer-field input,
+.drawer-field select {
+  border: 1px solid #e6eae7;
+  background: white;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: #20313a;
+  width: 100%;
 }
 
 .drawer-day span {
@@ -926,6 +1420,43 @@ const inventoryItems: InventoryItem[] = [
 
 .drawer-day small {
   color: #76858d;
+}
+
+.drawer-footer {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #eef1f0;
+}
+
+.drawer-save-btn,
+.drawer-cancel-btn {
+  flex: 1;
+  border: 0;
+  border-radius: 8px;
+  padding: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.drawer-save-btn {
+  background: #0f7c7f;
+  color: white;
+}
+
+.drawer-cancel-btn {
+  background: #f1f3f2;
+  color: #55656d;
+}
+
+.drawer-save-btn:hover {
+  background: #0d6b6e;
+}
+
+.drawer-cancel-btn:hover {
+  background: #e5e8e7;
 }
 
 @media (max-width: 1220px) {
@@ -942,10 +1473,6 @@ const inventoryItems: InventoryItem[] = [
   .metrics-row,
   .two-col {
     grid-template-columns: 1fr;
-  }
-
-  .topbar-user {
-    justify-self: start;
   }
 
   .legend-row {

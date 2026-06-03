@@ -7,6 +7,10 @@ import { join } from 'path';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
+  // Increase body parser limits
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
   // Enable global validation
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,

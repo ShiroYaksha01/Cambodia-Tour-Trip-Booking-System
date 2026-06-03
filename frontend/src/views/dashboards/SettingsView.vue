@@ -168,7 +168,7 @@
       <div class="footer-left">
         <button class="btn-text">➕ New Booking</button>
         <button class="btn-text">? Support</button>
-        <button class="btn-text">🚪 Logout</button>
+        <button @click="handleLogout" class="btn-text">🚪 Logout</button>
       </div>
       <div class="footer-right">
         <p class="last-updated">Last updated: Oct 24, 2023 at 09:15 AM</p>
@@ -181,6 +181,11 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
+import { clearAuthData } from "../../utils/auth";
+
+defineProps<{
+  searchQuery?: string;
+}>();
 
 const companyName = ref("Angkor Treasures");
 const biography = ref("Curating authentic heritage experiences since 2015...");
@@ -198,6 +203,13 @@ const logoPreview = ref("");
 const logoInput = ref<HTMLInputElement | null>(null);
 
 // header/profile info provided by ProviderHeader in shell; no local computed needed
+
+function handleLogout() {
+  if (confirm("Are you sure you want to log out?")) {
+    clearAuthData();
+    window.location.href = "/customer/homepage";
+  }
+}
 
 function triggerLogoUpload() {
   logoInput.value?.click();

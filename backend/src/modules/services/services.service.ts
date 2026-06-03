@@ -33,7 +33,11 @@ export class ServicesService {
 
   async findAll(filter: FilterServicesDto) {
     const query = this.serviceRepository.createQueryBuilder('service')
-      .leftJoinAndSelect('service.provider', 'provider');
+      .leftJoinAndSelect('service.provider', 'provider')
+      .leftJoinAndSelect('service.tourPackage', 'tourPackage')
+      .leftJoinAndSelect('service.accommodation', 'accommodation')
+      .leftJoinAndSelect('service.transportation', 'transportation')
+      .leftJoinAndSelect('service.images', 'images');
 
     if (filter.serviceType) {
       query.andWhere('service.serviceType = :serviceType', {
@@ -57,12 +61,23 @@ export class ServicesService {
       query.andWhere('service.isActive = :isActive', {
         isActive: filter.isActive,
       });
+    } else {
+      query.andWhere('service.isActive = :isActive', {
+        isActive: true,
+      });
     }
 
     if (filter.providerId) {
       query.andWhere('service.providerId = :providerId', {
         providerId: filter.providerId,
       });
+    }
+
+    if (filter.destination) {
+      query.andWhere(
+        '(service.location ILIKE :destination OR tourPackage.destination ILIKE :destination OR transportation.destination ILIKE :destination)',
+        { destination: `%${filter.destination}%` },
+      );
     }
 
     return query.getMany();
@@ -72,20 +87,27 @@ export class ServicesService {
     const provider = await this.providerRepository.findOne({ where: { userId } });
     if (!provider) throw new ForbiddenException('Provider profile not found');
 
-    return this.findAll({ providerId: provider.id });
+    return this.serviceRepository.find({
+      where: { providerId: provider.id },
+      relations: ['provider', 'tourPackage', 'accommodation', 'transportation', 'images'],
+    });
   }
 
   async findOne(id: string) {
-    const service = await this.serviceRepository.findOne({ 
+    const service = await this.serviceRepository.findOne({
       where: { id },
-      relations: [
-        'provider', 
-        'inventory', 
-        'tourPackage', 
-        'accommodation', 
-        'transportation', 
-        'images'
-      ]
+      relations: {
+        provider: true,
+        inventory: true,
+        tourPackage: {
+          itineraryDays: {
+            activities: true,
+          },
+        },
+        accommodation: true,
+        transportation: true,
+        images: true,
+      },
     });
     if (!service) throw new NotFoundException('Service not found');
     return service;

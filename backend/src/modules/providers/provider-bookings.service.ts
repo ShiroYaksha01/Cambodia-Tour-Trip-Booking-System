@@ -49,6 +49,8 @@ export class ProviderBookingsService {
     return bookings.map((booking) => ({
       id: booking.id,
       service_name: booking.service?.title ?? null,
+      reference_code: booking.referenceCode,
+      booking_status: booking.bookingStatus,
       user: this.toBasicUser(booking.user),
       quantity: booking.quantity,
       date: booking.bookingDate,

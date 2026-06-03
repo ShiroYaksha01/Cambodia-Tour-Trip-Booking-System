@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, onBeforeUnmount } from 'vue'
+import { resolveImageUrl } from '../../utils/api'
 
 const props = defineProps<{
   show: boolean
@@ -49,6 +50,8 @@ const defaultForm = () => ({
 
 const form = ref<any>(defaultForm())
 let currentObjectUrl: string | null = null
+const selectedFile = ref<File | null>(null)
+const isUploading = ref(false)
 
 watch(() => props.service, (newVal) => {
   if (newVal) {
@@ -66,19 +69,48 @@ watch(() => props.service, (newVal) => {
       arrivalTime: newVal.transportation?.arrivalTime ? new Date(newVal.transportation.arrivalTime).toISOString().slice(0, 16) : '',
       totalCapacity: newVal.inventory?.totalCapacity || 10,
     }
+    selectedFile.value = null
   } else {
     form.value = defaultForm()
+    selectedFile.value = null
   }
 }, { immediate: true })
 
-function handleSave() {
-  emit('save', { ...form.value })
+import { uploadImage } from '../../services/api'
+
+async function handleSave() {
+  try {
+    isUploading.value = true
+    
+    // If we have a new file selected, upload it first
+    if (selectedFile.value) {
+      const res = await uploadImage(selectedFile.value)
+      if (res && res.url) {
+        form.value.image = res.url
+      }
+    }
+    
+    emit('save', { ...form.value })
+  } catch (error) {
+    console.error('Failed to upload image:', error)
+    alert('Failed to upload image. Please try again.')
+  } finally {
+    isUploading.value = false
+  }
 }
 
 const handleFileChange = (e: Event) => {
   const input = e.target as HTMLInputElement | null
   const f = input?.files?.[0]
   if (f) {
+    // Check file size (10MB limit)
+    if (f.size > 10 * 1024 * 1024) {
+      alert('File is too large. Please select an image smaller than 10MB.')
+      if (input) input.value = ''
+      return
+    }
+
+    selectedFile.value = f
     // revoke previous object URL if we created one
     if (currentObjectUrl) {
       try { URL.revokeObjectURL(currentObjectUrl) } catch (e) { /* ignore */ }
@@ -128,7 +160,7 @@ onBeforeUnmount(() => {
             <label class="upload-drop">
               <input class="upload-input" type="file" accept="image/*" @change="handleFileChange" />
               <div v-if="form.image" class="upload-preview-wrap">
-                <img :src="form.image" alt="cover preview" class="upload-preview"/>
+                <img :src="resolveImageUrl(form.image)" alt="cover preview" class="upload-preview"/>
                 <div class="upload-overlay">Change cover image</div>
               </div>
               <div v-else class="upload-placeholder">
@@ -350,8 +382,10 @@ onBeforeUnmount(() => {
           <footer class="modal-footer">
             <a class="duplicate">Duplicate existing ↗</a>
             <div class="footer-actions">
-              <button type="button" class="cancel-btn" @click="emit('close')">Cancel</button>
-              <button type="submit" class="create-btn">Create service</button>
+              <button type="button" class="cancel-btn" @click="emit('close')" :disabled="isUploading">Cancel</button>
+              <button type="submit" class="create-btn" :disabled="isUploading">
+                {{ isUploading ? 'Uploading...' : (service ? 'Update service' : 'Create service') }}
+              </button>
             </div>
           </footer>
         </form>
