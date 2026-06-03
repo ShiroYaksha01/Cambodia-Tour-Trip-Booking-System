@@ -14,8 +14,16 @@
 
     <div class="search-panel">
       <form @submit.prevent="handleSearch" class="search-form">
+        <!-- ALL TAB -->
+        <template v-if="activeTab === 'all'">
+          <label class="all-search-label">
+            <span>Search Anything</span>
+            <input type="text" v-model="tourForm.title" placeholder="Find tours, hotels, or transfers..." />
+          </label>
+        </template>
+
         <!-- TOUR TAB -->
-        <template v-if="activeTab === 'tour'">
+        <template v-else-if="activeTab === 'tour'">
           <label>
             <span>Location</span>
             <select v-model="tourForm.location">
@@ -99,9 +107,10 @@ export default defineComponent({
   name: 'CustomerHomePageSearch',
   emits: ['search'],
   setup(_, { emit }) {
-    const activeTab = ref('tour')
+    const activeTab = ref('all')
 
     const tabs = [
+      { id: 'all', label: 'All', icon: '🔍' },
       { id: 'tour', label: 'Tour', icon: '🗺️' },
       { id: 'accommodation', label: 'Accommodation', icon: '🏨' },
       { id: 'transportation', label: 'Transportation', icon: '🚐' },
@@ -166,6 +175,7 @@ export default defineComponent({
     function handleSearch() {
       const filters = {
         type: activeTab.value,
+        ...(activeTab.value === 'all' ? { title: tourForm.title } : {}),
         ...(activeTab.value === 'tour' ? { ...tourForm } : {}),
         ...(activeTab.value === 'accommodation' ? { ...accommodationForm } : {}),
         ...(activeTab.value === 'transportation' ? { ...transportationForm } : {}),
@@ -240,6 +250,10 @@ export default defineComponent({
   min-width: 150px;
   display: grid;
   gap: 6px;
+}
+
+.all-search-label {
+  flex: 3 !important;
 }
 
 .search-form span {

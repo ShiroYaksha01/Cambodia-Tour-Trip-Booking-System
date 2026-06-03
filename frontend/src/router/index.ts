@@ -164,7 +164,7 @@ const routes: RouteRecordRaw[] = [
         path: "settings",
         name: "provider-settings",
         component: () => import("../views/dashboards/SettingsView.vue"),
-        meta: { title: "Brand & Public Profile" },
+        meta: { title: "Profile Settings" },
       },
     ],
   },
@@ -224,6 +224,30 @@ const routes: RouteRecordRaw[] = [
     meta: {
       requiresAuth: true,
       roles: ["customer"],
+    },
+  },
+  {
+    path: "/customer/tour/:id",
+    name: "customer-tour-detail",
+    component: () => import("../views/customer/ServiceDetailTour.vue"),
+    meta: {
+      requiresAuth: false,
+    },
+  },
+  {
+    path: "/customer/hotel/:id",
+    name: "customer-hotel-detail",
+    component: () => import("../views/customer/ServiceDetailHotel.vue"),
+    meta: {
+      requiresAuth: false,
+    },
+  },
+  {
+    path: "/customer/transport/:id",
+    name: "customer-transport-detail",
+    component: () => import("../views/customer/ServiceDetailTransport.vue"),
+    meta: {
+      requiresAuth: false,
     },
   },
   {
@@ -292,6 +316,13 @@ const routes: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition;
+    } else {
+      return { top: 0 };
+    }
+  },
 });
 
 router.beforeEach((to) => {

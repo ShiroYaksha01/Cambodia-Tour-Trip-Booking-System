@@ -111,6 +111,125 @@ export const createService = (data: any) => api.post('/services', data);
 export const updateService = (id: string, data: any) => api.patch(`/services/${id}`, data);
 export const deleteService = (id: string) => api.delete(`/services/${id}`);
 
+/**
+ * Get all services + inventory slots for the authenticated provider
+ * GET /inventory/provider
+ */
+export const getProviderInventory = () =>
+  api.get('/inventory/provider');
+
+/**
+ * Batch apply pricing across services (calls per-service endpoint internally)
+ * PUT /inventory/:serviceId/pricing
+ */
+export const applyPricingToService = (
+  serviceId: string,
+  startDate: string,
+  endDate: string,
+  markupPercentage: number,
+) =>
+  api.put(`/inventory/${serviceId}/pricing`, {
+    startDate,
+    endDate,
+    markupPercentage,
+  });
+
+// ── Inventory API ──────────────────────────────────────────────
+
+/**
+ * Create a single inventory slot for a service
+ * POST /inventory/:serviceId/slot
+ */
+export const createInventorySlot = (serviceId: string, slotData: any) =>
+  api.post(`/inventory/${serviceId}/slot`, slotData);
+
+/**
+ * Create multiple inventory slots for a date range
+ * POST /inventory/:serviceId/batch
+ */
+export const createBatchInventorySlots = (serviceId: string, batchData: any) =>
+  api.post(`/inventory/${serviceId}/batch`, batchData);
+
+/**
+ * Get inventory matrix for a service in a date range
+ * GET /inventory/:serviceId?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
+ */
+export const getInventoryMatrix = (
+  serviceId: string,
+  startDate: string,
+  endDate: string,
+) =>
+  api.get(`/inventory/${serviceId}`, {
+    params: { startDate, endDate },
+  });
+
+/**
+ * Get a single inventory slot
+ * GET /inventory/slot/:slotId
+ */
+export const getInventorySlot = (slotId: string) =>
+  api.get(`/inventory/slot/${slotId}`);
+
+/**
+ * Update an inventory slot
+ * PUT /inventory/slot/:slotId
+ */
+export const updateInventorySlot = (slotId: string, updateData: any) =>
+  api.put(`/inventory/slot/${slotId}`, updateData);
+
+/**
+ * Delete an inventory slot
+ * DELETE /inventory/slot/:slotId
+ */
+export const deleteInventorySlot = (slotId: string) =>
+  api.delete(`/inventory/slot/${slotId}`);
+
+/**
+ * Book slots (increment booked count when booking is confirmed)
+ * POST /inventory/slot/:slotId/book
+ */
+export const bookInventorySlots = (slotId: string, quantity: number) =>
+  api.post(`/inventory/slot/${slotId}/book`, { quantity });
+
+/**
+ * Cancel booking (decrement booked count when booking is cancelled)
+ * POST /inventory/slot/:slotId/cancel
+ */
+export const cancelInventoryBooking = (slotId: string, quantity: number) =>
+  api.post(`/inventory/slot/${slotId}/cancel`, { quantity });
+
+/**
+ * Apply dynamic pricing to a date range
+ * PUT /inventory/:serviceId/pricing
+ */
+export const applyDynamicPricing = (
+  serviceId: string,
+  startDate: string,
+  endDate: string,
+  markupPercentage: number,
+) =>
+  api.put(`/inventory/${serviceId}/pricing`, {
+    startDate,
+    endDate,
+    markupPercentage,
+  });
+
+/**
+ * Set peak period flags for a date range
+ * PUT /inventory/:serviceId/peak-period
+ */
+export const setPeakPeriod = (
+  serviceId: string,
+  startDate: string,
+  endDate: string,
+  isPeak: boolean,
+) =>
+  api.put(`/inventory/${serviceId}/peak-period`, {
+    startDate,
+    endDate,
+    isPeak,
+  });
+
 function mockProviderBookings() {
   return [
     {

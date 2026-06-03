@@ -184,6 +184,15 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 
+const props = withDefaults(
+  defineProps<{
+    searchQuery?: string;
+  }>(),
+  {
+    searchQuery: "",
+  },
+);
+
 type ServiceRow = {
   id: number;
   name: string;
@@ -223,12 +232,32 @@ const selectedService = ref<ServiceRow | null>(null);
 const isEditingService = ref(false);
 const editingAvailability = ref<Array<{ price: number; slots: number }>>([]);
 const showDatePicker = ref(false);
-const startDate = ref("2026-04-13");
-const endDate = ref("2026-04-16");
+
+// Helper to get current date in YYYY-MM-DD format
+const getCurrentDate = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+// Helper to add days to a date
+const addDays = (dateStr: string, days: number) => {
+  const date = new Date(`${dateStr}T00:00:00`);
+  date.setDate(date.getDate() + days);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const currentDate = getCurrentDate();
+const startDate = ref(currentDate);
+const endDate = ref(addDays(currentDate, 3));
 const draftStartDate = ref(startDate.value);
 const draftEndDate = ref(endDate.value);
 const activeCategory = ref<CategoryKey>("tours");
-const searchQuery = ref("");
 
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat("en-US", {
@@ -242,10 +271,10 @@ const selectedDateRangeSubtitle = computed(() => "Khmer New Year Period");
 
 const filteredServices = computed(() => {
   const services = activeCategoryData.value.services;
-  if (!searchQuery.value.trim()) {
+  if (!props.searchQuery.trim()) {
     return services;
   }
-  const query = searchQuery.value.toLowerCase();
+  const query = props.searchQuery.toLowerCase();
   return services.filter(
     (service) =>
       service.name.toLowerCase().includes(query) ||

@@ -15,3 +15,6 @@ package-lock.json
 # OS specific files
 .DS_Store
 Thumbs.db
+
+# Documentation
+INVENTORY_API_DOCS.md

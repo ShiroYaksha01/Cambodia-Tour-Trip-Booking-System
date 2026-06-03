@@ -182,6 +182,10 @@
 <script setup lang="ts">
 import { ref } from "vue";
 
+defineProps<{
+  searchQuery?: string;
+}>();
+
 const companyName = ref("Angkor Treasures");
 const biography = ref("Curating authentic heritage experiences since 2015...");
 const facebookUrl = ref("fb.com/yourbrand");
