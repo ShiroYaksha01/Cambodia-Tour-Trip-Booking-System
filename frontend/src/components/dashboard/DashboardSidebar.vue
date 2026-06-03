@@ -150,13 +150,13 @@ const navMap: Record<DashboardRole, NavItem[]> = {
     {
       label: "Analytics",
       description: "Business intelligence",
-      href: "#analytics",
+      href: "/admin/analytics",
       icon: "ChartBarSquareIcon",
     },
     {
       label: "Settings",
       description: "Platform controls",
-      href: "#settings",
+      href: "/admin/settings",
       icon: "Cog6ToothIcon",
     },
   ],

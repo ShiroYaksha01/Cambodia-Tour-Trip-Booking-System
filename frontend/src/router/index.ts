@@ -93,6 +93,24 @@ const routes: RouteRecordRaw[] = [
       roles: ["admin"],
     },
   },
+  {
+    path: "/admin/analytics",
+    name: "admin-analytics",
+    component: () => import("../views/admin/AdminAnalyticsView.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["admin"],
+    },
+  },
+  {
+    path: "/admin/settings",
+    name: "admin-settings",
+    component: () => import("../views/admin/AdminSettingsView.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["admin"],
+    },
+  },
 
 
   {
