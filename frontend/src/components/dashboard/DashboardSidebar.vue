@@ -19,9 +19,9 @@
           :to="item.href"
           class="provider-nav__item"
         >
-          <span class="provider-nav__icon" aria-hidden="true">{{
-            item.icon
-          }}</span>
+          <span class="provider-nav__icon" aria-hidden="true">
+            <component :is="item.icon" />
+          </span>
           <span>{{ item.label }}</span>
         </router-link>
       </nav>
@@ -50,7 +50,7 @@
           :key="section.label"
           class="nav-section"
         >
-          <p class="nav-section__label">{{ section.label }}</p>
+          <p v-if="section.label" class="nav-section__label">{{ section.label }}</p>
           <component
             :is="item.href.startsWith('/') ? 'router-link' : 'a'"
             v-for="item in section.items"
@@ -60,9 +60,9 @@
             class="nav-item"
             :class="{ 'nav-item--active': isActiveItem(item) }"
           >
-            <span class="nav-item__icon" aria-hidden="true">{{
-              item.icon
-            }}</span>
+            <span class="nav-item__icon" aria-hidden="true">
+              <component :is="item.icon" />
+            </span>
             <span>
               <strong>{{ item.label }}</strong>
               <small>{{ item.description }}</small>
@@ -91,6 +91,18 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import {
+  BanknotesIcon,
+  BookOpenIcon,
+  BuildingStorefrontIcon,
+  CalendarDaysIcon,
+  ChartBarSquareIcon,
+  Cog6ToothIcon,
+  CubeIcon,
+  EnvelopeIcon,
+  HomeIcon,
+  UserGroupIcon,
+} from "@heroicons/vue/24/outline";
 import LogoutButton from "../LogoutButton.vue";
 
 type DashboardRole = "admin" | "provider";
@@ -109,43 +121,43 @@ const navMap: Record<DashboardRole, NavItem[]> = {
       label: "Dashboard",
       description: "Financial overview",
       href: "/admin/dashboard",
-      icon: "⌂",
-      group: "Main",
+      icon: "HomeIcon",
     },
     {
       label: "Users",
       description: "Manage accounts",
       href: "/admin/users",
-      icon: "👤",
-      group: "Management",
+      icon: "UserGroupIcon",
     },
     {
       label: "Providers",
       description: "Vendors & partners",
       href: "/admin/providers",
-      icon: "▣",
-      group: "Management",
-    },
-    {
-      label: "Revenue",
-      description: "Financial analytics",
-      href: "/admin/revenue",
-      icon: "💰",
-      group: "Management",
+      icon: "BuildingStorefrontIcon",
     },
     {
       label: "Bookings",
       description: "Booking Ledger",
       href: "/admin/bookings",
-      icon: "≡",
-      group: "Management",
+      icon: "CalendarDaysIcon",
     },
     {
-      label: "Packages",
-      description: "Quality review",
-      href: "/admin/packages",
-      icon: "◇",
-      group: "Management",
+      label: "Revenue",
+      description: "Financial analytics",
+      href: "/admin/revenue",
+      icon: "BanknotesIcon",
+    },
+    {
+      label: "Analytics",
+      description: "Business intelligence",
+      href: "#analytics",
+      icon: "ChartBarSquareIcon",
+    },
+    {
+      label: "Settings",
+      description: "Platform controls",
+      href: "#settings",
+      icon: "Cog6ToothIcon",
     },
   ],
   provider: [
@@ -153,31 +165,31 @@ const navMap: Record<DashboardRole, NavItem[]> = {
       label: "Inventory",
       description: "Stock and availability",
       href: "/provider/dashboard",
-      icon: "◌",
+      icon: "CubeIcon",
     },
     {
       label: "Bookings",
       description: "Reservation ledger",
       href: "/provider/bookings",
-      icon: "▣",
+      icon: "BookOpenIcon",
     },
     {
       label: "Finance",
       description: "Pricing and markup",
       href: "#pricing",
-      icon: "◫",
+      icon: "ChartBarSquareIcon",
     },
     {
       label: "Messages",
       description: "Inbox and requests",
       href: "#controller",
-      icon: "✉",
+      icon: "EnvelopeIcon",
     },
     {
       label: "Settings",
       description: "Provider preferences",
       href: "#changes",
-      icon: "⚙",
+      icon: "Cog6ToothIcon",
     },
   ],
 };
@@ -186,6 +198,16 @@ export default defineComponent({
   name: "DashboardSidebar",
   components: {
     LogoutButton,
+    BanknotesIcon,
+    BookOpenIcon,
+    BuildingStorefrontIcon,
+    CalendarDaysIcon,
+    ChartBarSquareIcon,
+    Cog6ToothIcon,
+    CubeIcon,
+    EnvelopeIcon,
+    HomeIcon,
+    UserGroupIcon,
   },
   props: {
     role: {
@@ -198,13 +220,7 @@ export default defineComponent({
       return navMap[this.role];
     },
     groupedNavItems(): Array<{ label: string; items: NavItem[] }> {
-      const groups: Array<NavItem["group"]> = ["Main", "Management"];
-      return groups
-        .map((group) => ({
-          label: group || "",
-          items: this.navItems.filter((item) => item.group === group),
-        }))
-        .filter((section) => section.items.length > 0);
+      return [{ label: "", items: this.navItems }];
     },
     providerNavItems(): NavItem[] {
       return navMap.provider;
@@ -306,10 +322,17 @@ export default defineComponent({
 
 .provider-nav__icon {
   width: 18px;
+  height: 18px;
   display: grid;
   place-items: center;
-  font-size: 0.82rem;
   color: #67807d;
+}
+
+.provider-nav__icon svg,
+.nav-item__icon svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
 }
 
 .provider-cta {
@@ -436,7 +459,6 @@ export default defineComponent({
   height: 20px;
   display: grid;
   place-items: center;
-  font-size: 0.82rem;
   color: currentColor;
 }
 
