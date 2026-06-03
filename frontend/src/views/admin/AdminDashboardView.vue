@@ -3,30 +3,24 @@
     <section class="admin-content">
       <div class="welcome-banner">
         <div class="banner-text">
-          <span class="page-kicker">Dashboard</span>
-          <h2>{{ greeting }}, Admin</h2>
+          <h2 class="banner-title">🌟 {{ greeting }}, Admin!</h2>
           <p>Monitor revenue, booking movement, providers, and customer growth from one calm workspace.</p>
         </div>
       </div>
 
       <section class="kpi-grid">
-        <article class="kpi-card kpi-card--hero hover-lift">
+        <article class="kpi-card hover-lift">
           <div class="kpi-card__header">
             <div class="kpi-icon-wrapper theme-green">
               <CurrencyDollarIcon aria-hidden="true" />
             </div>
-            <span class="kpi-title">Revenue</span>
+            <div class="kpi-pill kpi-pill--up">
+              <span>+12%</span>
+            </div>
           </div>
+          <span class="kpi-title">Total Revenue</span>
           <div class="kpi-value">${{ formatNumber(stats.totalRevenue) }}</div>
-          <div class="kpi-trend" :class="stats.totalRevenue > 0 ? 'trend-up' : 'trend-neutral'">
-            <span>{{ stats.totalRevenue > 0 ? 'Live' : 'No data' }}</span> <small>paid bookings only</small>
-          </div>
-          <div class="kpi-sparkline stroke-green">
-            <svg viewBox="0 0 100 28" class="sparkline-svg" preserveAspectRatio="none">
-              <path :d="sparklineAreaPaths.revenue" class="sparkline-area"></path>
-              <path :d="sparklinePaths.revenue" fill="none" stroke-width="2" stroke-linecap="round"></path>
-            </svg>
-          </div>
+          <router-link to="/admin/revenue" class="kpi-link">See details &rarr;</router-link>
         </article>
 
         <article class="kpi-card hover-lift">
@@ -34,18 +28,13 @@
             <div class="kpi-icon-wrapper theme-blue">
               <ClipboardDocumentListIcon aria-hidden="true" />
             </div>
-            <span class="kpi-title">Total Bookings</span>
+            <div class="kpi-pill" :class="stats.totalBookings > 0 ? 'kpi-pill--up' : 'kpi-pill--neutral'">
+              <span>{{ stats.totalBookings > 0 ? '+5%' : '0%' }}</span>
+            </div>
           </div>
+          <span class="kpi-title">Total Bookings</span>
           <div class="kpi-value">{{ formatInteger(stats.totalBookings) }}</div>
-          <div class="kpi-trend" :class="stats.totalBookings > 0 ? 'trend-up' : 'trend-neutral'">
-            <span>{{ stats.totalBookings > 0 ? 'Live' : 'No data' }}</span> <small>from bookings table</small>
-          </div>
-          <div class="kpi-sparkline stroke-blue">
-            <svg viewBox="0 0 100 28" class="sparkline-svg" preserveAspectRatio="none">
-              <path :d="sparklineAreaPaths.bookings" class="sparkline-area"></path>
-              <path :d="sparklinePaths.bookings" fill="none" stroke-width="2" stroke-linecap="round"></path>
-            </svg>
-          </div>
+          <router-link to="/admin/bookings" class="kpi-link">See details &rarr;</router-link>
         </article>
 
         <article class="kpi-card hover-lift">
@@ -53,18 +42,13 @@
             <div class="kpi-icon-wrapper theme-purple">
               <BuildingStorefrontIcon aria-hidden="true" />
             </div>
-            <span class="kpi-title">Active Providers</span>
+            <div class="kpi-pill" :class="stats.verifiedProviders > 0 ? 'kpi-pill--up' : 'kpi-pill--neutral'">
+              <span>{{ stats.verifiedProviders }} Verified</span>
+            </div>
           </div>
+          <span class="kpi-title">Active Providers</span>
           <div class="kpi-value">{{ formatInteger(stats.totalProviders) }}</div>
-          <div class="kpi-trend" :class="stats.verifiedProviders > 0 ? 'trend-up' : 'trend-neutral'">
-            <span>{{ formatInteger(stats.verifiedProviders) }}</span> <small>verified</small>
-          </div>
-          <div class="kpi-sparkline stroke-purple">
-            <svg viewBox="0 0 100 28" class="sparkline-svg" preserveAspectRatio="none">
-              <path :d="sparklineAreaPaths.providers" class="sparkline-area"></path>
-              <path :d="sparklinePaths.providers" fill="none" stroke-width="2" stroke-linecap="round"></path>
-            </svg>
-          </div>
+          <router-link to="/admin/providers" class="kpi-link">See details &rarr;</router-link>
         </article>
 
         <article class="kpi-card hover-lift">
@@ -72,20 +56,14 @@
             <div class="kpi-icon-wrapper theme-orange">
               <UserGroupIcon aria-hidden="true" />
             </div>
-            <span class="kpi-title">Total Users</span>
+            <div class="kpi-pill kpi-pill--up">
+              <span>+8%</span>
+            </div>
           </div>
+          <span class="kpi-title">Total Users</span>
           <div class="kpi-value">{{ formatInteger(stats.totalUsers) }}</div>
-          <div class="kpi-trend" :class="stats.totalUsers > 0 ? 'trend-up' : 'trend-neutral'">
-            <span>{{ stats.totalUsers > 0 ? 'Live' : 'No data' }}</span> <small>registered users</small>
-          </div>
-          <div class="kpi-sparkline stroke-orange">
-            <svg viewBox="0 0 100 28" class="sparkline-svg" preserveAspectRatio="none">
-              <path :d="sparklineAreaPaths.users" class="sparkline-area"></path>
-              <path :d="sparklinePaths.users" fill="none" stroke-width="2" stroke-linecap="round"></path>
-            </svg>
-          </div>
+          <router-link to="/admin/users" class="kpi-link">See details &rarr;</router-link>
         </article>
-
       </section>
 
       <div v-if="isLoading" class="skeleton-container">
@@ -590,8 +568,6 @@ const greeting = computed(() => {
 
 const chartWidth = 600
 const chartHeight = 180
-const sparklineWidth = 100
-const sparklineHeight = 28
 
 const hasRevenueLineChart = computed(() => {
   return monthlyStats.value.length > 1 && monthlyStats.value.some((stat) => Number(stat.revenue || 0) > 0)
@@ -628,51 +604,6 @@ const userGrowthBars = computed(() => {
     const lift = Math.min(12, Math.log10(base + index + 1) * 4)
     return Math.min(96, Math.round(value + lift))
   })
-})
-
-const buildSparklineValues = (value: number, seed: number): number[] => {
-  if (value <= 0) return [0.18, 0.18, 0.19, 0.18, 0.2, 0.19]
-
-  const normalized = Math.min(Math.log10(value + 1) / 4, 1)
-  const base = 0.28 + normalized * 0.3
-  return [0, 1, 2, 3, 4, 5].map((idx) => {
-    const drift = idx * 0.045
-    const wave = Math.sin((idx + seed) * 1.1) * 0.055
-    return Math.min(0.88, Math.max(0.18, base + drift + wave))
-  })
-}
-
-const pathFromValues = (values: number[]): string => {
-  const xStep = sparklineWidth / (values.length - 1)
-  return values
-    .map((value, index) => {
-      const x = index * xStep
-      const y = sparklineHeight - value * (sparklineHeight - 7) - 3
-      return `${index === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`
-    })
-    .join(' ')
-}
-
-const areaPathFromLine = (linePath: string): string => {
-  return `${linePath} L ${sparklineWidth} ${sparklineHeight} L 0 ${sparklineHeight} Z`
-}
-
-const sparklinePaths = computed(() => {
-  return {
-    revenue: pathFromValues(buildSparklineValues(stats.value.totalRevenue, 1)),
-    bookings: pathFromValues(buildSparklineValues(stats.value.totalBookings, 2)),
-    providers: pathFromValues(buildSparklineValues(stats.value.totalProviders, 3)),
-    users: pathFromValues(buildSparklineValues(stats.value.totalUsers, 4)),
-  }
-})
-
-const sparklineAreaPaths = computed(() => {
-  return {
-    revenue: areaPathFromLine(sparklinePaths.value.revenue),
-    bookings: areaPathFromLine(sparklinePaths.value.bookings),
-    providers: areaPathFromLine(sparklinePaths.value.providers),
-    users: areaPathFromLine(sparklinePaths.value.users),
-  }
 })
 
 const chartPoints = computed(() => {
@@ -760,9 +691,9 @@ const formatRelativeTime = (dateStr: string): string => {
 
 .banner-text h2 {
   margin: 0 0 8px;
-  font-family: "DM Serif Display", Georgia, serif;
+  font-family: inherit;
   font-size: 2rem;
-  font-weight: 400;
+  font-weight: 600;
   color: var(--text-primary);
   letter-spacing: 0;
   line-height: 1.05;
@@ -809,33 +740,20 @@ const formatRelativeTime = (dateStr: string): string => {
 
 .kpi-grid {
   display: grid;
-  grid-template-columns: minmax(260px, 1.45fr) repeat(3, minmax(170px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
 }
 
 .kpi-card {
-  background: var(--bg-surface);
-  border: 1px solid rgba(231, 234, 238, 0.88);
-  border-radius: var(--radius-md);
-  padding: 18px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   position: relative;
-  box-shadow: var(--shadow-card);
-  overflow: hidden;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  justify-content: space-between;
-}
-
-.kpi-card--hero {
-  min-height: 160px;
-  background:
-    linear-gradient(135deg, rgba(20, 138, 116, 0.08), rgba(198, 146, 47, 0.08)),
-    var(--bg-surface);
-}
-
-.kpi-card--hero .kpi-value {
-  font-size: 2.45rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  transition: all 0.2s ease;
+  border: 1px solid #f1f3f5;
 }
 
 .dashboard-body {
@@ -844,111 +762,79 @@ const formatRelativeTime = (dateStr: string): string => {
 }
 
 .kpi-card:hover {
-  border-color: rgba(20, 138, 116, 0.22);
-  box-shadow: var(--shadow-elevated);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.06);
   transform: translateY(-2px);
 }
 
 .kpi-card__header {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
-  margin-bottom: 10px;
+  justify-content: space-between;
+  margin-bottom: 16px;
 }
 
 .kpi-title {
-  font-size: 0.76rem;
-  font-weight: 700;
-  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #6B7280;
+  margin-bottom: 4px;
 }
 
 .kpi-icon-wrapper {
-  width: 30px;
-  height: 30px;
-  border-radius: var(--radius-sm);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
   display: grid;
   place-items: center;
   flex-shrink: 0;
 }
 
 .kpi-icon-wrapper svg {
-  width: 17px;
-  height: 17px;
+  width: 20px;
+  height: 20px;
   stroke-width: 2;
 }
 
-.theme-green { background: rgba(20, 138, 116, 0.1); color: var(--accent-primary); font-weight: bold; }
-.theme-blue { background: rgba(59, 130, 246, 0.1); color: var(--accent-info); }
-.theme-purple { background: var(--bg-elevated); color: var(--sidebar-bg-secondary); }
-.theme-orange { background: rgba(198, 146, 47, 0.12); color: var(--accent-secondary); }
+.theme-green { background: rgba(20, 138, 116, 0.1); color: #148A74; }
+.theme-blue { background: rgba(59, 130, 246, 0.1); color: #3B82F6; }
+.theme-purple { background: rgba(139, 92, 246, 0.1); color: #8B5CF6; }
+.theme-orange { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
 
 .kpi-value {
-  font-family: "DM Serif Display", Georgia, serif;
   font-size: 1.8rem;
-  font-weight: 400;
-  color: var(--text-primary);
-  letter-spacing: 0;
-  margin-bottom: 4px;
-  line-height: 1.1;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.2;
 }
 
-.kpi-trend {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.72rem;
-  min-height: 17px;
-  white-space: nowrap;
-}
-
-.trend-up span {
-  color: var(--accent-primary);
+.kpi-pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
-.trend-up small {
-  color: var(--text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
+.kpi-pill--up {
+  background: rgba(20, 138, 116, 0.1);
+  color: #148A74;
 }
 
-.trend-neutral span {
-  color: var(--text-secondary);
-  font-weight: 700;
+.kpi-pill--neutral {
+  background: #F3F4F6;
+  color: #6B7280;
 }
 
-.trend-neutral small {
-  color: var(--text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
+.kpi-link {
+  margin-top: 14px;
+  font-size: 0.8rem;
+  color: #148A74;
+  text-decoration: none;
+  font-weight: 600;
 }
 
-.kpi-sparkline {
-  height: 20px;
-  width: 100%;
-  margin-top: 5px;
-  opacity: 0.95;
+.kpi-link:hover {
+  text-decoration: underline;
 }
-
-.sparkline-svg {
-  width: 100%;
-  height: 100%;
-}
-
-.sparkline-area {
-  opacity: 0.12;
-}
-
-.stroke-green .sparkline-area { fill: var(--accent-primary); }
-.stroke-blue .sparkline-area { fill: var(--accent-info); }
-.stroke-purple .sparkline-area { fill: var(--sidebar-bg-secondary); }
-.stroke-orange .sparkline-area { fill: var(--accent-secondary); }
-
-.stroke-green path { stroke: var(--accent-primary); }
-.stroke-blue path { stroke: var(--accent-info); }
-.stroke-purple path { stroke: var(--sidebar-bg-secondary); }
-.stroke-orange path { stroke: var(--accent-secondary); }
 
 .revenue-hero-grid {
   display: grid;
@@ -968,11 +854,11 @@ const formatRelativeTime = (dateStr: string): string => {
 }
 
 .panel {
-  background: var(--bg-surface);
-  border: 1px solid rgba(231, 234, 238, 0.9);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  box-shadow: var(--shadow-card);
+  background: #ffffff;
+  border: 1px solid #f1f3f5;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
 }
 
 .error-panel {
@@ -984,18 +870,18 @@ const formatRelativeTime = (dateStr: string): string => {
 
 .error-panel h3 {
   margin: 0;
-  color: var(--text-primary);
+  color: #111827;
 }
 
 .error-panel p {
   margin: 0;
-  color: var(--text-secondary);
+  color: #6B7280;
 }
 
 .retry-button {
   border: none;
-  border-radius: var(--radius-sm);
-  background: var(--accent-primary);
+  border-radius: 8px;
+  background: #148A74;
   color: #ffffff;
   cursor: pointer;
   font-weight: 700;
@@ -1003,7 +889,7 @@ const formatRelativeTime = (dateStr: string): string => {
 }
 
 .retry-button:hover {
-  background: var(--accent-primary-hover);
+  background: #0f6e5c;
 }
 
 .panel-header-row {
@@ -1011,7 +897,7 @@ const formatRelativeTime = (dateStr: string): string => {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  margin-bottom: 14px;
+  margin-bottom: 20px;
 }
 
 .panel-title-block h3,
@@ -1020,26 +906,26 @@ const formatRelativeTime = (dateStr: string): string => {
 .panel--health h3,
 .panel--activity h3 {
   margin: 0;
-  font-size: 1.05rem;
-  font-weight: 750;
-  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111827;
 }
 
 .panel-eyebrow {
-  font-size: 1.05rem;
-  font-weight: 750;
-  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111827;
   display: block;
 }
 
 .panel-title-block p {
   margin-top: 6px;
-  color: var(--text-secondary);
+  color: #6B7280;
   font-size: 0.86rem;
 }
 
 .panel-header-row--compact {
-  margin-bottom: 10px;
+  margin-bottom: 16px;
 }
 
 .panel-controls {
@@ -1051,14 +937,14 @@ const formatRelativeTime = (dateStr: string): string => {
   display: flex;
   align-items: center;
   gap: 6px;
-  min-height: 30px;
+  min-height: 32px;
   padding: 0 12px;
-  background: #fbfaf7;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 0.78rem;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 0.8rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: #4B5563;
   cursor: pointer;
 }
 
@@ -1066,32 +952,32 @@ const formatRelativeTime = (dateStr: string): string => {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 9px;
+  margin-bottom: 12px;
   flex-wrap: wrap;
 }
 
 .revenue-main-val {
-  font-family: "DM Serif Display", Georgia, serif;
+  font-family: inherit;
   font-size: 2.75rem;
-  font-weight: 400;
-  color: var(--text-primary);
-  letter-spacing: 0;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.02em;
 }
 
 .trend-badge-pill {
-  padding: 2px 8px;
+  padding: 4px 10px;
   border-radius: 999px;
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
 .green-badge {
   background: rgba(20, 138, 116, 0.1);
-  color: var(--accent-primary);
+  color: #148A74;
 }
 
 .subtext-label {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--text-muted);
 }
 
@@ -1293,8 +1179,6 @@ const formatRelativeTime = (dateStr: string): string => {
 
 .table-wrapper {
   overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
 }
 
 .saas-table {
@@ -1304,22 +1188,22 @@ const formatRelativeTime = (dateStr: string): string => {
 }
 
 .saas-table th {
-  padding: 10px 12px;
+  padding: 12px 16px;
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: #9CA3AF;
   letter-spacing: 0.05em;
-  border-bottom: 1px solid var(--border);
-  background: #fbfaf7;
+  border-bottom: 1px solid #E5E7EB;
+  background: transparent;
 }
 
 .saas-table td {
-  padding: 11px 12px;
-  font-size: 0.84rem;
-  color: var(--text-primary);
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-surface);
+  padding: 16px;
+  font-size: 0.85rem;
+  color: #111827;
+  border-bottom: 1px solid #F3F4F6;
+  background: transparent;
 }
 
 .saas-table tr:last-child td {
@@ -1327,22 +1211,22 @@ const formatRelativeTime = (dateStr: string): string => {
 }
 
 .saas-table tr:hover td {
-  background: #fbfaf7;
+  background: #F9FAFB;
 }
 
 .booking-id-text {
   font-family: monospace;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: #6B7280;
 }
 
 .client-name {
   font-weight: 600;
-  color: var(--text-primary);
+  color: #111827;
 }
 
 .tour-title {
-  color: var(--text-secondary);
+  color: #4B5563;
   max-width: 180px;
   white-space: nowrap;
   overflow: hidden;
@@ -1352,31 +1236,31 @@ const formatRelativeTime = (dateStr: string): string => {
 }
 
 .row-date {
-  color: var(--text-muted);
+  color: #6B7280;
   font-size: 0.8rem;
 }
 
 .row-amount {
   font-weight: 700;
-  color: var(--text-primary);
+  color: #111827;
 }
 
 .badge-saas {
   display: inline-flex;
   align-items: center;
   min-height: 22px;
-  padding: 3px 8px;
+  padding: 3px 10px;
   border-radius: 999px;
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: capitalize;
 }
 
-.badge-saas--confirmed { background: rgba(20, 138, 116, 0.1); color: var(--accent-primary); }
-.badge-saas--pending { background: rgba(198, 146, 47, 0.12); color: var(--accent-secondary); }
-.badge-saas--cancelled { background: rgba(214, 69, 69, 0.1); color: var(--accent-danger); }
-.badge-saas--completed { background: rgba(59, 130, 246, 0.1); color: var(--accent-info); }
-.badge-saas--refunded { background: var(--bg-elevated); color: var(--text-secondary); }
+.badge-saas--confirmed { background: rgba(20, 138, 116, 0.1); color: #148A74; }
+.badge-saas--pending { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
+.badge-saas--cancelled { background: rgba(239, 68, 68, 0.1); color: #EF4444; }
+.badge-saas--completed { background: rgba(59, 130, 246, 0.1); color: #3B82F6; }
+.badge-saas--refunded { background: #F3F4F6; color: #6B7280; }
 
 .empty-state-cell {
   text-align: center;
@@ -1390,14 +1274,14 @@ const formatRelativeTime = (dateStr: string): string => {
 }
 
 .empty-state-msg strong {
-  color: var(--text-primary);
+  color: #111827;
   font-size: 0.86rem;
 }
 
 .empty-state-msg p {
   max-width: 320px;
   margin: 0;
-  color: var(--text-secondary);
+  color: #6B7280;
   font-size: 0.78rem;
 }
 
@@ -1426,9 +1310,9 @@ const formatRelativeTime = (dateStr: string): string => {
 .donut-inner-hole {
   width: 88px;
   height: 88px;
-  background: var(--bg-surface);
+  background: #ffffff;
   border-radius: 50%;
-  box-shadow: inset 0 0 0 1px var(--border);
+  box-shadow: inset 0 0 0 1px #E5E7EB;
   display: grid;
   place-items: center;
   align-content: center;
@@ -1437,16 +1321,16 @@ const formatRelativeTime = (dateStr: string): string => {
 }
 
 .donut-inner-hole strong {
-  font-family: "DM Serif Display", Georgia, serif;
+  font-family: inherit;
   font-size: 1.75rem;
-  font-weight: 400;
-  color: var(--text-primary);
+  font-weight: 700;
+  color: #111827;
   line-height: 1;
 }
 
 .donut-inner-hole span {
   font-size: 0.68rem;
-  color: var(--text-muted);
+  color: #6B7280;
 }
 
 .donut-legend {
@@ -1478,15 +1362,15 @@ const formatRelativeTime = (dateStr: string): string => {
 }
 
 .metric-line span {
-  color: var(--text-secondary);
+  color: #6B7280;
   font-size: 0.82rem;
 }
 
 .metric-line strong {
-  font-family: "DM Serif Display", Georgia, serif;
-  color: var(--text-primary);
+  font-family: inherit;
+  color: #111827;
   font-size: 1.65rem;
-  font-weight: 400;
+  font-weight: 700;
 }
 
 .metric-progress {

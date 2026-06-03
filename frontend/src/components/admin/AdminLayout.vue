@@ -32,10 +32,10 @@ const emit = defineEmits(['search'])
   height: 100vh;
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
-  background: #f5f5f2;
+  background: #F8F9FA;
   box-sizing: border-box;
   overflow: hidden;
-  font-family: 'DM Sans', Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: #111827;
 }
 
@@ -48,9 +48,7 @@ const emit = defineEmits(['search'])
   display: flex;
   flex-direction: column;
   height: 100%;
-  background:
-    radial-gradient(circle at top right, rgba(198, 146, 47, 0.08), transparent 28rem),
-    #f5f5f2;
+  background: #F8F9FA;
   overflow: hidden;
 }
 
@@ -65,8 +63,9 @@ const emit = defineEmits(['search'])
   min-height: 100vh;
   border-radius: 0 !important;
   border: none !important;
-  box-shadow: 18px 0 46px rgba(8, 31, 31, 0.16) !important;
-  background: linear-gradient(180deg, #143535 0%, #0d2b2b 35%, #081f1f 100%) !important;
+  border-right: 1px solid #e7eaee !important;
+  box-shadow: none !important;
+  background: #ffffff !important;
   padding: 22px 16px !important;
   display: flex;
   flex-direction: column;
@@ -86,13 +85,13 @@ const emit = defineEmits(['search'])
 
 :deep(.brand-block p.eyebrow) {
   display: block !important;
-  color: rgba(255, 255, 255, 0.48) !important;
+  color: #6B7280 !important;
   letter-spacing: 0.16em !important;
 }
 
 :deep(.brand-block strong) {
   font-size: 1.04rem !important;
-  color: #ffffff !important;
+  color: #111827 !important;
   font-weight: 700 !important;
 }
 
@@ -101,19 +100,19 @@ const emit = defineEmits(['search'])
   width: fit-content;
   margin-top: 8px !important;
   padding: 4px 9px;
-  border: 1px solid rgba(198, 146, 47, 0.28);
+  border: 1px solid rgba(20, 138, 116, 0.2);
   border-radius: 999px;
-  background: rgba(198, 146, 47, 0.12);
+  background: rgba(20, 138, 116, 0.1);
   font-size: 0.67rem !important;
-  color: #f0d49b !important;
+  color: #148A74 !important;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 :deep(.brand-mark) {
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: #f0d49b !important;
-  border: 1px solid rgba(255, 255, 255, 0.13);
+  background: #148A74 !important;
+  color: #ffffff !important;
+  border: none !important;
   border-radius: 12px !important;
   font-weight: 800;
   width: 38px !important;
@@ -121,7 +120,7 @@ const emit = defineEmits(['search'])
 }
 
 :deep(.nav-list) {
-  gap: 18px !important;
+  gap: 8px !important;
 }
 
 :deep(.nav-item) {
@@ -129,39 +128,39 @@ const emit = defineEmits(['search'])
   min-height: 44px !important;
   padding: 9px 12px !important;
   margin-bottom: 0 !important;
-  border-radius: 12px !important;
+  border-radius: 10px !important;
   background: transparent !important;
   border: 1px solid transparent !important;
-  color: rgba(255, 255, 255, 0.64) !important;
+  color: #4B5563 !important;
   transition: all 0.22s ease !important;
 }
 
 :deep(.nav-item:hover) {
-  background: rgba(255, 255, 255, 0.07) !important;
-  color: #ffffff !important;
+  background: #F3F4F6 !important;
+  color: #111827 !important;
 }
 
 :deep(.nav-item.router-link-exact-active),
 :deep(.nav-item.nav-item--active) {
-  background: rgba(255, 255, 255, 0.11) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  color: #ffffff !important;
-  box-shadow: inset 3px 0 0 #c6922f;
+  background: rgba(20, 138, 116, 0.08) !important;
+  border-color: transparent !important;
+  color: #111827 !important;
+  box-shadow: inset 3px 0 0 #148A74;
 }
 
 :deep(.nav-item.router-link-exact-active strong) {
-  color: #ffffff !important;
+  color: #111827 !important;
 }
 
 :deep(.nav-item.router-link-exact-active .nav-item__icon) {
-  color: #f0d49b !important;
+  color: #148A74 !important;
 }
 
 :deep(.sidebar-card) {
   padding: 13px !important;
-  border-radius: 16px !important;
-  background: rgba(255, 255, 255, 0.08) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+  background: #F9FAFB !important;
+  border: 1px solid #E5E7EB !important;
   margin-top: auto !important;
 }
 
@@ -169,7 +168,7 @@ const emit = defineEmits(['search'])
 :deep(.nav-item small),
 :deep(.system-status p),
 :deep(.sidebar-actions a) {
-  color: rgba(255, 255, 255, 0.46) !important;
+  color: #6B7280 !important;
 }
 
 :deep(.nav-item strong),
