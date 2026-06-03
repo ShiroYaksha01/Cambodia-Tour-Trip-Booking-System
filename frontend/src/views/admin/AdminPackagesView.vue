@@ -22,6 +22,7 @@ interface Service {
   location: string
   rating: number
   createdAt: string
+  description?: string
   provider?: Provider
   images?: ServiceImage[]
 }
@@ -35,6 +36,11 @@ const currentPage = ref(1)
 const search = ref('')
 const perPage = 5
 const tabs = ['All Packages', 'Tours', 'Accommodations', 'Transportation']
+
+// Modal state
+const detailsOpen = ref(false)
+const detailsLoading = ref(false)
+const selectedService = ref<Service | null>(null)
 
 // ─── Computed ─────────────────────────────────────────────────────────────────
 const filtered = computed(() => {
@@ -81,6 +87,25 @@ async function fetchServices() {
   } finally {
     loading.value = false
   }
+}
+
+const openDetails = async (id: string) => {
+  detailsOpen.value = true
+  detailsLoading.value = true
+  try {
+    const res = await apiGet<any>(`/services/${id}`)
+    selectedService.value = res.data || res
+  } catch (error) {
+    console.warn('Backend details API failed, falling back to local list.', error)
+    selectedService.value = services.value.find(s => s.id === id) || null
+  } finally {
+    detailsLoading.value = false
+  }
+}
+
+const closeDetails = () => {
+  detailsOpen.value = false
+  selectedService.value = null
 }
 
 const exportCSV = () => {
@@ -182,7 +207,7 @@ onMounted(fetchServices)
               <td><span class="status" :class="s.isActive ? 'active' : 'inactive'">{{ s.isActive ? 'Active' : 'Inactive' }}</span></td>
               <td>{{ fmtDate(s.createdAt) }}</td>
               <td>
-                <router-link :to="`/service/${s.id}`" class="edit-btn">View</router-link>
+                <button class="edit-btn" @click="openDetails(s.id)">View Details</button>
               </td>
             </tr>
             <tr v-if="paged.length === 0">
@@ -202,6 +227,106 @@ onMounted(fetchServices)
         >{{ p }}</button>
       </div>
     </div>
+
+    <!-- Package Details Modal -->
+    <Transition name="fade">
+      <div v-if="detailsOpen" class="modal-overlay" @click.self="closeDetails">
+        <div class="modal-window wide">
+          <header class="modal-header">
+            <div class="header-text">
+              <p class="eyebrow">Package Inspection</p>
+              <h2>{{ selectedService?.title || 'Loading Package...' }}</h2>
+            </div>
+            <button class="close-btn" @click="closeDetails">✕</button>
+          </header>
+
+          <div v-if="detailsLoading" class="modal-loader-container">
+            <div class="spinner"></div>
+            <p>Fetching package details...</p>
+          </div>
+
+          <div v-else-if="selectedService" class="modal-body">
+            <div class="details-grid">
+              <!-- Left Column: Details -->
+              <div class="details-main">
+                <!-- Image Gallery Preview -->
+                <div class="gallery-preview" v-if="selectedService.images && selectedService.images.length">
+                  <img :src="selectedService.images[0].url" alt="Cover Image" class="gallery-main-img"/>
+                </div>
+                
+                <div class="detail-section">
+                  <h3>Service Description</h3>
+                  <p class="desc-text">{{ selectedService.description || 'No description provided by the provider.' }}</p>
+                </div>
+
+                <div class="detail-section">
+                  <h3>Core Information</h3>
+                  <div class="info-grid">
+                    <div class="info-item">
+                      <label>Service Type</label>
+                      <p class="capitalize">{{ selectedService.serviceType }}</p>
+                    </div>
+                    <div class="info-item">
+                      <label>Base Price</label>
+                      <p class="price-val-lg">{{ fmtPrice(selectedService.price) }}</p>
+                    </div>
+                    <div class="info-item">
+                      <label>Location</label>
+                      <p>{{ selectedService.location || 'Not Specified' }}</p>
+                    </div>
+                    <div class="info-item">
+                      <label>Rating</label>
+                      <p>★ {{ selectedService.rating || 'New' }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Column: Provider & Actions -->
+              <aside class="details-side">
+                <div class="detail-section">
+                  <h3>Provider Profile</h3>
+                  <div class="customer-card">
+                    <div class="customer-avatar">{{ selectedService.provider?.companyName?.charAt(0) || 'P' }}</div>
+                    <div class="customer-info">
+                      <strong>{{ selectedService.provider?.companyName || 'Independent Provider' }}</strong>
+                      <span>ID: {{ selectedService.provider?.id?.slice(0,8) || 'N/A' }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="detail-section">
+                  <h3>Listing Status</h3>
+                  <div class="status-box">
+                    <div class="status-row">
+                      <span>Current Status</span>
+                      <span :class="['status-pill', selectedService.isActive ? 'active' : 'inactive']">
+                        {{ selectedService.isActive ? 'Active / Published' : 'Inactive / Hidden' }}
+                      </span>
+                    </div>
+                    <div class="status-row divider">
+                      <span>Date Listed</span>
+                      <strong>{{ fmtDate(selectedService.createdAt) }}</strong>
+                    </div>
+                    <div class="status-row">
+                      <span>Internal ID</span>
+                      <code class="id-code-sm">{{ selectedService.id.slice(0,8).toUpperCase() }}</code>
+                    </div>
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </div>
+
+          <footer class="modal-footer">
+            <button class="secondary-btn" @click="closeDetails">Close View</button>
+            <a :href="`/service/${selectedService?.id}`" target="_blank" class="primary-btn" v-if="selectedService">
+              View Public Page ↗
+            </a>
+          </footer>
+        </div>
+      </div>
+    </Transition>
   </AdminLayout>
 </template>
 
@@ -270,6 +395,326 @@ tr:last-child td { border-bottom: none; }
 .pagination button:hover { background: #E5E7EB; color: #111827; }
 .pagination .active { background: #148A74; color: #ffffff; border-color: #148A74; }
 
-.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
+/* Modal Wide Sheets */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.modal-window.wide {
+  max-width: 920px;
+}
+
+.modal-window {
+  background: #ffffff;
+  width: 100%;
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #E5E7EB;
+}
+
+.modal-header {
+  padding: 20px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #E5E7EB;
+  background: #ffffff;
+}
+
+.modal-header h2 {
+  font-size: 1.15rem;
+  margin: 4px 0 0;
+  color: #111827;
+  font-weight: 700;
+}
+
+.eyebrow {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #148A74;
+  font-weight: 700;
+  margin: 0;
+}
+
+.modal-body {
+  padding: 28px;
+  overflow-y: auto;
+  background: #F9FAFB;
+}
+
+.modal-loader-container {
+  padding: 60px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #6B7280;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 28px;
+}
+
+.detail-section {
+  margin-bottom: 24px;
+}
+
+.detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.detail-section h3 {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #148A74;
+  margin: 0 0 16px;
+  font-weight: 800;
+}
+
+.gallery-preview {
+  margin-bottom: 20px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #E5E7EB;
+  height: 240px;
+}
+
+.gallery-main-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.desc-text {
+  color: #4B5563;
+  line-height: 1.6;
+  font-size: 0.9rem;
+  margin: 0;
+  background: #ffffff;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #E5E7EB;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  background: #ffffff;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #E5E7EB;
+}
+
+.info-item label {
+  display: block;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #9CA3AF;
+  margin-bottom: 4px;
+}
+
+.info-item p {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.capitalize {
+  text-transform: capitalize;
+}
+
+.price-val-lg {
+  color: #148A74 !important;
+  font-size: 1.15rem !important;
+  font-weight: 800 !important;
+}
+
+.customer-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #ffffff;
+  border: 1px solid #E5E7EB;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.customer-avatar {
+  width: 42px;
+  height: 42px;
+  background: #111827;
+  color: #ffffff;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.customer-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.customer-info strong {
+  color: #111827;
+  font-size: 0.88rem;
+}
+
+.customer-info span {
+  font-size: 0.8rem;
+  color: #6B7280;
+}
+
+.status-box {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #E5E7EB;
+}
+
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.status-row:last-child {
+  margin-bottom: 0;
+}
+
+.status-row.divider {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #E5E7EB;
+}
+
+.status-row span:first-child {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #6B7280;
+}
+
+.status-pill {
+  display: inline-flex;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.status-pill.active { background: rgba(20, 138, 116, 0.1); color: #148A74; }
+.status-pill.inactive { background: #F3F4F6; color: #6B7280; }
+
+.id-code-sm {
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: #111827;
+  font-weight: 600;
+}
+
+.modal-footer {
+  padding: 18px 28px;
+  background: #ffffff;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid #E5E7EB;
+}
+
+.secondary-btn {
+  background: none;
+  border: 1px solid #E5E7EB;
+  color: #6B7280;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  transition: all 0.2s ease;
+}
+
+.secondary-btn:hover {
+  background: #F9FAFB;
+  color: #111827;
+}
+
+.primary-btn {
+  background: #148A74;
+  color: #ffffff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.88rem;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.primary-btn:hover {
+  background: #0f6e5c;
+}
+
+.close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  background: #F9FAFB;
+  color: #6B7280;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: #E5E7EB;
+  color: #111827;
+}
+
+/* Transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+@media (max-width: 1024px) {
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .details-side {
+    order: -1;
+  }
+}
 </style>
