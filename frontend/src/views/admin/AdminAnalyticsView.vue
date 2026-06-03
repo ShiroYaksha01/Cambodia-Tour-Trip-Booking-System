@@ -29,7 +29,7 @@
             <span class="badge positive">+2.4%</span>
           </div>
           <div class="metric-body">
-            <h2>8.5%</h2>
+            <h2>{{ metrics.conversionRate }}%</h2>
             <p>From search to successful booking</p>
           </div>
         </article>
@@ -40,7 +40,7 @@
             <span class="badge positive">+12%</span>
           </div>
           <div class="metric-body">
-            <h2>$142.50</h2>
+            <h2>${{ metrics.avgBookingValue }}</h2>
             <p>Per confirmed transaction</p>
           </div>
         </article>
@@ -51,7 +51,7 @@
             <span class="badge negative">+1.1%</span>
           </div>
           <div class="metric-body">
-            <h2>3.2%</h2>
+            <h2>{{ metrics.cancellationRate }}%</h2>
             <p>Percentage of refunded bookings</p>
           </div>
         </article>
@@ -65,14 +65,14 @@
             <p>New registrations vs. active users over time.</p>
           </header>
           <div class="chart-placeholder">
-            <!-- Simulated bar chart using flexbox -->
-            <div class="bar-chart">
+            <div v-if="loading" style="text-align: center; color: #6B7280; padding: 40px;">Loading data...</div>
+            <div v-else class="bar-chart">
               <div v-for="n in 12" :key="n" class="bar-group">
                 <div class="bar bar-primary" :style="{ height: `${Math.random() * 80 + 20}%` }"></div>
                 <div class="bar bar-secondary" :style="{ height: `${Math.random() * 60 + 10}%` }"></div>
               </div>
             </div>
-            <div class="chart-x-axis">
+            <div class="chart-x-axis" v-if="!loading">
               <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span>
               <span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span>
             </div>
@@ -85,7 +85,9 @@
             <h3>Top Destinations</h3>
             <p>Most popular service locations.</p>
           </header>
-          <div class="list-chart">
+          <div v-if="loading" style="text-align: center; color: #6B7280; padding: 40px;">Loading data...</div>
+          <div v-else-if="topDestinations.length === 0" style="text-align: center; color: #6B7280; padding: 40px;">No destinations found in this period.</div>
+          <div v-else class="list-chart">
             <div class="list-item" v-for="(dest, idx) in topDestinations" :key="idx">
               <div class="list-info">
                 <strong>{{ dest.name }}</strong>
@@ -103,18 +105,20 @@
             <h3>Booking by Category</h3>
             <p>Distribution of service types.</p>
           </header>
-          <div class="donut-chart-mock">
+          <div v-if="loading" style="text-align: center; color: #6B7280; padding: 40px;">Loading data...</div>
+          <div v-else-if="categories.length === 0" style="text-align: center; color: #6B7280; padding: 40px;">No categories found in this period.</div>
+          <div v-else class="donut-chart-mock">
             <div class="donut-circle">
               <div class="donut-inner">
-                <strong>4,201</strong>
+                <strong>100%</strong>
                 <span>Total</span>
               </div>
             </div>
             <div class="donut-legend">
-              <div class="legend-item"><span class="dot color-1"></span> Tour (45%)</div>
-              <div class="legend-item"><span class="dot color-2"></span> Experience (30%)</div>
-              <div class="legend-item"><span class="dot color-3"></span> Transport (15%)</div>
-              <div class="legend-item"><span class="dot color-4"></span> Other (10%)</div>
+              <div class="legend-item" v-for="(cat, idx) in categories" :key="cat.type">
+                <span :class="'dot color-' + (idx % 4 + 1)"></span> 
+                <span style="text-transform: capitalize;">{{ cat.type }} ({{ cat.percent }}%)</span>
+              </div>
             </div>
           </div>
         </article>
