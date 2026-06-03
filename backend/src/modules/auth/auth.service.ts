@@ -1,5 +1,3 @@
- 
-
 import { Injectable, BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import * as nodemailer from 'nodemailer';
@@ -12,27 +10,27 @@ import { PasswordReset } from './entities/password-reset.entity';
 
 @Injectable()
 export class AuthService {
-  private transporter: nodemailer.Transporter;
-
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
     @InjectRepository(PasswordReset)
     private passwordResetRepository: Repository<PasswordReset>,
     private configService: ConfigService,
-  ) {
+  ) {}
+
+  private getTransporter() {
     const user = this.configService.get<string>('EMAIL_USER');
     const pass = this.configService.get<string>('EMAIL_PASS');
-    console.log('--- Email Config Check ---');
-    console.log('EMAIL_USER:', user);
-    console.log('EMAIL_PASS (length):', pass?.length);
-    console.log('--------------------------');
 
-    this.transporter = nodemailer.createTransport({
+    if (!user || !pass) {
+      throw new Error('Email configuration (EMAIL_USER or EMAIL_PASS) is missing');
+    }
+
+    return nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: user,
-        pass: pass,
+        user,
+        pass,
       },
     });
   }
@@ -109,8 +107,9 @@ export class AuthService {
         expiresAt,
       });
 
+      const transporter = this.getTransporter();
       try {
-        await this.transporter.sendMail({
+        await transporter.sendMail({
           from: this.configService.get<string>('EMAIL_USER'),
           to: email,
           subject: 'Password Reset OTP',
