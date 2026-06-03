@@ -133,6 +133,20 @@ import AdminLayout from '../../components/admin/AdminLayout.vue'
 
 const searchQuery = ref('')
 const timeframe = ref('30')
+const loading = ref(false)
+
+const metrics = ref({
+  conversionRate: 3.2,
+  avgBookingValue: 145,
+  cancellationRate: 1.8
+})
+
+const categories = ref([
+  { type: 'Tours', percent: 45 },
+  { type: 'Hotels', percent: 30 },
+  { type: 'Transport', percent: 15 },
+  { type: 'Other', percent: 10 },
+])
 
 const topDestinations = ref([
   { name: 'Siem Reap', bookings: 1240, percent: 85 },
