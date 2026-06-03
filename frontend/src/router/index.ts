@@ -144,7 +144,7 @@ const routes: RouteRecordRaw[] = [
     path: "/provider",
     component: () => import("../views/dashboards/ProviderShellView.vue"),
     meta: {
-      requiresAuth: false,
+      requiresAuth: true,
       roles: ["provider"],
     },
     children: [

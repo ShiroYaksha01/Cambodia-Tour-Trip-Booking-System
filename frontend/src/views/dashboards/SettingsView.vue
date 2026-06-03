@@ -181,7 +181,6 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import { useRouter } from "vue-router";
 import { clearAuthData } from "../../utils/auth";
 
 defineProps<{
@@ -202,18 +201,13 @@ const logoFileName = ref("");
 const logoPreview = ref("");
 
 const logoInput = ref<HTMLInputElement | null>(null);
-const router = useRouter();
 
 // header/profile info provided by ProviderHeader in shell; no local computed needed
 
 function handleLogout() {
   if (confirm("Are you sure you want to log out?")) {
     clearAuthData();
-    router.push({ name: "customer-homepage" });
-    // Small delay to ensure router has started navigation before reload
-    setTimeout(() => {
-      window.location.reload();
-    }, 100);
+    window.location.href = "/customer/homepage";
   }
 }
 
