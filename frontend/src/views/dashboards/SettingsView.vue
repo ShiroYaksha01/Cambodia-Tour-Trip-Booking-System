@@ -181,7 +181,6 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import { useRouter } from "vue-router";
 import { clearAuthData } from "../../utils/auth";
 
 defineProps<{
@@ -202,7 +201,6 @@ const logoFileName = ref("");
 const logoPreview = ref("");
 
 const logoInput = ref<HTMLInputElement | null>(null);
-const router = useRouter();
 
 // header/profile info provided by ProviderHeader in shell; no local computed needed
 

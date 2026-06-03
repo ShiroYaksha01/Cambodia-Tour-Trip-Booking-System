@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { BellIcon, CalendarDaysIcon, ChevronDownIcon, MagnifyingGlassIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { clearAuthData } from '../../utils/auth'
 
@@ -10,7 +9,6 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['search'])
-const router = useRouter()
 const showProfile = ref(false)
 const searchQuery = ref('')
 
