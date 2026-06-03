@@ -142,6 +142,12 @@ const navMap: Record<DashboardRole, NavItem[]> = {
       icon: "CalendarDaysIcon",
     },
     {
+      label: "Packages",
+      description: "Service catalog",
+      href: "/admin/packages",
+      icon: "CubeIcon",
+    },
+    {
       label: "Revenue",
       description: "Financial analytics",
       href: "/admin/revenue",
