@@ -23,6 +23,9 @@ const router = useRouter();
 const isLoading = ref(false);
 
 async function logout() {
+  if (!confirm("Are you sure you want to log out?")) {
+    return;
+  }
   isLoading.value = true;
   try {
     clearAuthData();
