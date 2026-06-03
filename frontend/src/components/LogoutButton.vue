@@ -29,10 +29,10 @@ async function logout() {
   isLoading.value = true;
   try {
     clearAuthData();
-    await router.push({ name: "customer-homepage" });
-    // Force a reload or update state if necessary
-    window.location.reload(); 
-  } finally {
+    // Using location.href ensures a full reload and redirect to the public home
+    window.location.href = "/customer/homepage";
+  } catch (error) {
+    console.error("Logout failed:", error);
     isLoading.value = false;
   }
 }

@@ -34,8 +34,10 @@ const currentDateLabel = new Date().toLocaleDateString('en-US', {
 })
 
 const handleLogout = () => {
-  clearAuthData()
-  router.push('/login')
+  if (confirm("Are you sure you want to log out?")) {
+    clearAuthData();
+    window.location.href = "/customer/homepage";
+  }
 }
 
 const onSearchInput = () => {

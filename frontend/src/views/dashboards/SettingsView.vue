@@ -209,11 +209,7 @@ const router = useRouter();
 function handleLogout() {
   if (confirm("Are you sure you want to log out?")) {
     clearAuthData();
-    router.push({ name: "customer-homepage" });
-    // Small delay to ensure router has started navigation before reload
-    setTimeout(() => {
-      window.location.reload();
-    }, 100);
+    window.location.href = "/customer/homepage";
   }
 }
 
