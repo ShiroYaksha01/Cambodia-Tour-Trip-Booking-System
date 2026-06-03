@@ -398,7 +398,7 @@ const filteredServiceItems = computed(() => {
       !query ||
       item.name.toLowerCase().includes(query) ||
       item.subtitle.toLowerCase().includes(query) ||
-      item.destinations.some((destination) => destination.toLowerCase().includes(query)) ||
+      item.destinations.some((destination: string) => destination.toLowerCase().includes(query)) ||
       item.status.toLowerCase().includes(query) ||
       item.category.toLowerCase().includes(query);
 

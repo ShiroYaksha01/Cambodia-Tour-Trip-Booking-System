@@ -286,7 +286,6 @@ import { computed, ref, onMounted } from "vue";
 import {
   getProviderInventory,
   updateInventorySlot,
-  applyPricingToService,
 } from "../../services/api";
 
 const props = withDefaults(
@@ -521,7 +520,6 @@ function startEdit(itemIdx: number, dayIdx: number) {
 function confirmEdit(itemIdx: number, dayIdx: number) {
   if (editingItemIdx.value !== itemIdx || editingDayIdx.value !== dayIdx) return;
   const day = inventoryItems.value[itemIdx].days[dayIdx];
-  const prevDate = day.date;
   day.date = editDate.value;
   day.slots = editSlots.value;
   day.price = editPrice.value;

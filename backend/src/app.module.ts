@@ -13,6 +13,7 @@ import { UsersModule } from './modules/users/users.module';
 import { ProvidersModule } from './modules/providers/providers.module';
 import { BookingsModule } from './modules/bookings/bookings.module';
 import { CommonModule } from './common/common.module';
+import { UploadsController } from './uploads.controller';
 
 @Module({
   imports: [
@@ -34,7 +35,7 @@ import { CommonModule } from './common/common.module';
     BookingsModule,
     ServicesModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, UploadsController],
   providers: [AppService],
 })
 export class AppModule {}

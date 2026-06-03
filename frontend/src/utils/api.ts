@@ -24,7 +24,7 @@ export function getAuthHeaders(): Record<string, string> {
  */
 export function resolveImageUrl(path: string | null | undefined): string {
   if (!path) return '';
-  if (path.startsWith('http')) return path;
+  if (path.startsWith('http') || path.startsWith('blob:') || path.startsWith('data:')) return path;
   
   // Ensure no double slashes
   const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;

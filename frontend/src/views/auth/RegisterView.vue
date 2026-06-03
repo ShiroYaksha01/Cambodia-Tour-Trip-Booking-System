@@ -14,7 +14,15 @@ const agreed = ref(false);
 const message = ref("");
 
 const handleFile = (e) => {
-  file.value = e.target.files[0];
+  const f = e.target.files[0];
+  if (f) {
+    if (f.size > 10 * 1024 * 1024) {
+      alert("File is too large. Please select an image smaller than 10MB.");
+      e.target.value = "";
+      return;
+    }
+    file.value = f;
+  }
 };
 
 const handleRegister = async () => {
