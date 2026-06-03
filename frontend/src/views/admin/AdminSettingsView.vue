@@ -120,7 +120,7 @@
   </AdminLayout>
 
   <transition name="fade">
-    <div v-if="toast.visible" class="toast success">{{ toast.message }}</div>
+    <div v-if="toast.visible" :class="['toast', toast.isError ? 'error' : 'success']">{{ toast.message }}</div>
   </transition>
 </template>
 
@@ -438,6 +438,46 @@ input:checked + .slider:before {
 }
 
 .toast { 
+  position: fixed; 
+  bottom: 24px; 
+  right: 24px; 
+  padding: 12px 22px; 
+  border-radius: 8px; 
+  font-size: 0.85rem; 
+  font-weight: 600; 
+  z-index: 9999; 
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+  background: #ffffff; 
+  color: #148A74; 
+  border-left: 4px solid #148A74; 
+}
+
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+@media (max-width: 1024px) {
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+  .settings-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  .nav-btn {
+    white-space: nowrap;
+  }
+}
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .input-group.full {
+    grid-column: span 1;
+  }
+}
+</style>
+ast { 
   position: fixed; 
   bottom: 24px; 
   right: 24px; 
