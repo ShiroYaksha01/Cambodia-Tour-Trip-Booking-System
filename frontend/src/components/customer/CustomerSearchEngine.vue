@@ -266,7 +266,7 @@ export default defineComponent({
         || service.images?.[0]?.imageUrl;
 
       const coverImage = resolveImageUrl(rawImage)
-        || 'https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=800&auto=format&fit=crop';
+        || 'https://freedomdestinations.co.uk/wp-content/uploads/Angkor-Wat-Cambodia-4.jpg';
 
       return {
         id: service.id,
