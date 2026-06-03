@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:poll": "CHOKIDAR_USEPOLLING=true vite",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview"
   },

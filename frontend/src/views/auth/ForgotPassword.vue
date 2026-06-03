@@ -408,7 +408,7 @@ const goBack = () => {
 .input-wrap:focus-within { border-color: #0e7f76; box-shadow: 0 0 0 2px rgba(14, 127, 118, 0.15); }
 .input-icon { font-size: 0.92rem; color: #8b9498; width: 16px; text-align: center; }
 .input-wrap input { border: 0; outline: 0; width: 100%; font: inherit; color: #233036; background: transparent; }
-.input-wrap input::focus { outline: none; }
+.input-wrap input:focus { outline: none; }
 .input-wrap input::selection { background: rgba(244, 167, 29, 0.22); }
 
 /* Eye Toggle Native */
