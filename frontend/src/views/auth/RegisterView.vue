@@ -47,7 +47,7 @@ const handleRegister = async () => {
     message.value = res.data.message;
     console.log("REGISTER SUCCESS:", res.data);
 
-    router.push("/login");
+    router.push({ name: 'verify-email', query: { email: email.value } });
   } catch (err) {
     message.value = "Register failed";
     console.log(err);

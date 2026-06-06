@@ -19,7 +19,15 @@ export class UsersService {
   async findByEmail(email: string) {
     return this.userRepo.findOne({
       where: { email },
-      select: ['id', 'email', 'passwordHash', 'role', 'username'],
+      select: [
+        'id',
+        'email',
+        'passwordHash',
+        'role',
+        'username',
+        'emailVerifiedAt',
+        'isEmailVerified',
+      ],
     });
   }
 
@@ -32,7 +40,13 @@ export class UsersService {
   async updateUser(id: string, data: Partial<User> & { password?: string }) {
     const user = await this.findById(id);
 
-    const allowed = ['username', 'email', 'phoneNumber', 'profilePicture', 'status'];
+    const allowed = [
+      'username',
+      'email',
+      'phoneNumber',
+      'profilePicture',
+      'status',
+    ];
 
     for (const key of allowed) {
       if (data[key] !== undefined) {
@@ -48,15 +62,53 @@ export class UsersService {
     return this.userRepo.save(user); // ← return is outside the loop
   }
 
+  async updatePassword(id: string, passwordHash: string) {
+    const user = await this.findById(id);
+    user.passwordHash = passwordHash;
+    return this.userRepo.save(user);
+  }
+
+  async updateLastLogin(id: string) {
+    await this.userRepo.update(id, { lastLoginAt: new Date() });
+  }
+
+  async verifyEmail(email: string) {
+    const user = await this.userRepo.findOne({ where: { email } });
+    if (!user) throw new NotFoundException('User not found');
+    user.isEmailVerified = true;
+    user.emailVerifiedAt = new Date();
+    return this.userRepo.save(user);
+  }
+
   async findAll() {
     return this.userRepo.find({
-      select: ['id', 'email', 'username', 'phoneNumber', 'profilePicture', 'role', 'status', 'emailVerifiedAt', 'lastLoginAt'],
+      select: [
+        'id',
+        'email',
+        'username',
+        'phoneNumber',
+        'profilePicture',
+        'role',
+        'status',
+        'isEmailVerified',
+        'emailVerifiedAt',
+        'lastLoginAt',
+      ],
     });
   }
 
   async findAllForAdmin() {
     return this.userRepo.find({
-      select: ['id', 'email', 'username', 'role', 'status', 'createdAt'],
+      select: [
+        'id',
+        'email',
+        'username',
+        'role',
+        'status',
+        'isEmailVerified',
+        'emailVerifiedAt',
+        'createdAt',
+      ],
       order: { createdAt: 'DESC' },
     });
   }

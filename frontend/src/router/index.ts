@@ -29,7 +29,19 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/forgot-password",
     name: "forgot-password",
-    component: () => import("../views/auth/ForgotPassword.vue"),
+    component: () => import("../views/auth/ForgotPasswordView.vue"),
+    meta: { guestOnly: true },
+  },
+  {
+    path: "/verify-otp",
+    name: "verify-otp",
+    component: () => import("../views/auth/VerifyOtpView.vue"),
+    meta: { guestOnly: true },
+  },
+  {
+    path: "/reset-password",
+    name: "reset-password",
+    component: () => import("../views/auth/ResetPasswordView.vue"),
     meta: { guestOnly: true },
   },
   {

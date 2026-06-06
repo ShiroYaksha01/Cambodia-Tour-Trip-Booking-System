@@ -29,10 +29,10 @@
         Verify Your Email
       </h2>
       <p class="text-[15px] text-gray-500 mb-8 leading-relaxed">
-        Enter the 6-digit verification code sent to your email address.
+        Enter the 6-digit verification code sent to {{ email ? email : 'your email address' }}.
       </p>
 
-      <div class="flex gap-3 justify-center mb-8" @paste="handlePaste">
+      <div class="flex gap-3 justify-center mb-6" @paste="handlePaste">
         <input
           v-for="(digit, index) in code"
           :key="index"
@@ -47,12 +47,15 @@
         />
       </div>
 
+      <p v-if="errorMessage" class="text-sm text-red-500 mb-4">{{ errorMessage }}</p>
+      <p v-if="successMessage" class="text-sm text-green-600 mb-4">{{ successMessage }}</p>
+
       <button
         class="w-full py-3.5 bg-black text-white rounded-md text-base font-medium transition-colors duration-200 hover:bg-gray-900 disabled:bg-gray-300 disabled:cursor-not-allowed mb-6"
         @click="submitCode"
-        :disabled="!isCodeComplete"
+        :disabled="!isCodeComplete || isLoading"
       >
-        Verify
+        {{ isLoading ? 'Verifying...' : 'Verify' }}
       </button>
 
       <p class="text-sm text-gray-500 m-0">
@@ -70,10 +73,19 @@
 
 <script setup>
 import { ref, reactive, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { verifyEmail, resendVerificationEmail } from "../../services/api";
+
+const route = useRoute();
+const router = useRouter();
 
 // State
+const email = route.query.email || "";
 const code = reactive(["", "", "", "", "", ""]);
 const inputRefs = ref([]);
+const errorMessage = ref("");
+const successMessage = ref("");
+const isLoading = ref(false);
 
 // Check if all 6 digits are entered
 const isCodeComplete = computed(() => {
@@ -126,14 +138,47 @@ const handlePaste = (event) => {
 };
 
 // Form submissions
-const submitCode = () => {
+const submitCode = async () => {
+  errorMessage.value = "";
+  successMessage.value = "";
   const verificationCode = code.join("");
-  console.log("Sending verification code to server:", verificationCode);
-  // Add your API call to verify the email here
+  
+  if (!email) {
+    errorMessage.value = "Email is missing. Please try registering again.";
+    return;
+  }
+
+  isLoading.value = true;
+  try {
+    await verifyEmail(email, verificationCode);
+    successMessage.value = "Email verified successfully! Redirecting...";
+    setTimeout(() => {
+      router.push("/login");
+    }, 1500);
+  } catch (err) {
+    errorMessage.value = err.response?.data?.message || "Verification failed. Invalid or expired OTP.";
+  } finally {
+    isLoading.value = false;
+  }
 };
 
-const resendCode = () => {
-  console.log("Triggering resend API...");
-  // Add your API call to resend the code here
+const resendCode = async () => {
+  errorMessage.value = "";
+  successMessage.value = "";
+
+  if (!email) {
+    errorMessage.value = "Email is missing.";
+    return;
+  }
+
+  isLoading.value = true;
+  try {
+    const res = await resendVerificationEmail(email);
+    successMessage.value = res.data?.message || "A new code has been sent to your email.";
+  } catch (err) {
+    errorMessage.value = err.response?.data?.message || "Failed to resend code.";
+  } finally {
+    isLoading.value = false;
+  }
 };
 </script>

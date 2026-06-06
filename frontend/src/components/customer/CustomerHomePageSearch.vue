@@ -205,12 +205,25 @@ export default defineComponent({
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(16, 51, 61, 0.1);
   border: 1px solid rgba(16, 51, 61, 0.05);
+  transition: all 0.2s ease;
+}
+
+:global(.dark) .search-container {
+  background: #1f2937;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .search-tabs {
   display: flex;
   background: #f8fbf8;
   border-bottom: 1px solid rgba(16, 51, 61, 0.08);
+  transition: all 0.2s ease;
+}
+
+:global(.dark) .search-tabs {
+  background: #111827;
+  border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
 .tab-btn {
@@ -228,10 +241,20 @@ export default defineComponent({
   gap: 8px;
 }
 
+:global(.dark) .tab-btn {
+  color: #9ca3af;
+}
+
 .tab-btn.active {
   background: #fff;
   color: #006566;
   box-shadow: 0 -3px 0 #006566 inset;
+}
+
+:global(.dark) .tab-btn.active {
+  background: #1f2937;
+  color: #34d399;
+  box-shadow: 0 -3px 0 #34d399 inset;
 }
 
 .search-panel {
@@ -264,6 +287,10 @@ export default defineComponent({
   font-weight: 700;
 }
 
+:global(.dark) .search-form span {
+  color: #d1d5db;
+}
+
 .search-form input,
 .search-form select {
   width: 100%;
@@ -275,6 +302,28 @@ export default defineComponent({
   padding: 0 12px;
   font: inherit;
   box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+:global(.dark) .search-form input,
+:global(.dark) .search-form select {
+  background: #374151;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #f3f4f6;
+}
+
+:global(.dark) .search-form input::placeholder {
+  color: #9ca3af;
+}
+
+.search-form input:focus,
+.search-form select:focus {
+  border-color: #006566;
+}
+
+:global(.dark) .search-form input:focus,
+:global(.dark) .search-form select:focus {
+  border-color: #34d399;
 }
 
 .search-submit-btn {
@@ -286,10 +335,19 @@ export default defineComponent({
   color: white;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .search-submit-btn:hover {
   background: #004d4d;
+}
+
+:global(.dark) .search-submit-btn {
+  background: #059669;
+}
+
+:global(.dark) .search-submit-btn:hover {
+  background: #047857;
 }
 
 @media (max-width: 768px) {

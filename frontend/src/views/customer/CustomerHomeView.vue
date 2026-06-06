@@ -111,7 +111,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="bg-gray-50 min-h-screen">
+  <div class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-200">
     <!-- Navbar -->
     <CustomerNavbar />
 
@@ -177,22 +177,23 @@ onMounted(async () => {
           class="mb-12 flex flex-col gap-4 md:flex-row md:items-end md:justify-between"
         >
           <div>
-            <p class="text-sm font-semibold uppercase tracking-wide text-emerald-600">
+            <p class="text-sm font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
               Popular Packages
             </p>
 
-            <h2 class="mt-2 text-3xl md:text-4xl font-bold text-gray-900">
+            <h2 class="mt-2 text-3xl md:text-4xl font-bold text-gray-900 dark:text-white transition-colors duration-200">
               Featured Cambodia Tours
             </h2>
 
-            <p class="mt-4 max-w-2xl text-gray-600">
+            <p class="mt-4 max-w-2xl text-gray-600 dark:text-gray-300 transition-colors duration-200">
               Discover handpicked travel experiences designed for adventure,
               relaxation, and cultural exploration.
             </p>
           </div>
 
           <button
-            class="w-fit rounded-xl border border-emerald-600 px-5 py-3 font-medium text-emerald-600 transition hover:bg-emerald-600 hover:text-white"
+            @click="router.push({ name: 'customer-explore' })"
+            class="w-fit rounded-xl border border-emerald-600 dark:border-emerald-500 px-5 py-3 font-medium text-emerald-600 dark:text-emerald-500 transition hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-500 dark:hover:text-gray-900"
           >
             View All Tours
           </button>
@@ -212,9 +213,9 @@ onMounted(async () => {
             class="cursor-pointer"
           />
         </div>
-        <div v-else class="text-center py-20 bg-white rounded-2xl border border-gray-100">
-          <p class="text-gray-500 text-lg">No services found matching your criteria.</p>
-          <button @click="displayedServices = [...allServices]" class="mt-4 text-emerald-600 font-semibold underline">
+        <div v-else class="text-center py-20 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 transition-colors duration-200">
+          <p class="text-gray-500 dark:text-gray-400 text-lg">No services found matching your criteria.</p>
+          <button @click="displayedServices = [...allServices]" class="mt-4 text-emerald-600 dark:text-emerald-400 font-semibold underline">
             Clear all filters
           </button>
         </div>
@@ -222,18 +223,18 @@ onMounted(async () => {
     </section>
 
     <!-- Why Choose Us -->
-    <section class="bg-white py-20 px-4">
+    <section class="bg-white dark:bg-gray-800 py-20 px-4 transition-colors duration-200">
       <div class="max-w-7xl mx-auto">
         <div class="text-center max-w-3xl mx-auto">
-          <p class="text-sm font-semibold uppercase tracking-wide text-emerald-600">
+          <p class="text-sm font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
             Why Choose Us
           </p>
 
-          <h2 class="mt-3 text-3xl md:text-4xl font-bold text-gray-900">
+          <h2 class="mt-3 text-3xl md:text-4xl font-bold text-gray-900 dark:text-white transition-colors duration-200">
             Travel With Confidence
           </h2>
 
-          <p class="mt-5 text-gray-600 leading-relaxed">
+          <p class="mt-5 text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-200">
             We help travelers discover the beauty of Cambodia with secure
             booking, trusted providers, and unforgettable travel experiences.
           </p>
@@ -241,73 +242,73 @@ onMounted(async () => {
 
         <div class="mt-14 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           <div
-            class="rounded-2xl border border-gray-100 bg-gray-50 p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+            class="rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:hover:shadow-gray-900/50"
           >
             <div
-              class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-2xl"
+              class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 dark:bg-emerald-900 text-2xl"
             >
               ✈️
             </div>
 
-            <h3 class="text-xl font-semibold text-gray-900">
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white transition-colors duration-200">
               Easy Booking
             </h3>
 
-            <p class="mt-3 text-gray-600 leading-relaxed">
+            <p class="mt-3 text-gray-600 dark:text-gray-400 leading-relaxed transition-colors duration-200">
               Book your favorite tours quickly with a smooth and secure process.
             </p>
           </div>
 
           <div
-            class="rounded-2xl border border-gray-100 bg-gray-50 p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+            class="rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:hover:shadow-gray-900/50"
           >
             <div
-              class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-100 text-2xl"
+              class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-100 dark:bg-orange-900 text-2xl"
             >
               🏝️
             </div>
 
-            <h3 class="text-xl font-semibold text-gray-900">
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white transition-colors duration-200">
               Best Destinations
             </h3>
 
-            <p class="mt-3 text-gray-600 leading-relaxed">
+            <p class="mt-3 text-gray-600 dark:text-gray-400 leading-relaxed transition-colors duration-200">
               Explore Cambodia's top islands, temples, and cultural attractions.
             </p>
           </div>
 
           <div
-            class="rounded-2xl border border-gray-100 bg-gray-50 p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+            class="rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:hover:shadow-gray-900/50"
           >
             <div
-              class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 text-2xl"
+              class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 dark:bg-blue-900 text-2xl"
             >
               ⭐
             </div>
 
-            <h3 class="text-xl font-semibold text-gray-900">
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white transition-colors duration-200">
               Trusted Reviews
             </h3>
 
-            <p class="mt-3 text-gray-600 leading-relaxed">
+            <p class="mt-3 text-gray-600 dark:text-gray-400 leading-relaxed transition-colors duration-200">
               Real traveler reviews help you choose the best experiences.
             </p>
           </div>
 
           <div
-            class="rounded-2xl border border-gray-100 bg-gray-50 p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+            class="rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:hover:shadow-gray-900/50"
           >
             <div
-              class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-pink-100 text-2xl"
+              class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-pink-100 dark:bg-pink-900 text-2xl"
             >
               💬
             </div>
 
-            <h3 class="text-xl font-semibold text-gray-900">
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white transition-colors duration-200">
               24/7 Support
             </h3>
 
-            <p class="mt-3 text-gray-600 leading-relaxed">
+            <p class="mt-3 text-gray-600 dark:text-gray-400 leading-relaxed transition-colors duration-200">
               Our support team is available anytime to help your journey.
             </p>
           </div>

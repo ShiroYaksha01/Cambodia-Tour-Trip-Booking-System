@@ -38,8 +38,8 @@ const handleLogin = async () => {
         router.push("/dashboard");
       }
     }
-  } catch (err) {
-    message.value = "Login failed";
+  } catch (err: any) {
+    message.value = err.response?.data?.message || "Login failed";
     console.log(err);
   }
 };
