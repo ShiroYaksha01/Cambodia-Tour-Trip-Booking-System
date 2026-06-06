@@ -182,7 +182,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, onMounted } from "vue";
+import { getProviderDashboardStats } from "../../services/api";
 
 const props = withDefaults(
   defineProps<{
@@ -192,6 +193,24 @@ const props = withDefaults(
     searchQuery: "",
   },
 );
+
+const stats = ref({
+  avgOccupancy: '...',
+  revpar: '...',
+  lowStockAlerts: '...',
+  khmerNewYear: '...',
+});
+
+onMounted(async () => {
+  try {
+    const res = await getProviderDashboardStats();
+    if (res.data) {
+      stats.value = res.data;
+    }
+  } catch (err) {
+    console.error("Failed to fetch dashboard stats", err);
+  }
+});
 
 type ServiceRow = {
   id: number;
@@ -396,7 +415,18 @@ const categoryData: Record<CategoryKey, CategoryData> = {
   },
 };
 
-const activeCategoryData = computed(() => categoryData[activeCategory.value]);
+const activeCategoryData = computed(() => {
+  const data = categoryData[activeCategory.value];
+  return {
+    ...data,
+    metrics: {
+      ...data.metrics,
+      occupancy: stats.value.avgOccupancy,
+      alerts: stats.value.lowStockAlerts,
+      revenue: stats.value.revpar,
+    }
+  };
+});
 
 const openServiceDetail = (service: ServiceRow) => {
   selectedService.value = service;

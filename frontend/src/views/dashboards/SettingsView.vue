@@ -180,19 +180,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { clearAuthData } from "../../utils/auth";
+import { getProviderProfile, updateProviderProfile } from "../../services/api";
 
 defineProps<{
   searchQuery?: string;
 }>();
 
-const companyName = ref("Angkor Treasures");
-const biography = ref("Curating authentic heritage experiences since 2015...");
+const companyName = ref("");
+const biography = ref("");
 const facebookUrl = ref("fb.com/yourbrand");
 const telegramHandle = ref("@brand_support");
-const officialEmail = ref("ops@heritagecuration.com");
-const phoneNumber = ref("+855 12 345 678");
+const officialEmail = ref("");
+const phoneNumber = ref("");
 const bankAccountMasked = ref("801 234 567");
 const bankName = ref("TREASURE_CORP@ABA");
 const refundRules = ref("");
@@ -202,7 +203,18 @@ const logoPreview = ref("");
 
 const logoInput = ref<HTMLInputElement | null>(null);
 
-// header/profile info provided by ProviderHeader in shell; no local computed needed
+onMounted(async () => {
+  try {
+    const res = await getProviderProfile();
+    const data = res.data;
+    companyName.value = data.companyName || "";
+    biography.value = data.description || "";
+    officialEmail.value = data.user?.email || "";
+    phoneNumber.value = data.user?.phoneNumber || "";
+  } catch (err) {
+    console.error("Failed to fetch provider profile", err);
+  }
+});
 
 function handleLogout() {
   if (confirm("Are you sure you want to log out?")) {
@@ -228,9 +240,19 @@ function handleLogoUpload(event: Event) {
   }
 }
 
-function saveChanges() {
-  // Mock save
-  alert("Settings saved successfully!");
+async function saveChanges() {
+  try {
+    await updateProviderProfile({
+      companyName: companyName.value,
+      description: biography.value,
+      email: officialEmail.value,
+      phoneNumber: phoneNumber.value,
+    });
+    alert("Settings saved successfully!");
+  } catch (err) {
+    console.error("Failed to save changes", err);
+    alert("Error saving settings.");
+  }
 }
 
 function discardChanges() {

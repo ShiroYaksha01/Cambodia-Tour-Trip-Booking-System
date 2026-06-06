@@ -14,13 +14,21 @@
             </div>
           </div>
 
-          <div class="numpad">
-            <div v-for="n in 9" :key="n" class="numpad-btn" @click="addDigit(n.toString())">
-              {{ n }}
+          <div class="alphanumeric-keyboard">
+            <div class="keyboard-row">
+              <div v-for="n in ['1','2','3','4','5','6','7','8','9','0']" :key="n" class="key" @click="addDigit(n)">{{ n }}</div>
             </div>
-            <div class="numpad-btn clear-btn" @click="clearCode">⌫</div>
-            <div class="numpad-btn" @click="addDigit('0')">0</div>
-            <div class="numpad-btn check-btn" @click="verifyCode">✓</div>
+            <div class="keyboard-row">
+              <div v-for="l in ['Q','W','E','R','T','Y','U','I','O','P']" :key="l" class="key" @click="addDigit(l)">{{ l }}</div>
+            </div>
+            <div class="keyboard-row">
+              <div v-for="l in ['A','S','D','F','G','H','J','K','L']" :key="l" class="key" @click="addDigit(l)">{{ l }}</div>
+            </div>
+            <div class="keyboard-row">
+              <div class="key special-key clear-btn" @click="clearCode">⌫</div>
+              <div v-for="l in ['Z','X','C','V','B','N','M']" :key="l" class="key" @click="addDigit(l)">{{ l }}</div>
+              <div class="key special-key check-btn" @click="verifyCode">✓</div>
+            </div>
           </div>
 
           <div class="info-box">
@@ -76,8 +84,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from "vue";
-import { getProviderBookings } from "../../services/api";
+import { computed, ref, onMounted, onUnmounted } from "vue";
+import { getProviderBookings, checkInBooking } from "../../services/api";
 
 const props = withDefaults(
   defineProps<{
@@ -162,7 +170,36 @@ onMounted(async () => {
   } finally {
     isLoading.value = false;
   }
+  window.addEventListener("keydown", handleGlobalKeydown);
 });
+
+onUnmounted(() => {
+  window.removeEventListener("keydown", handleGlobalKeydown);
+});
+
+function handleGlobalKeydown(e: KeyboardEvent) {
+  // Ignore if user is typing in an input or textarea
+  if (
+    e.target instanceof HTMLInputElement ||
+    e.target instanceof HTMLTextAreaElement
+  ) {
+    return;
+  }
+
+  const key = e.key.toUpperCase();
+
+  if (/^[A-Z0-9]$/.test(key)) {
+    addDigit(key);
+  } else if (e.key === "Backspace") {
+    if (bookingCode.value.length > 0) {
+      bookingCode.value = bookingCode.value.slice(0, -1);
+    }
+  } else if (e.key === "Enter") {
+    verifyCode();
+  } else if (e.key === "Escape") {
+    clearCode();
+  }
+}
 
 const filteredGuests = computed(() => {
   if (!props.searchQuery.trim()) {
@@ -203,13 +240,38 @@ function verifyCode() {
   );
 
   if (match) {
-    verificationMessage.value = {
-      type: "success",
-      icon: "✓",
-      title: "Guest Successfully Verified",
-      description: `${match.name} • ${match.package} ${match.bookingCode ? "• #" + match.bookingCode : ""}`,
-      undoBtn: true,
-    };
+    if (match.checked) {
+      verificationMessage.value = {
+        type: "success",
+        icon: "✓",
+        title: "Guest Already Verified",
+        description: `${match.name} • ${match.package} • #${match.bookingCode}`,
+      };
+      return;
+    }
+
+    // Call check-in API
+    checkInBooking(match.id)
+      .then(() => {
+        match.checked = true;
+        match.status = "Completed";
+        match.statusClass = "checked-in";
+        verificationMessage.value = {
+          type: "success",
+          icon: "✓",
+          title: "Guest Successfully Verified",
+          description: `${match.name} • ${match.package} • #${match.bookingCode}`,
+          undoBtn: false,
+        };
+      })
+      .catch((err: any) => {
+        verificationMessage.value = {
+          type: "error",
+          icon: "✕",
+          title: "Verification Failed",
+          description: err.response?.data?.message || "Could not complete check-in.",
+        };
+      });
   } else {
     verificationMessage.value = {
       type: "error",
@@ -339,8 +401,8 @@ function undoVerification() {
 }
 
 .code-display {
-  display: grid;
-  grid-template-columns: repeat(6, 60px);
+  display: flex;
+  justify-content: center;
   gap: 12px;
 }
 
@@ -357,30 +419,42 @@ function undoVerification() {
   height: 60px;
 }
 
-.numpad {
-  display: grid;
-  grid-template-columns: repeat(3, 132px);
-  gap: 12px;
+.alphanumeric-keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   margin-top: 12px;
 }
 
-.numpad-btn {
+.keyboard-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.key {
   display: grid;
   place-items: center;
   background: #f5f5f5;
   border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   transition: all 0.2s;
-  width: 132px;
-  height: 60px;
+  width: 40px;
+  height: 50px;
   padding: 0;
+  color: #1a1a1a;
 }
 
-.numpad-btn:hover {
+.key:hover {
   background: #efefef;
+  border-color: #ccc;
+}
+
+.special-key {
+  width: 60px;
 }
 
 .clear-btn {
