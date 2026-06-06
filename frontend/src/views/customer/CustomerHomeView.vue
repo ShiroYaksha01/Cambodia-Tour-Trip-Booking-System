@@ -192,6 +192,7 @@ onMounted(async () => {
           </div>
 
           <button
+            @click="router.push({ name: 'customer-explore' })"
             class="w-fit rounded-xl border border-emerald-600 px-5 py-3 font-medium text-emerald-600 transition hover:bg-emerald-600 hover:text-white"
           >
             View All Tours

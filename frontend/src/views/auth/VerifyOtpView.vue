@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { verifyOtp } from '../../services/api'
+import { verifyOtp, forgotPassword } from '../../services/api'
 
 const router = useRouter()
 const route = useRoute()
@@ -9,9 +9,34 @@ const email = route.query.email as string
 const code = reactive(["", "", "", "", "", ""])
 const codeRefs = ref<HTMLInputElement[]>([])
 const codeError = ref('')
+const successMessage = ref('')
 const loading = ref(false)
+const resendLoading = ref(false)
+
+const countdown = ref(60)
+let timerInterval: any = null
 
 const isCodeComplete = computed(() => code.every(d => d !== ""))
+
+const startTimer = () => {
+  countdown.value = 60
+  clearInterval(timerInterval)
+  timerInterval = setInterval(() => {
+    if (countdown.value > 0) {
+      countdown.value--
+    } else {
+      clearInterval(timerInterval)
+    }
+  }, 1000)
+}
+
+onMounted(() => {
+  startTimer()
+})
+
+onUnmounted(() => {
+  clearInterval(timerInterval)
+})
 
 const handleCodeInput = (index: number, event: Event) => {
   const target = event.target as HTMLInputElement
@@ -26,6 +51,7 @@ const handleCodeInput = (index: number, event: Event) => {
 
 const handleVerifyCode = async () => {
   codeError.value = ''
+  successMessage.value = ''
   if (!isCodeComplete.value) {
     codeError.value = 'Please enter the complete 6-digit code.'
     return
@@ -39,6 +65,24 @@ const handleVerifyCode = async () => {
     codeError.value = 'Invalid or expired OTP.'
   } finally {
     loading.value = false
+  }
+}
+
+const handleResendCode = async () => {
+  if (countdown.value > 0) return
+  
+  codeError.value = ''
+  successMessage.value = ''
+  resendLoading.value = true
+  
+  try {
+    await forgotPassword(email)
+    successMessage.value = 'A new code has been sent to your email.'
+    startTimer()
+  } catch (error: any) {
+    codeError.value = error.response?.data?.message || 'Failed to resend code. Please try again.'
+  } finally {
+    resendLoading.value = false
   }
 }
 </script>
@@ -60,7 +104,7 @@ const handleVerifyCode = async () => {
         <div class="form-card">
           <header class="form-header">
             <h2>Check your email</h2>
-            <p>We sent a 6-digit code to {{ email }}.</p>
+            <p>We sent a 6-digit code to {{ email }}. The code expires in 10 minutes.</p>
           </header>
           
           <form class="auth-form" @submit.prevent="handleVerifyCode">
@@ -74,10 +118,31 @@ const handleVerifyCode = async () => {
                 @input="handleCodeInput(index, $event)"
               />
             </div>
-            <p v-if="codeError" class="error-text">{{ codeError }}</p>
+            
+            <div class="message-container">
+              <p v-if="codeError" class="error-text">{{ codeError }}</p>
+              <p v-if="successMessage" class="success-text" style="color: #2e7d32; font-size: 14px; margin: 4px 0 0; text-align: center;">{{ successMessage }}</p>
+            </div>
+            
             <button class="primary-button" type="submit" :disabled="!isCodeComplete || loading">
               {{ loading ? 'Verifying...' : 'Verify Code →' }}
             </button>
+            
+            <div class="resend-container" style="text-align: center; margin-top: 16px;">
+              <p class="resend-text" style="color: #69757a; font-size: 14px; margin: 0;">
+                Didn't receive the code? 
+                <button 
+                  type="button" 
+                  class="resend-btn" 
+                  @click="handleResendCode" 
+                  :disabled="countdown > 0 || resendLoading"
+                  style="background: none; border: none; padding: 0; margin-left: 4px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: underline;"
+                  :style="{ color: countdown > 0 ? '#999' : '#0a4b47' }"
+                >
+                  {{ resendLoading ? 'Sending...' : (countdown > 0 ? `Resend in ${countdown}s` : 'Resend Code') }}
+                </button>
+              </p>
+            </div>
           </form>
         </div>
       </div>

@@ -275,4 +275,7 @@ export const forgotPassword = (email: string) => api.post('/auth/forgot-password
 export const verifyOtp = (email: string, otp: string) => api.post('/auth/verify-otp', { email, otp });
 export const resetPassword = (email: string, otp: string, newPassword: string) => api.post('/auth/reset-password', { email, otp, newPassword });
 
+export const verifyEmail = (email: string, otp: string) => api.post('/auth/verify-email', { email, otp });
+export const resendVerificationEmail = (email: string) => api.post('/auth/resend-verification', { email });
+
 export default api;

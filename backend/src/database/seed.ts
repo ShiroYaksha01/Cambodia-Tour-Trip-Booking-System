@@ -36,6 +36,7 @@ async function upsertUser(
     existingUser.passwordHash = passwordHash;
     existingUser.phoneNumber = input.phoneNumber ?? existingUser.phoneNumber;
     existingUser.status = AccountStatus.ACTIVE;
+    existingUser.isEmailVerified = true;
     existingUser.emailVerifiedAt = existingUser.emailVerifiedAt ?? new Date();
     return userRepository.save(existingUser);
   }
@@ -48,6 +49,7 @@ async function upsertUser(
       phoneNumber: input.phoneNumber,
       passwordHash,
       status: AccountStatus.ACTIVE,
+      isEmailVerified: true,
       emailVerifiedAt: new Date(),
     }),
   );

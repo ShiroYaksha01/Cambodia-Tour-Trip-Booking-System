@@ -9,6 +9,7 @@ import { Repository, LessThan } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
 import { PasswordReset } from './entities/password-reset.entity';
+import { EmailVerification } from './entities/email-verification.entity';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +20,8 @@ export class AuthService {
     private jwtService: JwtService,
     @InjectRepository(PasswordReset)
     private passwordResetRepository: Repository<PasswordReset>,
+    @InjectRepository(EmailVerification)
+    private emailVerificationRepository: Repository<EmailVerification>,
     private configService: ConfigService,
   ) {
     const user = this.configService.get<string>('EMAIL_USER');
@@ -50,7 +53,7 @@ export class AuthService {
 
     const hash = await bcrypt.hash(password, 10);
 
-    return this.usersService.create({
+    const user = await this.usersService.create({
       username,
       email,
       passwordHash: hash,
@@ -58,6 +61,29 @@ export class AuthService {
       profilePicture,
       role: (role ?? 'customer') as any,
     });
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 10);
+
+    await this.emailVerificationRepository.save({
+      email,
+      otp,
+      expiresAt,
+    });
+
+    try {
+      await this.transporter.sendMail({
+        from: this.configService.get<string>('EMAIL_USER'),
+        to: email,
+        subject: 'Welcome! Verify your email',
+        text: `Your OTP for email verification is: ${otp}. It expires in 10 minutes.`,
+      });
+    } catch (emailError) {
+      console.error('Email sending failed during registration:', emailError);
+    }
+
+    return user;
   }
 
   async login(email: string, password: string) {
@@ -65,6 +91,19 @@ export class AuthService {
 
     if (!user) {
       throw new BadRequestException('Invalid credentials');
+    }
+
+    const isVerified = user.isEmailVerified || user.emailVerifiedAt;
+
+    if (!isVerified) {
+      throw new BadRequestException(
+        'Please verify your email before logging in',
+      );
+    }
+
+    // Sync emailVerifiedAt if it's null but isEmailVerified is true
+    if (user.isEmailVerified && !user.emailVerifiedAt) {
+      await this.usersService.verifyEmail(email);
     }
 
     const match = await bcrypt.compare(password, user.passwordHash);
@@ -78,6 +117,9 @@ export class AuthService {
       role: user.role,
     });
 
+    // Update last login timestamp
+    await this.usersService.updateLastLogin(user.id);
+
     return {
       success: true,
       user: {
@@ -88,6 +130,57 @@ export class AuthService {
       },
       token,
     };
+  }
+
+  async resendVerificationOtp(email: string) {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) throw new BadRequestException('User not found');
+    if (user.isEmailVerified || user.emailVerifiedAt)
+      return { message: 'Email is already verified' };
+
+    // Invalidate old OTPs
+    await this.emailVerificationRepository.update(
+      { email, isUsed: false },
+      { isUsed: true },
+    );
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 10);
+
+    await this.emailVerificationRepository.save({
+      email,
+      otp,
+      expiresAt,
+    });
+
+    try {
+      await this.transporter.sendMail({
+        from: this.configService.get<string>('EMAIL_USER'),
+        to: email,
+        subject: 'Verify your email',
+        text: `Your new OTP for email verification is: ${otp}. It expires in 10 minutes.`,
+      });
+    } catch (emailError) {
+      console.error('Email resend failed:', emailError);
+    }
+
+    return { success: true };
+  }
+
+  async verifyRegistrationEmail(email: string, otp: string) {
+    const verificationRecord = await this.emailVerificationRepository.findOne({
+      where: { email, otp, isUsed: false },
+    });
+
+    if (!verificationRecord || verificationRecord.expiresAt < new Date()) {
+      throw new BadRequestException('Invalid or expired OTP');
+    }
+
+    await this.emailVerificationRepository.update({ id: verificationRecord.id }, { isUsed: true });
+    await this.usersService.verifyEmail(email);
+
+    return { success: true };
   }
 
   async forgotPassword(email: string) {
