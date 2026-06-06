@@ -6,8 +6,10 @@ import CustomerFooter from "../../components/customer/CustomerFooter.vue";
 import LogoutButton from "../../components/LogoutButton.vue";
 import api from "../../services/api";
 import { resolveImageUrl } from "../../utils/api";
+import { useTheme } from "../../composables/useTheme";
 
 const router = useRouter();
+const { isDarkMode, toggleDarkMode } = useTheme();
 
 interface ServiceInfo {
   id?: string;
@@ -47,7 +49,6 @@ const activeTab = ref<
 const bookingFilter = ref<"all" | "pending" | "confirmed" | "cancelled">("all");
 const bookingSearch = ref("");
 
-const darkMode = ref(localStorage.getItem("customerDarkMode") === "true");
 const profileImage = ref(localStorage.getItem("customerProfileImage") || "");
 const language = ref(localStorage.getItem("customerLanguage") || "English");
 const feedbackMessage = ref("");
@@ -76,10 +77,6 @@ const user = ref({
 
 const editForm = ref({ ...user.value });
 const bookings = ref<Booking[]>([]);
-
-watch(darkMode, (value) => {
-  localStorage.setItem("customerDarkMode", String(value));
-});
 
 watch(language, (value) => {
   localStorage.setItem("customerLanguage", value);
@@ -492,7 +489,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="profile-page" :class="{ dark: darkMode }">
+  <div class="profile-page" :class="{ dark: isDarkMode }">
     <CustomerNavbar />
 
     <main class="profile-container">
@@ -542,8 +539,8 @@ onMounted(() => {
         </div>
 
         <div class="profile-actions">
-          <button class="dark-btn" @click="darkMode = !darkMode">
-            {{ darkMode ? "Light Mode" : "Dark Mode" }}
+          <button class="dark-btn" @click="toggleDarkMode">
+            {{ isDarkMode ? "Light Mode" : "Dark Mode" }}
           </button>
 
           <button class="edit-btn" @click="scrollToSettings">
@@ -1013,7 +1010,7 @@ onMounted(() => {
 
                     <div class="form-group">
                       <label>Theme</label>
-                      <select v-model="darkMode">
+                      <select v-model="isDarkMode">
                         <option :value="false">Light Mode</option>
                         <option :value="true">Dark Mode</option>
                       </select>
