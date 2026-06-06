@@ -18,3 +18,6 @@ Thumbs.db
 
 # Documentation
 INVENTORY_API_DOCS.md
+
+# Supabase
+supabase/.temp/

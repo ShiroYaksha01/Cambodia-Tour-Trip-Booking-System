@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, watch, onBeforeUnmount } from 'vue'
+import { ref, watch, onBeforeUnmount, computed } from 'vue'
 import { resolveImageUrl } from '../../utils/api'
+import { uploadImage } from '../../services/api'
 
 const props = defineProps<{
   show: boolean
@@ -9,18 +10,26 @@ const props = defineProps<{
 
 const emit = defineEmits(['close', 'save'])
 
+const provinces = [
+  "Banteay Meanchey", "Battambang", "Kampong Cham", "Kampong Chhnang", "Kampong Speu",
+  "Kampong Thom", "Kampot", "Kandal", "Kep", "Koh Kong", "Kratie", "Mondulkiri",
+  "Oddar Meanchey", "Pailin", "Phnom Penh", "Preah Vihear", "Preah Sihanouk",
+  "Prey Veng", "Pursat", "Ratanakiri", "Siem Reap", "Stung Treng", "Svay Rieng",
+  "Takeo", "Tboung Khmum",
+]
+
 const defaultForm = () => ({
   title: '',
   description: '',
   price: 0,
   serviceType: 'tour',
   isActive: true,
+  generateInventory: true,
   image: '',
   destinations: [],
   destination: '',
   location: '',
   duration: '',
-  // Inventory
   totalCapacity: 10,
   // Tour
   numDays: 1,
@@ -53,47 +62,126 @@ let currentObjectUrl: string | null = null
 const selectedFile = ref<File | null>(null)
 const isUploading = ref(false)
 
+const minDateTime = computed(() => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+});
+
+// UI-only date strings for DD/MM/YYYY display
+const uiTravelDate = ref('')
+const uiEndDate = ref('')
+
+// Helpers to convert between ISO (YYYY-MM-DD) and UI (DD/MM/YYYY)
+function isoToUi(iso: string): string {
+  if (!iso) return ''
+  const parts = iso.split('T')[0].split('-')
+  if (parts.length !== 3) return iso
+  return `${parts[2]}/${parts[1]}/${parts[0]}`
+}
+
+function uiToIso(ui: string): string {
+  if (!ui) return ''
+  const parts = ui.split('/')
+  if (parts.length !== 3) return ui
+  const d = parts[0].padStart(2, '0')
+  const m = parts[1].padStart(2, '0')
+  const y = parts[2]
+  return `${y}-${m}-${d}`
+}
+
 watch(() => props.service, (newVal) => {
   if (newVal) {
-    // Flatten metadata for the form
     const metadata = newVal.tourPackage || newVal.accommodation || newVal.transportation || {}
     form.value = { 
       ...defaultForm(),
       ...newVal,
       image: newVal.coverImage || '',
       ...metadata,
-      // Handle Date objects from backend
-      travelDate: newVal.tourPackage?.travelDate ? new Date(newVal.tourPackage.travelDate).toISOString().split('T')[0] : '',
-      endDate: newVal.tourPackage?.endDate ? new Date(newVal.tourPackage.endDate).toISOString().split('T')[0] : '',
-      departureTime: newVal.transportation?.departureTime ? new Date(newVal.transportation.departureTime).toISOString().slice(0, 16) : '',
-      arrivalTime: newVal.transportation?.arrivalTime ? new Date(newVal.transportation.arrivalTime).toISOString().slice(0, 16) : '',
       totalCapacity: newVal.inventory?.totalCapacity || 10,
     }
+    // Set UI dates
+    uiTravelDate.value = isoToUi(newVal.tourPackage?.travelDate || '')
+    uiEndDate.value = isoToUi(newVal.tourPackage?.endDate || '')
     selectedFile.value = null
   } else {
     form.value = defaultForm()
+    uiTravelDate.value = ''
+    uiEndDate.value = ''
     selectedFile.value = null
   }
 }, { immediate: true })
-
-import { uploadImage } from '../../services/api'
 
 async function handleSave() {
   try {
     isUploading.value = true
     
-    // If we have a new file selected, upload it first
     if (selectedFile.value) {
       const res = await uploadImage(selectedFile.value)
       if (res && res.url) {
         form.value.image = res.url
       }
     }
+
+    const travelDateIso = uiToIso(uiTravelDate.value)
+    const endDateIso = uiToIso(uiEndDate.value)
+
+    // Construct a clean payload
+    const payload: any = {
+      title: form.value.title,
+      description: form.value.description,
+      price: Number(form.value.price) || 0,
+      serviceType: form.value.serviceType,
+      isActive: form.value.isActive,
+      image: form.value.image,
+      location: form.value.location,
+      duration: form.value.duration,
+      totalCapacity: Number(form.value.totalCapacity) || 1,
+    }
+
+    // generateInventory is only for creation
+    if (!props.service) {
+      payload.generateInventory = form.value.generateInventory
+    }
+
+    if (form.value.serviceType === 'tour') {
+      if (travelDateIso) payload.travelDate = travelDateIso
+      if (endDateIso) payload.endDate = endDateIso
+      payload.numDays = Number(form.value.numDays) || 1
+      payload.maxPeople = Number(form.value.maxPeople) || 1
+      payload.departurePoint = form.value.departurePoint
+      // destination is required
+      payload.destination = form.value.destination || form.value.destinations.join(', ') || form.value.location
+      payload.includesAccommodation = form.value.includesAccommodation
+      payload.includesTransportation = form.value.includesTransportation
+      payload.includesMeals = form.value.includesMeals
+    } else if (form.value.serviceType === 'accommodation') {
+      payload.hotelName = form.value.hotelName || form.value.title
+      payload.address = form.value.address
+      payload.starRating = Number(form.value.starRating) || 3
+      payload.roomType = form.value.roomType
+      payload.totalRooms = Number(form.value.totalRooms) || 1
+      if (form.value.checkInTime) payload.checkInTime = form.value.checkInTime
+      if (form.value.checkOutTime) payload.checkOutTime = form.value.checkOutTime
+    } else if (form.value.serviceType === 'transportation') {
+      payload.transportType = form.value.transportType
+      payload.vehicleModel = form.value.vehicleModel
+      payload.totalSeats = Number(form.value.totalSeats) || 1
+      if (form.value.departureTime) payload.departureTime = new Date(form.value.departureTime).toISOString()
+      if (form.value.arrivalTime) payload.arrivalTime = new Date(form.value.arrivalTime).toISOString()
+      payload.pickupNotes = form.value.pickupNotes
+      payload.departurePoint = form.value.departurePoint || form.value.location
+      payload.destination = form.value.destination || form.value.location
+    }
     
-    emit('save', { ...form.value })
+    emit('save', payload)
   } catch (error) {
-    console.error('Failed to upload image:', error)
-    alert('Failed to upload image. Please try again.')
+    console.error('Failed to prepare data:', error)
+    alert('Please check your data and try again.')
   } finally {
     isUploading.value = false
   }
@@ -103,17 +191,14 @@ const handleFileChange = (e: Event) => {
   const input = e.target as HTMLInputElement | null
   const f = input?.files?.[0]
   if (f) {
-    // Check file size (10MB limit)
     if (f.size > 10 * 1024 * 1024) {
       alert('File is too large. Please select an image smaller than 10MB.')
       if (input) input.value = ''
       return
     }
-
     selectedFile.value = f
-    // revoke previous object URL if we created one
     if (currentObjectUrl) {
-      try { URL.revokeObjectURL(currentObjectUrl) } catch (e) { /* ignore */ }
+      try { URL.revokeObjectURL(currentObjectUrl) } catch (e) { }
       currentObjectUrl = null
     }
     const url = URL.createObjectURL(f)
@@ -131,8 +216,7 @@ const addDestination = () => {
 
 onBeforeUnmount(() => {
   if (currentObjectUrl) {
-    try { URL.revokeObjectURL(currentObjectUrl) } catch (e) { /* ignore */ }
-    currentObjectUrl = null
+    try { URL.revokeObjectURL(currentObjectUrl) } catch (e) { }
   }
 })
 </script>
@@ -144,7 +228,7 @@ onBeforeUnmount(() => {
         <header class="modal-header">
           <div>
             <h2>{{ service ? 'Edit Service' : 'Create New Service' }}</h2>
-            <div class="modal-subtitle">Heritage Management - angkorklean</div>
+            <div class="modal-subtitle">Heritage Management — angkorklean</div>
           </div>
           <button class="close-btn" @click="emit('close')">✕</button>
         </header>
@@ -170,140 +254,100 @@ onBeforeUnmount(() => {
               </div>
             </label>
           </div>
-          <!-- Common Fields -->
-          <div class="section-title">Basic Information</div>
+
+          <!-- Section: Basic Information (Common) -->
+          <div class="section-title">Core Listing Details</div>
+          
           <div class="form-group">
-            <label>Service Title</label>
+            <label>Service Title <span class="required">*</span></label>
             <input v-model="form.title" type="text" placeholder="e.g. Angkor Sunrise Premium" required />
           </div>
 
-          <div class="form-group">
-            <label>Description</label>
-            <textarea v-model="form.description" placeholder="Describe your service..." rows="2"></textarea>
-          </div>
-
-          <div class="form-group">
-            <label>Cover Image URL</label>
-            <input v-model="form.image" type="text" placeholder="https://example.com/image.jpg" />
-          </div>
-
           <div class="form-row">
             <div class="form-group">
-              <label>Service Type</label>
-              <select v-model="form.serviceType">
-                <option value="tour">Tour</option>
-                <option value="accommodation">Accommodation</option>
-                <option value="transportation">Transportation</option>
+              <label>Province / Region <span class="required">*</span></label>
+              <select v-model="form.location" required>
+                <option value="" disabled>Select Province</option>
+                <option v-for="province in provinces" :key="province" :value="province">
+                  {{ province }}
+                </option>
               </select>
             </div>
             <div class="form-group">
-              <label>Price ($)</label>
-              <input v-model.number="form.price" type="number" step="0.01" required />
+              <label>Base Price ($) <span class="required">*</span></label>
+              <input v-model.number="form.price" type="number" step="0.01" min="0" required />
             </div>
           </div>
 
-          <div class="destinations-row">
-            <div class="form-group small">
-              <label>Duration</label>
-              <div class="duration-row">
-                <input v-model.number="form.numDays" type="number" min="1" />
-                <select v-model="form.duration">
-                  <option>Hours</option>
-                  <option>Days</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group small">
-              <label>Guide type</label>
-              <select v-model="form.maxPeople">
-                <option :value="10">Private Guided</option>
-                <option :value="20">Group</option>
-              </select>
-            </div>
+          <div class="form-group">
+            <label>Short Description</label>
+            <textarea v-model="form.description" placeholder="A brief summary for customers..." rows="2"></textarea>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label>Location</label>
-              <input v-model="form.location" type="text" placeholder="e.g. Siem Reap" />
-            </div>
-            <div class="form-group">
-              <label>Duration/Note</label>
-              <input v-model="form.duration" type="text" placeholder="e.g. 3 days / Per night" />
-            </div>
+          <div class="form-group">
+            <label>Duration / Pricing Label</label>
+            <input v-model="form.duration" type="text" placeholder="e.g. 3 days / Per night / One way" />
           </div>
 
-          <div class="destinations">
-            <label>Destinations</label>
-            <div class="destinations-list">
-              <span v-for="(d, i) in form.destinations" :key="i" class="destination-pill">{{ d }}</span>
-            </div>
-            <div class="destinations-add">
-              <input v-model="form.destination" placeholder="Add destination..." />
-              <button type="button" @click="addDestination">+ Add</button>
-            </div>
-          </div>
-
-          <!-- Tour Specific -->
+          <!-- Section: Tour Specific -->
           <template v-if="form.serviceType === 'tour'">
-            <div class="section-title">Tour Details</div>
+            <div class="section-title">Tour Specifications</div>
             <div class="form-row">
               <div class="form-group">
-                <label>Number of Days</label>
-                <input v-model.number="form.numDays" type="number" min="1" />
+                <label>Start Date (DD/MM/YYYY) <span class="required">*</span></label>
+                <input v-model="uiTravelDate" type="text" placeholder="DD/MM/YYYY" required />
               </div>
               <div class="form-group">
-                <label>Max People</label>
-                <input v-model.number="form.maxPeople" type="number" min="1" />
+                <label>End Date (DD/MM/YYYY) <span class="required">*</span></label>
+                <input v-model="uiEndDate" type="text" placeholder="DD/MM/YYYY" required />
               </div>
             </div>
+
             <div class="form-row">
               <div class="form-group">
-                <label>Start Date</label>
-                <input v-model="form.travelDate" type="date" />
+                <label>Duration (Days) <span class="required">*</span></label>
+                <input v-model.number="form.numDays" type="number" min="1" required />
               </div>
               <div class="form-group">
-                <label>End Date</label>
-                <input v-model="form.endDate" type="date" />
+                <label>Max People <span class="required">*</span></label>
+                <input v-model.number="form.maxPeople" type="number" min="1" required />
               </div>
             </div>
+
+            <div class="form-group">
+              <label>Primary Destination <span class="required">*</span></label>
+              <input v-model="form.destination" type="text" placeholder="e.g. Angkor Archaeological Park" required />
+            </div>
+
+            <div class="destinations">
+              <label>Itinerary Highlights</label>
+              <div class="destinations-list" v-if="form.destinations.length">
+                <span v-for="(d, i) in form.destinations" :key="i" class="destination-pill">{{ d }}</span>
+              </div>
+              <div class="destinations-add">
+                <input v-model="form.destination_temp" @keyup.enter="addDestination" placeholder="Add specific spot..." />
+                <button type="button" @click="addDestination">+ Add</button>
+              </div>
+            </div>
+
             <div class="form-group">
               <label>Departure Point</label>
-              <input v-model="form.departurePoint" type="text" placeholder="Hotel pickup, Airport, etc." />
+              <input v-model="form.departurePoint" type="text" placeholder="Hotel pickup, Office, etc." />
             </div>
+
             <div class="checkbox-group">
-              <label><input type="checkbox" v-model="form.includesAccommodation" /> Incl. Accommodation</label>
+              <label><input type="checkbox" v-model="form.includesAccommodation" /> Incl. Hotel</label>
               <label><input type="checkbox" v-model="form.includesTransportation" /> Incl. Transport</label>
               <label><input type="checkbox" v-model="form.includesMeals" /> Incl. Meals</label>
             </div>
-
-            <div class="pricing-card">
-              <div class="pricing-row">
-                <div>
-                  <label>Currency</label>
-                  <select>
-                    <option>USD $</option>
-                  </select>
-                </div>
-                <div>
-                  <label>Price per ticket *</label>
-                  <input v-model.number="form.price" type="number" step="0.01" />
-                </div>
-                <div>
-                  <label>Max capacity</label>
-                  <input v-model.number="form.totalCapacity" type="number" />
-                </div>
-              </div>
-            </div>
           </template>
 
-          <!-- Accommodation Specific -->
+          <!-- Section: Accommodation Specific -->
           <template v-if="form.serviceType === 'accommodation'">
-            <div class="section-title">Accommodation Details</div>
+            <div class="section-title">Hotel / Stay Details</div>
             <div class="form-group">
-              <label>Hotel/Property Name</label>
-              <input v-model="form.hotelName" type="text" />
+              <label>Hotel Name <span class="required">*</span></label>
+              <input v-model="form.hotelName" type="text" placeholder="Property name..." required />
             </div>
             <div class="form-row">
               <div class="form-group">
@@ -317,23 +361,27 @@ onBeforeUnmount(() => {
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label>Total Rooms</label>
-                <input v-model.number="form.totalRooms" type="number" min="1" />
+                <label>Total Available Rooms <span class="required">*</span></label>
+                <input v-model.number="form.totalRooms" type="number" min="1" required />
               </div>
               <div class="form-group">
                 <label>Check-in Time</label>
                 <input v-model="form.checkInTime" type="time" />
               </div>
             </div>
+            <div class="form-group">
+              <label>Property Address</label>
+              <input v-model="form.address" type="text" placeholder="Street name, number..." />
+            </div>
           </template>
 
-          <!-- Transportation Specific -->
+          <!-- Section: Transportation Specific -->
           <template v-if="form.serviceType === 'transportation'">
-            <div class="section-title">Transportation Details</div>
+            <div class="section-title">Transfer Details</div>
             <div class="form-row">
               <div class="form-group">
-                <label>Vehicle Type</label>
-                <select v-model="form.transportType">
+                <label>Vehicle Type <span class="required">*</span></label>
+                <select v-model="form.transportType" required>
                   <option value="van">Van</option>
                   <option value="bus">Bus</option>
                   <option value="car">Car</option>
@@ -342,45 +390,48 @@ onBeforeUnmount(() => {
                 </select>
               </div>
               <div class="form-group">
-                <label>Total Seats</label>
-                <input v-model.number="form.totalSeats" type="number" min="1" />
+                <label>Capacity (Seats) <span class="required">*</span></label>
+                <input v-model.number="form.totalSeats" type="number" min="1" required />
               </div>
-            </div>
-            <div class="form-group">
-              <label>Vehicle Model</label>
-              <input v-model="form.vehicleModel" type="text" placeholder="e.g. Ford Transit 2023" />
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label>Departure Time</label>
-                <input v-model="form.departureTime" type="datetime-local" />
+                <label>Departure Location <span class="required">*</span></label>
+                <input v-model="form.departurePoint" type="text" placeholder="Pickup point..." required />
               </div>
               <div class="form-group">
-                <label>Arrival Time (Est.)</label>
-                <input v-model="form.arrivalTime" type="datetime-local" />
+                <label>Destination <span class="required">*</span></label>
+                <input v-model="form.destination" type="text" placeholder="Drop-off point..." required />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Departure Time <span class="required">*</span></label>
+                <input v-model="form.departureTime" type="datetime-local" :min="minDateTime" required />
+              </div>
+              <div class="form-group">
+                <label>Vehicle Model</label>
+                <input v-model="form.vehicleModel" type="text" placeholder="e.g. Ford Transit 2023" />
               </div>
             </div>
           </template>
 
+          <!-- Section: Visibility & Automation -->
+          <div class="section-title">Listing Settings</div>
+          <div class="form-group checkbox" v-if="!service">
+            <label>
+              <input type="checkbox" v-model="form.generateInventory" />
+              <span>Auto-generate inventory for the next 30 days</span>
+            </label>
+          </div>
           <div class="form-group checkbox">
             <label>
               <input type="checkbox" v-model="form.isActive" />
-              Active and visible to customers
+              <span>Active and visible to customers</span>
             </label>
-          </div>
-          <div class="preview-card">
-            <div class="preview-left">
-              <strong>PREVIEW</strong>
-              <p class="preview-title">{{ form.title || 'New service name' }}</p>
-              <p class="preview-sub">Private Guided · {{ form.numDays }} hours</p>
-            </div>
-            <div class="preview-right">
-              <span class="status-pill">{{ form.isActive ? 'Live' : 'Draft' }}</span>
-            </div>
           </div>
 
           <footer class="modal-footer">
-            <a class="duplicate">Duplicate existing ↗</a>
             <div class="footer-actions">
               <button type="button" class="cancel-btn" @click="emit('close')" :disabled="isUploading">Cancel</button>
               <button type="submit" class="create-btn" :disabled="isUploading">
@@ -396,234 +447,48 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-  display: grid;
-  place-items: center;
-  z-index: 1000;
-  padding: 20px;
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px);
+  display: grid; place-items: center; z-index: 1000; padding: 20px;
 }
-
 .modal {
-  background: #fff;
-  width: 100%;
-  max-width: 600px;
-  max-height: 90vh;
-  border-radius: 16px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
-  display: flex;
-  flex-direction: column;
+  background: #fff; width: 100%; max-width: 600px; max-height: 90vh; border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2); display: flex; flex-direction: column;
 }
-
-.modal-subtitle {
-  font-size: 12px;
-  color: #6b7a7a;
-  margin-top: 4px;
-}
-
-.modal-tabs {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.tab {
-  background: transparent;
-  border: 0;
-  padding: 8px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  color: #4d6b6b;
-}
-
-.tab.active {
-  background: #eef7f6;
-  color: #0f6e70;
-  border-bottom: 2px solid #0f6e70;
-}
-
-.upload-area {
-  margin: 12px 0 18px 0;
-}
-
-.upload-drop {
-  display: block;
-  width: 100%;
-  border: 2px dashed #e6e6e6;
-  border-radius: 8px;
-  padding: 28px;
-  text-align: center;
-  cursor: pointer;
-  background: #fbfbfb;
-}
-
-.upload-drop { position: relative; overflow: hidden }
+.modal-header { padding: 16px 24px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+.modal-header h2 { margin: 0; font-size: 1.25rem; color: #173f42; }
+.modal-subtitle { font-size: 12px; color: #6b7a7a; margin-top: 4px; }
+.close-btn { background: transparent; border: 0; font-size: 1.2rem; color: #999; cursor: pointer; }
+.modal-body { padding: 24px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
+.modal-tabs { display: flex; gap: 12px; margin-bottom: 12px; }
+.tab { background: transparent; border: 0; padding: 8px 12px; border-radius: 8px; cursor: pointer; color: #4d6b6b; font-weight: 600; }
+.tab.active { background: #eef7f6; color: #0f6e70; box-shadow: inset 0 -2px 0 #0f6e70; }
+.upload-area { margin-bottom: 8px; }
+.upload-drop { display: block; width: 100%; border: 2px dashed #e6e6e6; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; background: #fbfbfb; position: relative; overflow: hidden; }
 .upload-input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 .upload-preview-wrap { position: relative }
 .upload-preview { width: 100%; height: 160px; object-fit: cover; border-radius: 6px }
-.upload-overlay { position: absolute; left: 12px; bottom: 12px; background: rgba(0,0,0,0.45); color: white; padding: 6px 10px; border-radius: 6px; font-weight:700 }
-
+.upload-overlay { position: absolute; left: 12px; bottom: 12px; background: rgba(0,0,0,0.45); color: white; padding: 6px 10px; border-radius: 6px; font-weight:700; font-size: 12px; }
 .upload-placeholder .upload-icon { font-size: 22px; }
-.upload-text { font-weight: 700; margin-top: 8px; }
-.upload-sub { font-size: 12px; color: #9aa3a3; margin-top: 4px; }
-
+.upload-text { font-weight: 700; margin-top: 8px; font-size: 14px; }
+.upload-sub { font-size: 11px; color: #9aa3a3; margin-top: 4px; }
+.section-title { font-size: 0.7rem; font-weight: 800; color: #0f6e70; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 12px; padding-bottom: 6px; border-bottom: 1px solid #f0f7f7; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group label { font-size: 0.85rem; font-weight: 700; color: #4a5568; }
+.required { color: #e53e3e; margin-left: 2px; }
+.form-group input, .form-group textarea, .form-group select { padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font: inherit; outline: none; transition: border-color 0.2s; }
+.form-group input:focus, .form-group textarea:focus { border-color: #0f6e70; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .destinations-list { display:flex; gap:8px; flex-wrap:wrap; margin:8px 0; }
-.destination-pill { background:#e8f4f0; color:#1b7f6a; padding:6px 10px; border-radius:999px; font-weight:600 }
+.destination-pill { background:#e8f4f0; color:#1b7f6a; padding:6px 10px; border-radius:999px; font-weight:600; font-size: 12px; }
 .destinations-add { display:flex; gap:8px; }
 .destinations-add input { flex:1 }
-
-.pricing-card { background:#fafafa; border-radius:8px; border:1px solid #eee; padding:12px; margin:12px 0 }
-.pricing-row { display:flex; gap:12px }
-.pricing-row > div { flex:1 }
-
-.preview-card { display:flex; justify-content:space-between; align-items:center; background:#f6f6f6; padding:12px; border-radius:8px; margin-top:12px }
-.preview-title { margin:4px 0 0 0; font-weight:700 }
-.preview-sub { margin:4px 0 0 0; color:#6b7a7a }
-
-.modal-footer { padding:16px 24px; border-top:1px solid #eee; display:flex; justify-content:space-between; align-items:center }
-.duplicate { color:#6b7a7a; font-size:13px }
-.footer-actions { display:flex; gap:12px }
-.create-btn { background:#0f8e6f; color:white; padding:10px 18px; border-radius:8px; border:0; cursor:pointer; font-weight:700 }
-.cancel-btn { background:#fff; border:1px solid #ddd; padding:10px 18px; border-radius:8px; cursor:pointer }
-
-.modal-header {
-  padding: 16px 24px;
-  border-bottom: 1px solid #eee;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.modal-header h2 {
-  margin: 0;
-  font-size: 1.25rem;
-  color: #173f42;
-}
-
-.close-btn {
-  background: transparent;
-  border: 0;
-  font-size: 1.2rem;
-  color: #999;
-  cursor: pointer;
-}
-
-.modal-body {
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  overflow-y: auto;
-}
-
-.section-title {
-  font-size: 0.75rem;
-  font-weight: 800;
-  color: #0f6e70;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-top: 8px;
-  padding-bottom: 4px;
-  border-bottom: 2px solid #f0f7f7;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.form-group label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #555;
-}
-
-.form-group input, 
-.form-group textarea, 
-.form-group select {
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font: inherit;
-  outline: none;
-}
-
-.form-group input:focus, 
-.form-group textarea:focus {
-  border-color: #0f6e70;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.checkbox-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  background: #f9fafb;
-  padding: 12px;
-  border-radius: 8px;
-}
-
-.checkbox-group label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  cursor: pointer;
-}
-
-.checkbox label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 400;
-  cursor: pointer;
-}
-
-.modal-footer {
-  padding: 16px 24px;
-  border-top: 1px solid #eee;
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-.cancel-btn {
-  padding: 10px 20px;
-  border-radius: 8px;
-  border: 1px solid #ddd;
-  background: #fff;
-  cursor: pointer;
-}
-
-.save-btn {
-  padding: 10px 24px;
-  border-radius: 8px;
-  border: 0;
-  background: #0f6e70;
-  color: #fff;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.save-btn:hover {
-  background: #0a5c5d;
-}
-
-.modal-enter-active, .modal-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.modal-enter-from, .modal-leave-to {
-  opacity: 0;
-}
+.checkbox-group { display: flex; flex-wrap: wrap; gap: 16px; background: #f7fafc; padding: 12px; border-radius: 8px; }
+.checkbox-group label { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; cursor: pointer; font-weight: 600; color: #4a5568; }
+.checkbox label { display: flex; align-items: center; gap: 10px; font-weight: 600; cursor: pointer; color: #4a5568; font-size: 0.85rem; }
+.modal-footer { padding: 16px 24px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 12px; }
+.cancel-btn { padding: 10px 20px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; cursor: pointer; font-weight: 600; color: #4a5568; }
+.create-btn { background:#0f8e6f; color:white; padding:10px 24px; border-radius:8px; border:0; cursor:pointer; font-weight:700; transition: background 0.2s; }
+.create-btn:hover { background: #0a5c5d; }
+.modal-enter-active, .modal-leave-active { transition: opacity 0.3s ease; }
+.modal-enter-from, .modal-leave-to { opacity: 0; }
 </style>

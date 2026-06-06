@@ -138,4 +138,8 @@ export class CreateServiceDto {
   @IsOptional()
   @IsString()
   pickupNotes?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  generateInventory?: boolean;
 }

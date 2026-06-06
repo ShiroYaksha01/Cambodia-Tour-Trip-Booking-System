@@ -19,22 +19,18 @@
           <span class="icon">📊</span>
           Inventory & Pricing
         </RouterLink>
-        <a href="#" class="nav-item" @click.prevent>
+        <RouterLink class="nav-item" :to="{ name: 'provider-manifest' }" exact-active-class="active">
           <span class="icon">👥</span>
           Guest Manifest
-        </a>
-        <a href="#" class="nav-item" @click.prevent>
+        </RouterLink>
+        <RouterLink class="nav-item" :to="{ name: 'provider-ledger' }" exact-active-class="active">
           <span class="icon">💰</span>
           Financial Ledger
-        </a>
-        <a href="#" class="nav-item" @click.prevent>
-          <span class="icon">💬</span>
-          Customer Chat
-        </a>
-        <a href="#" class="nav-item" @click.prevent>
-          <span class="icon">🎨</span>
-          Brand Settings
-        </a>
+        </RouterLink>
+        <RouterLink class="nav-item" :to="{ name: 'provider-settings' }" exact-active-class="active">
+          <span class="icon">⚙️</span>
+          Settings
+        </RouterLink>
       </nav>
     </aside>
 
@@ -79,39 +75,42 @@
               <div class="header-cell">ACTIONS</div>
             </div>
 
-            <article v-for="(item, index) in filteredServiceItems" :key="item.name + index" class="service-row service-manager-row">
+            <article v-for="(item, index) in filteredServiceItems" :key="item.id || index" class="service-row service-manager-row">
               <div class="service-info">
-                <img :src="item.image" :alt="item.name" class="service-image" />
+                <img :src="resolveImageUrl(item.coverImage) || 'https://via.placeholder.com/120'" :alt="item.title" class="service-image" />
                 <div class="service-details">
-                  <h3>{{ item.name }}</h3>
-                  <p>{{ item.subtitle }}</p>
+                  <h3>{{ item.title }}</h3>
+                  <p>{{ item.description || 'No description' }}</p>
                 </div>
               </div>
 
               <div class="destinations">
-                <span v-for="destination in item.destinations" :key="destination">{{ destination }}</span>
+                <span v-if="item.location">{{ item.location }}</span>
+                <span v-else class="text-gray-400">Not set</span>
               </div>
 
               <div class="pricing">
-                <strong>{{ item.price }}</strong>
+                <strong>${{ Number(item.price).toFixed(2) }}</strong>
                 <p>Per ticket</p>
               </div>
 
               <div class="status">
-                <span class="status-pill" :class="item.status.toLowerCase()">{{ item.status }}</span>
+                <span class="status-pill" :class="item.isActive ? 'live' : 'draft'">
+                  {{ item.isActive ? 'Live' : 'Draft' }}
+                </span>
               </div>
 
               <div class="actions">
                 <button @click.stop="toggleActionMenu(index)">⋯</button>
                 <div v-if="actionMenuIndex === index" class="action-menu">
-                  <button class="action-menu-item" @click="startEditService(index)">Update</button>
-                  <button class="action-menu-item danger" @click="deleteServiceItem(index)">Delete</button>
+                  <button class="action-menu-item" @click="startEditService(item)">Update</button>
+                  <button class="action-menu-item danger" @click="deleteServiceItem(item)">Delete</button>
                 </div>
               </div>
             </article>
 
             <div class="table-foot service-manager-foot">
-              <p>Showing {{ visibleServiceCountLabel }}</p>
+              <p>Showing {{ filteredServiceItems.length }} of {{ services.length }} services</p>
               <div>
                 <button class="page-btn">Previous</button>
                 <button class="page-btn">Next</button>
@@ -127,27 +126,15 @@
           </div>
 
           <div class="config-section">
-            <label>SELECTED SERVICE</label>
-            <button type="button" class="date-display date-display-button" @click="showDatePicker = !showDatePicker">
-              <span class="calendar-icon">🛠️</span>
-              <div>
-                <p class="date-range">{{ selectedDateRangeLabel }}</p>
-                <p class="date-label">{{ selectedDateRangeSubtitle }}</p>
+            <label>QUICK STATS</label>
+            <div class="pricing-rules">
+              <div class="rule-item">
+                <span>Total Services</span>
+                <p class="rule-desc">{{ services.length }} curated offerings</p>
               </div>
-            </button>
-
-            <div v-if="showDatePicker" class="date-picker-popover">
-              <div class="field-group compact">
-                <label>Start Date</label>
-                <input v-model="draftStartDate" type="date" />
-              </div>
-              <div class="field-group compact">
-                <label>End Date</label>
-                <input v-model="draftEndDate" type="date" />
-              </div>
-              <div class="picker-actions">
-                <button type="button" class="picker-cancel" @click="resetDatePicker">Cancel</button>
-                <button type="button" class="picker-apply" @click="applyDatePicker">Apply</button>
+              <div class="rule-item">
+                <span>Active Listings</span>
+                <p class="rule-desc">{{ services.filter(s => s.isActive).length }} live on marketplace</p>
               </div>
             </div>
           </div>
@@ -156,26 +143,17 @@
             <label>AVAILABLE ACTIONS</label>
             <div class="pricing-rules">
               <div class="rule-item">
-                <span>View package details</span>
-                <p class="rule-desc">Open a service for more information</p>
-              </div>
-              <div class="rule-item">
-                <span>Edit package pricing</span>
-                <p class="rule-desc">Update ticket pricing and status</p>
-              </div>
-              <div class="rule-item">
-                <span>Duplicate service</span>
-                <p class="rule-desc">Create a copy for a new offering</p>
+                <span>Bulk Update</span>
+                <p class="rule-desc">Modify multiple services at once (Coming soon)</p>
               </div>
             </div>
           </div>
 
-          <button class="btn-update">Update Tour Package</button>
-          <button class="btn-discard">Discard Changes</button>
+          <button class="btn-update" @click="openCreateModal">Create New Offering</button>
         </aside>
       </div>
 
-      <ServiceModal :show="showModal" :service="selectedService" @close="showModal = false" @save="handleSaveService" />
+      <ServiceModal :show="showModal" :service="selectedService" @close="closeModal" @save="handleSaveService" />
     </main>
   </div>
 </template>
@@ -183,7 +161,8 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from "vue";
 import ServiceModal from "../../components/provider/ServiceModal.vue";
-import { fetchServices, createService, updateService, deleteService } from "../../services/api";
+import { fetchMyServices, createService, updateService, deleteService } from "../../services/api";
+import { resolveImageUrl } from "../../utils/api";
 
 const props = withDefaults(
   defineProps<{
@@ -194,84 +173,70 @@ const props = withDefaults(
   },
 );
 
-// Helper to get current date in YYYY-MM-DD format
-const getCurrentDate = () => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-
-// Helper to add days to a date
-const addDays = (dateStr: string, days: number) => {
-  const date = new Date(`${dateStr}T00:00:00`);
-  date.setDate(date.getDate() + days);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-
+const services = ref<any[]>([]);
 const selectedCategory = ref("all");
-const showDatePicker = ref(false);
-const currentDate = getCurrentDate();
-const startDate = ref(currentDate);
-const endDate = ref(addDays(currentDate, 3));
-const draftStartDate = ref(startDate.value);
-const draftEndDate = ref(endDate.value);
+const showModal = ref(false);
+const selectedService = ref<any>(null);
+const actionMenuIndex = ref<number | null>(null);
 
 const categoryOptions = [
   { label: "All Services", value: "all" },
   { label: "Tours", value: "tour" },
-  { label: "Hotels", value: "hotel" },
-  { label: "Transport", value: "transport" },
+  { label: "Hotels", value: "accommodation" },
+  { label: "Transport", value: "transportation" },
 ] as const;
 
-const formatDate = (value: string) =>
-  new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(`${value}T00:00:00`));
-
-const selectedDateRangeLabel = computed(() => `${formatDate(startDate.value)} - ${formatDate(endDate.value)}`);
-const selectedDateRangeSubtitle = computed(() => "Khmer New Year Period");
 const selectedCategoryLabel = computed(() => {
   const found = categoryOptions.find((category) => category.value === selectedCategory.value);
   return found ? found.label : "All Services";
 });
+
 const selectedCategoryDescription = computed(() => {
   const descriptions: Record<string, string> = {
     all: "Browse all provider services by category.",
     tour: "Manage and curate your premium temple expeditions and cultural walks.",
-    hotel: "Manage hotel stays, room bundles, and guest accommodations.",
-    transport: "Manage transfers, shuttles, and private transport options.",
+    accommodation: "Manage hotel stays, room bundles, and guest accommodations.",
+    transportation: "Manage transfers, shuttles, and private transport options.",
   };
   return descriptions[selectedCategory.value] || descriptions.all;
 });
 
-const applyDatePicker = () => {
-  startDate.value = draftStartDate.value;
-  endDate.value = draftEndDate.value;
-  showDatePicker.value = false;
-};
+async function loadServices() {
+  try {
+    const res = await fetchMyServices();
+    // API might return the list directly or wrapped in a data property
+    services.value = Array.isArray(res) ? res : res.data || [];
+  } catch (err) {
+    console.error("Failed to fetch services:", err);
+    services.value = [];
+  }
+}
 
-const resetDatePicker = () => {
-  draftStartDate.value = startDate.value;
-  draftEndDate.value = endDate.value;
-  showDatePicker.value = false;
-};
+onMounted(loadServices);
 
-const showModal = ref(false);
-const selectedService = ref<any>(null);
-const editingIndex = ref<number | null>(null);
-const actionMenuIndex = ref<number | null>(null);
+const filteredServiceItems = computed(() => {
+  const query = props.searchQuery.trim().toLowerCase();
+
+  return services.value.filter((item) => {
+    const matchesCategory = selectedCategory.value === "all" || item.serviceType === selectedCategory.value;
+    const matchesSearch =
+      !query ||
+      item.title.toLowerCase().includes(query) ||
+      (item.description && item.description.toLowerCase().includes(query)) ||
+      (item.location && item.location.toLowerCase().includes(query));
+
+    return matchesCategory && matchesSearch;
+  });
+});
 
 function openCreateModal() {
-  editingIndex.value = null;
   selectedService.value = null;
   showModal.value = true;
+}
+
+function closeModal() {
+  showModal.value = false;
+  selectedService.value = null;
 }
 
 function toggleActionMenu(i: number) {
@@ -279,142 +244,45 @@ function toggleActionMenu(i: number) {
 }
 
 function startEditService(item: any) {
-  const index = serviceItems.value.findIndex((service) => service === item);
-  if (index === -1) return;
-  editingIndex.value = index;
-  // Transform item to modal-friendly shape
-  selectedService.value = {
-    title: item.name,
-    description: item.subtitle,
-    price: Number(String(item.price).replace(/[^0-9.]/g, "")) || 0,
-    destinations: item.destinations || [],
-    image: item.image,
-    isActive: (item.status || "").toLowerCase() === "live",
-  };
+  selectedService.value = item;
   showModal.value = true;
   actionMenuIndex.value = null;
 }
 
 async function deleteServiceItem(item: any) {
-  const index = serviceItems.value.findIndex((service) => service === item);
-  if (index === -1) return;
-  const ok = window.confirm(`Delete "${item.name}"? This cannot be undone.`);
+  const ok = window.confirm(`Delete "${item.title}"? This cannot be undone.`);
   if (!ok) {
     actionMenuIndex.value = null;
     return;
   }
-  if (item.id) {
-    try {
-      await deleteService(item.id);
-    } catch {
-      // proceed with local deletion even if API fails
-    }
+  
+  try {
+    await deleteService(item.id);
+    await loadServices();
+  } catch (err) {
+    console.error("Failed to delete service:", err);
+    alert("Failed to delete service. Please try again.");
   }
-  serviceItems.value.splice(index, 1);
   actionMenuIndex.value = null;
 }
 
-// helper functions removed (unused) to avoid TypeScript unused-local errors
-
-// NOTE: `startUpdate` and `deleteServiceItem` were removed because they were unused in the current template.
-
 async function handleSaveService(formData: any) {
-  const category =
-    formData.serviceType === "accommodation"
-      ? "hotel"
-      : formData.serviceType === "transportation"
-        ? "transport"
-        : "tour";
-
-  const item = {
-    name: formData.title || 'New service',
-    category,
-    subtitle: (formData.guideType === 'private' ? 'Private Guided' : 'Group') + ' • ' + (formData.duration || `${formData.durationValue} ${formData.durationUnit || 'hours'}`),
-    destinations: formData.destinations || (formData.destination ? [formData.destination] : []),
-    price: formData.price ? `$${Number(formData.price).toFixed(2)}` : '$0.00',
-    status: formData.isActive ? 'Live' : 'Draft',
-    image: formData.image || 'https://via.placeholder.com/120',
-  };
-
   try {
-    if (editingIndex.value !== null) {
-      const existing = serviceItems.value[editingIndex.value];
-      if (existing.id) {
-        await updateService(existing.id, formData);
-      }
-      serviceItems.value.splice(editingIndex.value, 1, { ...item, id: existing.id });
+    if (selectedService.value && selectedService.value.id) {
+      await updateService(selectedService.value.id, formData);
     } else {
-      const res = await createService(formData);
-      const saved = res.data;
-      serviceItems.value.unshift({ ...item, id: saved?.id || null });
+      await createService(formData);
     }
-  } catch {
-    // Fallback: update locally only
-    if (editingIndex.value !== null) {
-      serviceItems.value.splice(editingIndex.value, 1, { ...item, id: null });
-    } else {
-      serviceItems.value.unshift({ ...item, id: null });
-    }
+    
+    await loadServices();
+    closeModal();
+  } catch (err: any) {
+    console.error("Failed to save service:", err);
+    const serverMessage = err.response?.data?.message;
+    const errorDetail = Array.isArray(serverMessage) ? serverMessage.join(', ') : serverMessage;
+    alert(`Failed to save service: ${errorDetail || 'Please check your information and try again.'}`);
   }
-
-  editingIndex.value = null;
-  showModal.value = false;
 }
-
-const serviceItems = ref<any[]>([]);
-
-onMounted(async () => {
-  try {
-    const res = await fetchServices();
-    const list = Array.isArray(res) ? res : res.data || [];
-    serviceItems.value = list.map((svc: any) => ({
-      id: svc.id,
-      name: svc.title || 'Untitled',
-      category: svc.serviceType === 'accommodation' ? 'hotel' : svc.serviceType === 'transportation' ? 'transport' : 'tour',
-      subtitle: svc.description || '',
-      destinations: svc.location ? [svc.location] : [],
-      price: svc.price ? `$${Number(svc.price).toFixed(2)}` : '$0.00',
-      status: svc.isActive ? 'Live' : 'Draft',
-      image: svc.coverImage || 'https://via.placeholder.com/120',
-    }));
-  } catch {
-    // Fallback mock data
-    serviceItems.value = [
-      { id: null, name: "Angkor Wat Sunrise Premium", category: "tour", subtitle: "Private Guided • 8 Hours", destinations: ["Angkor Wat", "Bayon"], price: "$125.00", status: "Live", image: "https://images.unsplash.com/photo-1506461883276-594a12b11cf3?auto=format&fit=crop&w=120&q=80" },
-      { id: null, name: "Heritage Stay at Riverside", category: "hotel", subtitle: "Boutique Hotel Package", destinations: ["Siem Reap"], price: "$95.00", status: "Live", image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=120&q=80" },
-      { id: null, name: "Temple Express Shuttle", category: "transport", subtitle: "Private Transfer • 1 Way", destinations: ["Airport", "City Center"], price: "$25.00", status: "Draft", image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=120&q=80" },
-      { id: null, name: "Banteay Srei & Countryside", category: "tour", subtitle: "Full Day Expedition", destinations: ["Banteay Srei"], price: "$85.00", status: "Draft", image: "https://images.unsplash.com/photo-1528184039939-bd03972bd974?auto=format&fit=crop&w=120&q=80" },
-      { id: null, name: "Spiritual Alms Giving & Pagoda", category: "tour", subtitle: "Cultural Walk • 3 Hours", destinations: ["Local Pagoda"], price: "$45.00", status: "Live", image: "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=120&q=80" },
-    ];
-  }
-});
-
-const filteredServiceItems = computed(() => {
-  const query = props.searchQuery.trim().toLowerCase();
-
-  return serviceItems.value.filter((item) => {
-    const matchesCategory = selectedCategory.value === "all" || item.category === selectedCategory.value;
-    const matchesSearch =
-      !query ||
-      item.name.toLowerCase().includes(query) ||
-      item.subtitle.toLowerCase().includes(query) ||
-      item.destinations.some((destination: string) => destination.toLowerCase().includes(query)) ||
-      item.status.toLowerCase().includes(query) ||
-      item.category.toLowerCase().includes(query);
-
-    return matchesCategory && matchesSearch;
-  });
-});
-
-const visibleServiceCountLabel = computed(() => {
-  const total = serviceItems.value.length;
-  const visible = filteredServiceItems.value.length;
-  const label = selectedCategoryLabel.value.toLowerCase();
-
-  return selectedCategory.value === "all"
-    ? `${visible} of ${total} services`
-    : `${visible} ${label} service${visible === 1 ? "" : "s"} of ${total}`;
-});
 </script>
 
 <style scoped>
@@ -674,12 +542,17 @@ const visibleServiceCountLabel = computed(() => {
   margin: 2px 0 0 0;
   font-size: 12px;
   color: #999;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .destinations {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  justify-content: center;
 }
 
 .destinations span {
@@ -736,6 +609,7 @@ const visibleServiceCountLabel = computed(() => {
 
 .actions {
   text-align: center;
+  position: relative;
 }
 
 .actions button {
@@ -745,6 +619,7 @@ const visibleServiceCountLabel = computed(() => {
   border-radius: 999px;
   background: #fff;
   color: #5e6a73;
+  cursor: pointer;
 }
 
 .action-menu {
@@ -760,6 +635,7 @@ const visibleServiceCountLabel = computed(() => {
   right: 12px;
   z-index: 50;
 }
+
 .action-menu-item {
   background: transparent;
   border: 0;
@@ -767,28 +643,40 @@ const visibleServiceCountLabel = computed(() => {
   text-align: left;
   cursor: pointer;
   border-radius: 6px;
+  font-size: 13px;
+  color: #1a1a1a;
 }
-.action-menu-item:hover { background:#f5f7f7 }
-.action-menu-item.danger { color: #c0392b }
-.actions { position: relative }
+
+.action-menu-item:hover {
+  background: #f5f7f7;
+}
+
+.action-menu-item.danger {
+  color: #c0392b;
+}
 
 .table-foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  padding: 18px 6px 4px;
+  padding: 18px 6px 18px;
   color: #7d8790;
   font-size: 13px;
-}
-
-.service-manager-foot {
-  padding-top: 18px;
 }
 
 .table-foot div {
   display: flex;
   gap: 10px;
+}
+
+.page-btn {
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
 }
 
 .config-panel {
@@ -836,82 +724,6 @@ const visibleServiceCountLabel = computed(() => {
   text-transform: uppercase;
 }
 
-.date-display {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  background: #f9f9f9;
-  border-radius: 4px;
-}
-
-.date-display-button {
-  width: 100%;
-  border: 0;
-  text-align: left;
-  cursor: pointer;
-}
-
-.date-picker-popover {
-  margin-top: 10px;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #e7ebea;
-  background: #ffffff;
-  box-shadow: 0 12px 24px rgba(33, 49, 58, 0.08);
-}
-
-.compact {
-  margin-bottom: 10px;
-}
-
-.compact input {
-  width: 100%;
-}
-
-.picker-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.picker-cancel,
-.picker-apply {
-  border: 0;
-  border-radius: 8px;
-  padding: 8px 12px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.picker-cancel {
-  background: #f1f3f2;
-  color: #55656d;
-}
-
-.picker-apply {
-  background: #0f7c7f;
-  color: #ffffff;
-}
-
-.calendar-icon {
-  font-size: 20px;
-}
-
-.date-range {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 500;
-  color: #1a1a1a;
-}
-
-.date-label {
-  margin: 2px 0 0 0;
-  font-size: 12px;
-  color: #999;
-}
-
 .pricing-rules {
   display: flex;
   flex-direction: column;
@@ -950,20 +762,6 @@ const visibleServiceCountLabel = computed(() => {
   margin-top: 20px;
 }
 
-.btn-discard {
-  width: 100%;
-  padding: 10px;
-  background: white;
-  color: #666;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  margin-top: 8px;
-}
-
-
-
 @media (max-width: 1180px) {
   .provider-suite {
     flex-direction: column;
@@ -982,10 +780,10 @@ const visibleServiceCountLabel = computed(() => {
     max-height: none;
   }
 
-  .header,
-  .footer {
+  .header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 15px;
   }
 
   .header-left {

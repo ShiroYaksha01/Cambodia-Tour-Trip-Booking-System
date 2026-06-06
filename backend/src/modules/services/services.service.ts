@@ -12,6 +12,7 @@ import { Accommodation } from './entities/accommodation.entity';
 import { Transportation } from './entities/transportation.entity';
 import { ServiceInventory } from './entities/service-inventory.entity';
 import { ServiceType } from '../../shared/enums';
+import { InventoryService } from './inventory.service';
 
 @Injectable()
 export class ServicesService {
@@ -28,6 +29,7 @@ export class ServicesService {
     private readonly transportationRepository: Repository<Transportation>,
     @InjectRepository(ServiceInventory)
     private readonly inventoryRepository: Repository<ServiceInventory>,
+    private readonly inventoryService: InventoryService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -205,8 +207,37 @@ export class ServicesService {
       await queryRunner.manager.save(inventory);
 
       await queryRunner.commitTransaction();
+
+      // 4. Auto-generate inventory if requested
+      if (createServiceDto.generateInventory) {
+        try {
+          if (serviceType === ServiceType.TOUR || serviceType === ServiceType.ACCOMMODATION) {
+            const startDate = new Date();
+            startDate.setHours(0, 0, 0, 0);
+            const endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + 30);
+
+            await this.inventoryService.createBatchSlots(savedService.id, {
+              startDate,
+              endDate,
+              dailySlots: totalCapacity,
+              basePrice: price,
+            });
+          } else if (serviceType === ServiceType.TRANSPORTATION && metadata.departureTime) {
+            await this.inventoryService.createSlot(savedService.id, {
+              date: new Date(metadata.departureTime),
+              totalSlots: totalCapacity,
+              price,
+            });
+          }
+        } catch (inventoryError) {
+          console.error('Failed to auto-generate inventory slots:', inventoryError);
+          // We don't throw here as the service is already created and committed
+        }
+      }
+
       return this.findOne(savedService.id);
-    } catch (err) {
+      } catch (err) {
       await queryRunner.rollbackTransaction();
       throw err;
     } finally {
