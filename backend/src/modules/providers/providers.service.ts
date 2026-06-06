@@ -192,6 +192,12 @@ export class ProvidersService {
     if (updateDto.address) provider.address = updateDto.address;
     if (updateDto.description) provider.description = updateDto.description;
     if (updateDto.serviceCategory) provider.serviceCategory = updateDto.serviceCategory;
+    if (updateDto.facebookUrl) provider.facebookUrl = updateDto.facebookUrl;
+    if (updateDto.telegramUrl) provider.telegramUrl = updateDto.telegramUrl;
+    if (updateDto.bankAccountNumber) provider.bankAccountNumber = updateDto.bankAccountNumber;
+    if (updateDto.bankName) provider.bankName = updateDto.bankName;
+    if (updateDto.refundPolicy) provider.refundPolicy = updateDto.refundPolicy;
+    if (updateDto.guestRequirements) provider.guestRequirements = updateDto.guestRequirements;
 
     // Update user fields
     if (updateDto.email || updateDto.phoneNumber || updateDto.username) {

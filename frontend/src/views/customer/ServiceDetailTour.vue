@@ -33,13 +33,13 @@
         <div class="category-row">
           <span class="category-label">Tour Package</span>
           <span class="meta-divider">·</span>
-          <span class="duration-badge">{{ tourPackage?.num_days || 1 }} Days</span>
+          <span class="duration-badge">{{ tourPackage?.numDays || 1 }} Days</span>
         </div>
         <h1 class="service-title">{{ service.title }}</h1>
         <div class="destination-meta">
           <span class="meta-item">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 8 13 8 13s8-7.6 8-13a8 8 0 0 0-8-8z"/></svg>
-            {{ tourPackage?.departure_point || 'Departure' }}
+            {{ tourPackage?.departurePoint || 'Departure' }}
           </span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           <span class="meta-item">
@@ -91,16 +91,16 @@
               <h2>What's Included</h2>
             </div>
             <div class="inclusion-chips">
-              <div class="inclusion-chip" :class="{ included: tourPackage?.includes_accommodation }">
-                <span class="chip-icon">{{ tourPackage?.includes_accommodation ? '✓' : '✗' }}</span>
+              <div class="inclusion-chip" :class="{ included: tourPackage?.includesAccommodation }">
+                <span class="chip-icon">{{ tourPackage?.includesAccommodation ? '✓' : '✗' }}</span>
                 <span>Accommodation</span>
               </div>
-              <div class="inclusion-chip" :class="{ included: tourPackage?.includes_transportation }">
-                <span class="chip-icon">{{ tourPackage?.includes_transportation ? '✓' : '✗' }}</span>
+              <div class="inclusion-chip" :class="{ included: tourPackage?.includesTransportation }">
+                <span class="chip-icon">{{ tourPackage?.includesTransportation ? '✓' : '✗' }}</span>
                 <span>Transportation</span>
               </div>
-              <div class="inclusion-chip" :class="{ included: tourPackage?.includes_meals }">
-                <span class="chip-icon">{{ tourPackage?.includes_meals ? '✓' : '✗' }}</span>
+              <div class="inclusion-chip" :class="{ included: tourPackage?.includesMeals }">
+                <span class="chip-icon">{{ tourPackage?.includesMeals ? '✓' : '✗' }}</span>
                 <span>Meals</span>
               </div>
             </div>
@@ -115,20 +115,20 @@
             <div v-if="itineraryDays.length > 0" class="timeline">
               <template v-for="(day, di) in itineraryDays" :key="day.id || di">
                 <div class="timeline-day-header">
-                  <span class="day-marker">Day {{ day.day_number }}</span>
+                  <span class="day-marker">Day {{ day.dayNumber }}</span>
                   <span class="day-title-text">{{ day.title }}</span>
                 </div>
                 <p v-if="day.summary" class="day-summary">{{ day.summary }}</p>
                 <div v-for="(act, ai) in day.activities" :key="act.id || ai" class="timeline-item">
                   <div class="timeline-left">
-                    <span class="time-label">{{ formatTime(act.time_of_day) }}</span>
+                    <span class="time-label">{{ formatTime(act.timeOfDay) }}</span>
                   </div>
                   <div class="timeline-connector">
                     <div class="timeline-dot"></div>
                     <div v-if="!isLastActivity(di, ai, day.activities)" class="timeline-line"></div>
                   </div>
                   <div class="timeline-content">
-                    <h4 class="activity-title">{{ act.activity_title }}</h4>
+                    <h4 class="activity-title">{{ act.activityTitle }}</h4>
                     <span v-if="act.location" class="activity-location">{{ act.location }}</span>
                     <p v-if="act.description" class="activity-desc">{{ act.description }}</p>
                   </div>
@@ -149,13 +149,13 @@
             <div class="provider-card">
               <div class="provider-top">
                 <div class="provider-logo">
-                  <img v-if="provider?.logo" :src="provider.logo" :alt="provider?.company_name" />
+                  <img v-if="provider?.logo" :src="provider.logo" :alt="provider?.companyName" />
                   <span v-else class="provider-logo-fallback">🏛</span>
                 </div>
                 <div class="provider-info">
                   <div class="provider-name-row">
-                    <h3>{{ provider?.company_name || 'Tour Operator' }}</h3>
-                    <span v-if="provider?.is_verified" class="verified-badge" title="Verified Provider">
+                    <h3>{{ provider?.companyName || 'Tour Operator' }}</h3>
+                    <span v-if="provider?.isVerified" class="verified-badge" title="Verified Provider">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
                       Verified
                     </span>
@@ -163,12 +163,12 @@
                   <p class="provider-desc">{{ provider?.description || 'Professional tour operator in Cambodia.' }}</p>
                 </div>
               </div>
-              <div v-if="provider?.facebook_url || provider?.telegram_url" class="provider-links">
-                <a v-if="provider?.facebook_url" :href="provider.facebook_url" target="_blank" class="provider-link">
+              <div v-if="provider?.facebookUrl || provider?.telegramUrl" class="provider-links">
+                <a v-if="provider?.facebookUrl" :href="provider.facebookUrl" target="_blank" class="provider-link">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
                   Facebook
                 </a>
-                <a v-if="provider?.telegram_url" :href="provider.telegram_url" target="_blank" class="provider-link">
+                <a v-if="provider?.telegramUrl" :href="provider.telegramUrl" target="_blank" class="provider-link">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-1.97 9.289c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.88 13.67l-2.967-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.943.916z"/></svg>
                   Telegram
                 </a>
@@ -189,7 +189,7 @@
               <label class="field-label">Travel Date</label>
               <div class="field-readonly">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                <span>{{ formatDate(tourPackage?.travel_date) }}</span>
+                <span>{{ formatDate(tourPackage?.travelDate) }}</span>
               </div>
             </div>
 
@@ -197,7 +197,7 @@
               <label class="field-label">Departure Point</label>
               <div class="field-readonly">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 8 13 8 13s8-7.6 8-13a8 8 0 0 0-8-8z"/></svg>
-                <span>{{ tourPackage?.departure_point || 'N/A' }}</span>
+                <span>{{ tourPackage?.departurePoint || 'N/A' }}</span>
               </div>
             </div>
 
@@ -247,53 +247,53 @@ const route = useRoute()
 
 interface ItineraryActivity {
   id: string
-  day_id?: string
-  sort_order?: number
-  time_of_day: string
-  activity_title: string
+  dayId?: string
+  sortOrder?: number
+  timeOfDay: string
+  activityTitle: string
   description?: string
   location?: string
-  image_url?: string
+  imageUrl?: string
 }
 
 interface ItineraryDay {
   id: string
-  service_id?: string
-  day_number: number
+  serviceId?: string
+  dayNumber: number
   title: string
   summary?: string
   activities: ItineraryActivity[]
 }
 
 interface TourPackage {
-  service_id: string
-  num_days: number
-  max_people: number
-  base_price: number
-  travel_date: string
-  end_date: string
-  departure_point: string
+  serviceId: string
+  numDays: number
+  maxPeople: number
+  basePrice: number
+  travelDate: string
+  endDate: string
+  departurePoint: string
   destination: string
-  includes_accommodation: boolean
-  includes_transportation: boolean
-  includes_meals: boolean
+  includesAccommodation: boolean
+  includesTransportation: boolean
+  includesMeals: boolean
 }
 
 interface Provider {
   id: string
-  company_name: string
+  companyName: string
   logo?: string
   description?: string
-  is_verified: boolean
-  facebook_url?: string
-  telegram_url?: string
+  isVerified: boolean
+  facebookUrl?: string
+  telegramUrl?: string
 }
 
 interface ServiceImage {
   id: string
-  image_url: string
-  is_cover: boolean
-  sort_order: number
+  imageUrl: string
+  isCover: boolean
+  sortOrder: number
 }
 
 interface Service {
@@ -308,7 +308,7 @@ interface Service {
   images: ServiceImage[]
   provider: Provider
   tourPackage: TourPackage
-  inventory?: { total_capacity: number; booked_count: number }
+  inventory?: { totalCapacity: number; bookedCount: number }
 }
 
 const service = ref<Service | null>(null)
@@ -319,8 +319,8 @@ const activeImageUrl = ref<string | null>(null)
 
 const tourPackage = computed(() => service.value?.tourPackage)
 const provider = computed(() => service.value?.provider)
-const maxGuests = computed(() => tourPackage.value?.max_people || 10)
-const pricePerUnit = computed(() => tourPackage.value?.base_price || service.value?.price || 0)
+const maxGuests = computed(() => tourPackage.value?.maxPeople || 10)
+const pricePerUnit = computed(() => tourPackage.value?.basePrice || service.value?.price || 0)
 
 const itineraryDays = computed<ItineraryDay[]>(() => {
   const days = (service.value?.tourPackage as any)?.itineraryDays
@@ -331,12 +331,12 @@ const displayTags = computed(() => {
   const tags: string[] = []
   const tp = tourPackage.value
   if (tp) {
-    tags.push(`${tp.num_days || 1} Days`)
-    if (tp.departure_point) tags.push(tp.departure_point)
+    tags.push(`${tp.numDays || 1} Days`)
+    if (tp.departurePoint) tags.push(tp.departurePoint)
     if (tp.destination) tags.push(tp.destination)
-    if (tp.includes_accommodation) tags.push('Accommodation')
-    if (tp.includes_transportation) tags.push('Transport')
-    if (tp.includes_meals) tags.push('Meals Included')
+    if (tp.includesAccommodation) tags.push('Accommodation')
+    if (tp.includesTransportation) tags.push('Transport')
+    if (tp.includesMeals) tags.push('Meals Included')
   }
   return tags
 })
@@ -346,12 +346,12 @@ const galleryImages = computed(() => {
   const imgs = service.value.images || []
   
   const sorted = [...imgs].sort((a, b) => {
-    if (a.is_cover) return -1
-    if (b.is_cover) return 1
-    return (a.sort_order || 0) - (b.sort_order || 0)
+    if (a.isCover) return -1
+    if (b.isCover) return 1
+    return (a.sortOrder || 0) - (b.sortOrder || 0)
   })
 
-  const results = sorted.map(i => i.image_url)
+  const results = sorted.map(i => i.imageUrl)
   
   while (results.length < 4) {
     results.push(`https://placehold.co/800x600/006566/ffffff?text=Tour+Photo+${results.length + 1}`)
@@ -405,7 +405,14 @@ const handleBooking = () => {
     router.push({ name: 'login', query: { redirect: route.fullPath } })
     return
   }
-  router.push({ name: 'booking-form', params: { id: service.value?.id } })
+  router.push({ 
+    name: 'booking-form', 
+    params: { id: service.value?.id },
+    query: {
+      quantity: guests.value,
+      date: tourPackage.value?.travelDate ? new Date(tourPackage.value.travelDate).toISOString().split('T')[0] : undefined
+    }
+  })
 }
 </script>
 

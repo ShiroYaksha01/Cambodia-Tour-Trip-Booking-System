@@ -28,8 +28,6 @@
           <span>{{ providerRoleLabel }}</span>
         </div>
       </RouterLink>
-      <button class="icon-btn">🔔</button>
-      <button class="icon-btn">❓</button>
     </div>
   </header>
 </template>

@@ -47,6 +47,18 @@ export class Provider {
   @Column({ name: 'telegram_url', type: 'text', nullable: true })
   telegramUrl: string;
 
+  @Column({ name: 'bank_account_number', length: 50, nullable: true })
+  bankAccountNumber: string;
+
+  @Column({ name: 'bank_name', length: 100, nullable: true })
+  bankName: string;
+
+  @Column({ name: 'refund_policy', type: 'text', nullable: true })
+  refundPolicy: string;
+
+  @Column({ name: 'guest_requirements', type: 'text', nullable: true })
+  guestRequirements: string;
+
   @Column({
     name: 'commission_rate',
     type: 'decimal',

@@ -107,20 +107,20 @@
           <div class="payout-field">
             <label>BANK ACCOUNT NUMBER</label>
             <div class="account-display">
-              <span class="account-number">{{ bankAccountMasked }}</span>
-              <button class="copy-btn">📋</button>
+              <input v-model="bankAccountMasked" class="payout-input" placeholder="e.g. 000 123 456" />
+              <button class="copy-btn" @click.prevent>📋</button>
             </div>
           </div>
 
           <div class="payout-field">
             <label>BANK NAME</label>
             <div class="account-display">
-              <span class="bank-name">{{ bankName }}</span>
-              <button class="edit-btn">✎</button>
+              <input v-model="bankName" class="payout-input" placeholder="e.g. ABA Bank" />
+              <button class="edit-btn" @click.prevent>✎</button>
             </div>
           </div>
 
-          <button class="btn-secure-update">Secure Update</button>
+          <button class="btn-secure-update" @click="saveChanges">Secure Update</button>
         </div>
       </section>
 
@@ -206,11 +206,18 @@ const logoInput = ref<HTMLInputElement | null>(null);
 onMounted(async () => {
   try {
     const res = await getProviderProfile();
-    const data = res.data;
+    const data = res.data || res; // Handle different response shapes
     companyName.value = data.companyName || "";
     biography.value = data.description || "";
     officialEmail.value = data.user?.email || "";
     phoneNumber.value = data.user?.phoneNumber || "";
+    facebookUrl.value = data.facebookUrl || "fb.com/yourbrand";
+    telegramHandle.value = data.telegramUrl || "@brand_support";
+    bankAccountMasked.value = data.bankAccountNumber || "Not set";
+    bankName.value = data.bankName || "Not set";
+    refundRules.value = data.refundPolicy || "";
+    guestRequirements.value = data.guestRequirements || "";
+    logoPreview.value = data.logo || "";
   } catch (err) {
     console.error("Failed to fetch provider profile", err);
   }
@@ -247,6 +254,12 @@ async function saveChanges() {
       description: biography.value,
       email: officialEmail.value,
       phoneNumber: phoneNumber.value,
+      facebookUrl: facebookUrl.value,
+      telegramUrl: telegramHandle.value,
+      bankAccountNumber: bankAccountMasked.value,
+      bankName: bankName.value,
+      refundPolicy: refundRules.value,
+      guestRequirements: guestRequirements.value,
     });
     alert("Settings saved successfully!");
   } catch (err) {
@@ -589,6 +602,27 @@ function discardChanges() {
   font-size: 16px;
   font-weight: 600;
   color: white;
+}
+
+.payout-input {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  padding: 4px 8px;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  width: 100%;
+}
+
+.payout-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.payout-input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.2);
+  border-color: white;
 }
 
 .copy-btn,

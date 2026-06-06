@@ -33,13 +33,13 @@
         <div class="category-row">
           <span class="category-label">Transportation</span>
           <span class="meta-divider">·</span>
-          <span class="type-badge">{{ formatTransportType(transport?.transport_type) }}</span>
+          <span class="type-badge">{{ formatTransportType(transport?.transportType) }}</span>
         </div>
         <h1 class="service-title">{{ service.title }}</h1>
         <div class="route-meta">
           <div class="route-stop">
             <span class="route-dot filled"></span>
-            <span class="route-place">{{ transport?.departure_point || 'Departure' }}</span>
+            <span class="route-place">{{ transport?.departurePoint || 'Departure' }}</span>
           </div>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="route-arrow"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           <div class="route-stop">
@@ -94,21 +94,21 @@
               <div class="spec-chip">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 <div>
-                  <span class="spec-value">{{ transport?.total_seats || 0 }}</span>
+                  <span class="spec-value">{{ transport?.totalSeats || 0 }}</span>
                   <span class="spec-label">Total Seats</span>
                 </div>
               </div>
               <div class="spec-chip">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
                 <div>
-                  <span class="spec-value">{{ formatTransportType(transport?.transport_type) }}</span>
+                  <span class="spec-value">{{ formatTransportType(transport?.transportType) }}</span>
                   <span class="spec-label">Vehicle Type</span>
                 </div>
               </div>
               <div class="spec-chip">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
                 <div>
-                  <span class="spec-value">{{ transport?.vehicle_model || 'Standard' }}</span>
+                  <span class="spec-value">{{ transport?.vehicleModel || 'Standard' }}</span>
                   <span class="spec-label">Model</span>
                 </div>
               </div>
@@ -136,15 +136,15 @@
                 </div>
                 <div class="rt-content">
                   <h4 class="rt-title">Departure</h4>
-                  <span class="rt-place">{{ transport?.departure_point || 'Departure Point' }}</span>
-                  <span class="rt-time">{{ formatDateTime(transport?.departure_time) }}</span>
+                  <span class="rt-place">{{ transport?.departurePoint || 'Departure Point' }}</span>
+                  <span class="rt-time">{{ formatDateTime(transport?.departureTime) }}</span>
                 </div>
               </div>
 
               <!-- Pickup Notes -->
-              <div v-if="transport?.pickup_notes" class="pickup-notes">
+              <div v-if="transport?.pickupNotes" class="pickup-notes">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                <span>{{ transport.pickup_notes }}</span>
+                <span>{{ transport.pickupNotes }}</span>
               </div>
 
               <!-- Connector line -->
@@ -158,7 +158,7 @@
                 <div class="rt-content">
                   <h4 class="rt-title">Arrival</h4>
                   <span class="rt-place">{{ transport?.destination || 'Destination' }}</span>
-                  <span class="rt-time">{{ formatDateTime(transport?.arrival_time) }}</span>
+                  <span class="rt-time">{{ formatDateTime(transport?.arrivalTime) }}</span>
                 </div>
               </div>
             </div>
@@ -173,13 +173,13 @@
             <div class="provider-card">
               <div class="provider-top">
                 <div class="provider-logo">
-                  <img v-if="provider?.logo" :src="provider.logo" :alt="provider?.company_name" />
+                  <img v-if="provider?.logo" :src="provider.logo" :alt="provider?.companyName" />
                   <span v-else class="provider-logo-fallback">🏛</span>
                 </div>
                 <div class="provider-info">
                   <div class="provider-name-row">
-                    <h3>{{ provider?.company_name || 'Transport Operator' }}</h3>
-                    <span v-if="provider?.is_verified" class="verified-badge" title="Verified Provider">
+                    <h3>{{ provider?.companyName || 'Transport Operator' }}</h3>
+                    <span v-if="provider?.isVerified" class="verified-badge" title="Verified Provider">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
                       Verified
                     </span>
@@ -187,12 +187,12 @@
                   <p class="provider-desc">{{ provider?.description || 'Professional transportation provider in Cambodia.' }}</p>
                 </div>
               </div>
-              <div v-if="provider?.facebook_url || provider?.telegram_url" class="provider-links">
-                <a v-if="provider?.facebook_url" :href="provider.facebook_url" target="_blank" class="provider-link">
+              <div v-if="provider?.facebookUrl || provider?.telegramUrl" class="provider-links">
+                <a v-if="provider?.facebookUrl" :href="provider.facebookUrl" target="_blank" class="provider-link">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
                   Facebook
                 </a>
-                <a v-if="provider?.telegram_url" :href="provider.telegram_url" target="_blank" class="provider-link">
+                <a v-if="provider?.telegramUrl" :href="provider.telegramUrl" target="_blank" class="provider-link">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-1.97 9.289c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.88 13.67l-2.967-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.943.916z"/></svg>
                   Telegram
                 </a>
@@ -213,7 +213,7 @@
               <label class="field-label">Scheduled Departure</label>
               <div class="field-readonly">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                <span>{{ formatDateTime(transport?.departure_time) }}</span>
+                <span>{{ formatDateTime(transport?.departureTime) }}</span>
               </div>
             </div>
 
@@ -221,7 +221,7 @@
               <label class="field-label">Pickup Location</label>
               <div class="field-readonly">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 8 13 8 13s8-7.6 8-13a8 8 0 0 0-8-8z"/></svg>
-                <span>{{ transport?.departure_point || 'N/A' }}</span>
+                <span>{{ transport?.departurePoint || 'N/A' }}</span>
               </div>
             </div>
 
@@ -270,33 +270,33 @@ const router = useRouter()
 const route = useRoute()
 
 interface Transportation {
-  service_id: string
-  transport_type: string
-  vehicle_model?: string
-  total_seats: number
-  price_per_seat: number
-  departure_point: string
+  serviceId: string
+  transportType: string
+  vehicleModel?: string
+  totalSeats: number
+  pricePerSeat: number
+  departurePoint: string
   destination: string
-  departure_time: string
-  arrival_time?: string
-  pickup_notes?: string
+  departureTime: string
+  arrivalTime?: string
+  pickupNotes?: string
 }
 
 interface Provider {
   id: string
-  company_name: string
+  companyName: string
   logo?: string
   description?: string
-  is_verified: boolean
-  facebook_url?: string
-  telegram_url?: string
+  isVerified: boolean
+  facebookUrl?: string
+  telegramUrl?: string
 }
 
 interface ServiceImage {
   id: string
-  image_url: string
-  is_cover: boolean
-  sort_order: number
+  imageUrl: string
+  isCover: boolean
+  sortOrder: number
 }
 
 interface Service {
@@ -321,14 +321,14 @@ const activeImageUrl = ref<string | null>(null)
 
 const transport = computed(() => service.value?.transportation)
 const provider = computed(() => service.value?.provider)
-const pricePerSeat = computed(() => transport.value?.price_per_seat || service.value?.price || 0)
-const maxPassengers = computed(() => transport.value?.total_seats || 1)
+const pricePerSeat = computed(() => transport.value?.pricePerSeat || service.value?.price || 0)
+const maxPassengers = computed(() => transport.value?.totalSeats || 1)
 
 const estimatedTravelTime = computed(() => {
   const t = transport.value
-  if (!t?.departure_time || !t?.arrival_time) return 'N/A'
-  const dep = new Date(t.departure_time).getTime()
-  const arr = new Date(t.arrival_time).getTime()
+  if (!t?.departureTime || !t?.arrivalTime) return 'N/A'
+  const dep = new Date(t.departureTime).getTime()
+  const arr = new Date(t.arrivalTime).getTime()
   const diffMs = arr - dep
   if (diffMs <= 0) return 'N/A'
   const hours = Math.floor(diffMs / (1000 * 60 * 60))
@@ -342,10 +342,10 @@ const displayTags = computed(() => {
   const tags: string[] = []
   const t = transport.value
   if (t) {
-    tags.push(formatTransportType(t.transport_type))
-    if (t.vehicle_model) tags.push(t.vehicle_model)
-    tags.push(`${t.total_seats} Seats`)
-    if (t.departure_point) tags.push(t.departure_point)
+    tags.push(formatTransportType(t.transportType))
+    if (t.vehicleModel) tags.push(t.vehicleModel)
+    tags.push(`${t.totalSeats} Seats`)
+    if (t.departurePoint) tags.push(t.departurePoint)
     if (t.destination) tags.push(t.destination)
   }
   return tags.slice(0, 5)
@@ -356,12 +356,12 @@ const galleryImages = computed(() => {
   const imgs = service.value.images || []
   
   const sorted = [...imgs].sort((a, b) => {
-    if (a.is_cover) return -1
-    if (b.is_cover) return 1
-    return (a.sort_order || 0) - (b.sort_order || 0)
+    if (a.isCover) return -1
+    if (b.isCover) return 1
+    return (a.sortOrder || 0) - (b.sortOrder || 0)
   })
 
-  const results = sorted.map(i => i.image_url)
+  const results = sorted.map(i => i.imageUrl)
   
   while (results.length < 4) {
     results.push(`https://placehold.co/800x600/006566/ffffff?text=Vehicle+Photo+${results.length + 1}`)
@@ -411,7 +411,14 @@ const handleBooking = () => {
     router.push({ name: 'login', query: { redirect: route.fullPath } })
     return
   }
-  router.push({ name: 'booking-form', params: { id: service.value?.id } })
+  router.push({ 
+    name: 'booking-form', 
+    params: { id: service.value?.id },
+    query: {
+      quantity: passengers.value,
+      date: transport.value?.departureTime ? new Date(transport.value.departureTime).toISOString().split('T')[0] : undefined
+    }
+  })
 }
 </script>
 
