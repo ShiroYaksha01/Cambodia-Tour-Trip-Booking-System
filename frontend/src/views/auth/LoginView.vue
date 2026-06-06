@@ -35,7 +35,7 @@ const handleLogin = async () => {
       if (redirectPath) {
         router.push(redirectPath);
       } else {
-        router.push("/");
+        router.push("/dashboard");
       }
     }
   } catch (err) {

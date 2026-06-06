@@ -163,4 +163,51 @@ export class ProvidersService {
     await this.providerRepository.delete(id)
     return { deleted: true }
   }
+
+  async getProviderProfile(userId: string) {
+    const provider = await this.providerRepository.findOne({
+      where: { userId },
+      relations: ['user'],
+    });
+
+    if (!provider) {
+      throw new NotFoundException('Provider profile not found');
+    }
+
+    return provider;
+  }
+
+  async updateProviderProfile(userId: string, updateDto: any) {
+    const provider = await this.providerRepository.findOne({
+      where: { userId },
+      relations: ['user'],
+    });
+
+    if (!provider) {
+      throw new NotFoundException('Provider profile not found');
+    }
+
+    // Update provider fields
+    if (updateDto.companyName) provider.companyName = updateDto.companyName;
+    if (updateDto.address) provider.address = updateDto.address;
+    if (updateDto.description) provider.description = updateDto.description;
+    if (updateDto.serviceCategory) provider.serviceCategory = updateDto.serviceCategory;
+    if (updateDto.facebookUrl) provider.facebookUrl = updateDto.facebookUrl;
+    if (updateDto.telegramUrl) provider.telegramUrl = updateDto.telegramUrl;
+    if (updateDto.bankAccountNumber) provider.bankAccountNumber = updateDto.bankAccountNumber;
+    if (updateDto.bankName) provider.bankName = updateDto.bankName;
+    if (updateDto.refundPolicy) provider.refundPolicy = updateDto.refundPolicy;
+    if (updateDto.guestRequirements) provider.guestRequirements = updateDto.guestRequirements;
+
+    // Update user fields
+    if (updateDto.email || updateDto.phoneNumber || updateDto.username) {
+      await this.usersService.updateUser(userId, {
+        email: updateDto.email,
+        phoneNumber: updateDto.phoneNumber,
+        username: updateDto.username,
+      });
+    }
+
+    return this.providerRepository.save(provider);
+  }
 }

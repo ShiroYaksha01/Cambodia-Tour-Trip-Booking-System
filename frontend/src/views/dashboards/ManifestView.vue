@@ -14,13 +14,21 @@
             </div>
           </div>
 
-          <div class="numpad">
-            <div v-for="n in 9" :key="n" class="numpad-btn" @click="addDigit(n.toString())">
-              {{ n }}
+          <div class="alphanumeric-keyboard">
+            <div class="keyboard-row">
+              <div v-for="n in ['1','2','3','4','5','6','7','8','9','0']" :key="n" class="key" @click="addDigit(n)">{{ n }}</div>
             </div>
-            <div class="numpad-btn clear-btn" @click="clearCode">⌫</div>
-            <div class="numpad-btn" @click="addDigit('0')">0</div>
-            <div class="numpad-btn check-btn" @click="verifyCode">✓</div>
+            <div class="keyboard-row">
+              <div v-for="l in ['Q','W','E','R','T','Y','U','I','O','P']" :key="l" class="key" @click="addDigit(l)">{{ l }}</div>
+            </div>
+            <div class="keyboard-row">
+              <div v-for="l in ['A','S','D','F','G','H','J','K','L']" :key="l" class="key" @click="addDigit(l)">{{ l }}</div>
+            </div>
+            <div class="keyboard-row">
+              <div class="key special-key clear-btn" @click="clearCode">⌫</div>
+              <div v-for="l in ['Z','X','C','V','B','N','M']" :key="l" class="key" @click="addDigit(l)">{{ l }}</div>
+              <div class="key special-key check-btn" @click="verifyCode">✓</div>
+            </div>
           </div>
 
           <div class="info-box">
@@ -46,7 +54,11 @@
           <button class="download-btn">⬇ Download Daily Manifest</button>
         </div>
 
-        <div class="guest-list">
+        <div v-if="isLoading" class="flex justify-center py-20">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+        </div>
+
+        <div v-else class="guest-list">
           <div
             v-for="guest in filteredGuests"
             :key="guest.id"
@@ -66,9 +78,9 @@
             <div v-if="guest.checked" class="checked-badge">✓</div>
           </div>
 
-          <button v-if="filteredGuests.length === 0" class="view-all-btn">
-            VIEW ALL 24 BOOKINGS FOR TODAY
-          </button>
+          <div v-if="filteredGuests.length === 0" class="text-center py-10 text-gray-500">
+            No bookings found for today.
+          </div>
         </div>
       </section>
     </main>
@@ -76,8 +88,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from "vue";
-import { getProviderBookings } from "../../services/api";
+import { computed, ref, onMounted, onUnmounted } from "vue";
+import { getProviderBookings, checkInBooking } from "../../services/api";
+import { resolveImageUrl } from "../../utils/api";
 
 const props = withDefaults(
   defineProps<{
@@ -109,7 +122,11 @@ const verificationMessage = ref<{
   undoBtn?: boolean;
 } | null>(null);
 
-const bookingCodeDigits = computed(() => bookingCode.value.split(""));
+const bookingCodeDigits = computed(() => {
+  const digits = bookingCode.value.split("");
+  while (digits.length < 6) digits.push("");
+  return digits;
+});
 
 const guests = ref<Guest[]>([]);
 const isLoading = ref(true);
@@ -128,6 +145,7 @@ function mapBookingToGuest(booking: any): Guest {
     pending: { status: "Pending", statusClass: "arrival" },
     cancelled: { status: "Cancelled", statusClass: "delayed" },
     completed: { status: "Completed", statusClass: "checked-in" },
+    completed_checkin: { status: "Completed", statusClass: "checked-in" },
     refunded: { status: "Refunded", statusClass: "delayed" },
   };
   const mapped = statusMap[bkStatus] || { status: "Arrival Expected", statusClass: "arrival" };
@@ -140,35 +158,52 @@ function mapBookingToGuest(booking: any): Guest {
     time: timeStr,
     status: mapped.status,
     statusClass: mapped.statusClass,
-    avatar: booking.user?.profile_picture || `https://picsum.photos/40/40?random=${Math.random()}`,
-    checked: bkStatus === "completed",
+    avatar: resolveImageUrl(booking.user?.profile_picture) || `https://picsum.photos/40/40?random=${Math.random()}`,
+    checked: bkStatus === "completed" || bkStatus === "completed_checkin",
   };
 }
 
-const mockFallback = () => [
-  { id: "1", name: "Chen Srey-Mom", package: "PAX 2", bookingCode: "BT-8022", time: "09:30 AM", status: "Arrival Expected", statusClass: "arrival", avatar: "https://picsum.photos/40/40?random=1", checked: false },
-  { id: "2", name: "Liam Henderson", package: "PAX 1", bookingCode: "BT-8045", time: "CHECKED IN 08:12", status: "Sunrise Meditation", statusClass: "checked-in", avatar: "https://picsum.photos/40/40?random=2", checked: true },
-  { id: "3", name: "Elena Rodriguez", package: "PAX 4", bookingCode: "BT-9112", time: "Delayed", status: "Arriving 10:15", statusClass: "delayed", avatar: "https://picsum.photos/40/40?random=3", checked: false },
-  { id: "4", name: "Marcus Weber", package: "PAX 2", bookingCode: "BT-9140", time: "11:00 AM", status: "Angkor Archeology Tour", statusClass: "tour", avatar: "https://picsum.photos/40/40?random=4", checked: false },
-];
-
-onMounted(async () => {
+async function loadBookings() {
   try {
     const res = await getProviderBookings();
-    const list = res?.data || [];
+    const data = res.data || res;
+    const list = Array.isArray(data) ? data : data.data || [];
     guests.value = list.map(mapBookingToGuest);
-  } catch {
-    guests.value = mockFallback();
+  } catch (err) {
+    console.error("Failed to fetch bookings:", err);
+    guests.value = [];
   } finally {
     isLoading.value = false;
   }
+}
+
+onMounted(async () => {
+  await loadBookings();
+  window.addEventListener("keydown", handleGlobalKeydown);
 });
 
-const filteredGuests = computed(() => {
-  if (!props.searchQuery.trim()) {
-    return guests.value;
+onUnmounted(() => {
+  window.removeEventListener("keydown", handleGlobalKeydown);
+});
+
+function handleGlobalKeydown(e: KeyboardEvent) {
+  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+  const key = e.key.toUpperCase();
+  if (/^[A-Z0-9]$/.test(key)) {
+    addDigit(key);
+  } else if (e.key === "Backspace") {
+    bookingCode.value = bookingCode.value.slice(0, -1);
+  } else if (e.key === "Enter") {
+    verifyCode();
+  } else if (e.key === "Escape") {
+    clearCode();
   }
-  const query = props.searchQuery.toLowerCase();
+}
+
+const filteredGuests = computed(() => {
+  const query = props.searchQuery.trim().toLowerCase();
+  if (!query) return guests.value;
   return guests.value.filter(
     (guest) =>
       guest.name.toLowerCase().includes(query) ||
@@ -187,7 +222,7 @@ function clearCode() {
   verificationMessage.value = null;
 }
 
-function verifyCode() {
+async function verifyCode() {
   if (bookingCode.value.length !== 6) {
     verificationMessage.value = {
       type: "error",
@@ -203,13 +238,34 @@ function verifyCode() {
   );
 
   if (match) {
-    verificationMessage.value = {
-      type: "success",
-      icon: "✓",
-      title: "Guest Successfully Verified",
-      description: `${match.name} • ${match.package} ${match.bookingCode ? "• #" + match.bookingCode : ""}`,
-      undoBtn: true,
-    };
+    if (match.checked) {
+      verificationMessage.value = {
+        type: "success",
+        icon: "✓",
+        title: "Guest Already Verified",
+        description: `${match.name} • ${match.package} • #${match.bookingCode}`,
+      };
+      return;
+    }
+
+    try {
+      await checkInBooking(match.id);
+      await loadBookings();
+      verificationMessage.value = {
+        type: "success",
+        icon: "✓",
+        title: "Guest Successfully Verified",
+        description: `${match.name} • ${match.package} • #${match.bookingCode}`,
+        undoBtn: false,
+      };
+    } catch (err: any) {
+      verificationMessage.value = {
+        type: "error",
+        icon: "✕",
+        title: "Verification Failed",
+        description: err.response?.data?.message || "Could not complete check-in.",
+      };
+    }
   } else {
     verificationMessage.value = {
       type: "error",
@@ -234,183 +290,136 @@ function undoVerification() {
   background: #f5f5f5;
 }
 
-.manifest-header {
-  /* header is now provided by ProviderHeader component */
-  display: block;
-}
-
-.search-container {
-  position: relative;
-  flex: 1;
-  max-width: 400px;
-}
-
-.search-input {
-  width: 100%;
-  padding: 8px 12px 8px 32px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 13px;
-}
-
-.search-icon {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #999;
-}
-
-.header-icons {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.provider-profile {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  overflow: hidden;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(135deg, #0f6e70, #efb34f);
-  color: #fff;
-  font-size: 0.65rem;
-  font-weight: 800;
-}
-
-.avatar--image {
-  background: transparent;
-}
-
-.avatar--image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.icon-btn {
-  background: none;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
-  padding: 4px;
-}
-
 .manifest-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
-  padding: 20px 24px;
+  padding: 24px;
   flex: 1;
 }
 
 .check-in-section {
   background: white;
-  border-radius: 6px;
+  border-radius: 12px;
   padding: 24px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
 
 .check-in-section h2 {
   margin: 0 0 20px 0;
   font-size: 18px;
   color: #1a1a1a;
+  font-weight: 700;
 }
 
 .booking-code-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .section-label {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   color: #999;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
 }
 
 .code-display {
-  display: grid;
-  grid-template-columns: repeat(6, 60px);
+  display: flex;
+  justify-content: center;
   gap: 12px;
 }
 
 .digit {
   display: grid;
   place-items: center;
-  background: #f5f5f5;
+  background: #f9f9f9;
   border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  font-size: 18px;
-  font-weight: 600;
+  border: 2px solid #eee;
+  font-size: 24px;
+  font-weight: 700;
   color: #1a1a1a;
-  width: 60px;
-  height: 60px;
+  width: 54px;
+  height: 64px;
+  transition: all 0.2s;
 }
 
-.numpad {
-  display: grid;
-  grid-template-columns: repeat(3, 132px);
-  gap: 12px;
+.digit:not(:empty) {
+  border-color: #0f6e70;
+  background: white;
+}
+
+.alphanumeric-keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   margin-top: 12px;
 }
 
-.numpad-btn {
-  display: grid;
-  place-items: center;
-  background: #f5f5f5;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 600;
-  transition: all 0.2s;
-  width: 132px;
-  height: 60px;
-  padding: 0;
+.keyboard-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
 }
 
-.numpad-btn:hover {
-  background: #efefef;
+.key {
+  display: grid;
+  place-items: center;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  transition: all 0.2s;
+  width: 38px;
+  height: 48px;
+  color: #333;
+  box-shadow: 0 2px 0 #eee;
+}
+
+.key:hover {
+  background: #f5f7f7;
+  transform: translateY(-1px);
+}
+
+.key:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.special-key {
+  width: 58px;
 }
 
 .clear-btn {
-  background: #ffe8e8;
-  color: #d73a49;
+  background: #fff5f5;
+  color: #e53e3e;
+  border-color: #feb2b2;
 }
 
 .check-btn {
-  background: #b3f5e0;
-  color: #0f6e70;
+  background: #f0fff4;
+  color: #2f855a;
+  border-color: #9ae6b4;
 }
 
 .info-box {
   display: flex;
-  gap: 10px;
-  background: #fff9e6;
-  border-radius: 6px;
-  padding: 10px;
-  font-size: 11px;
-  color: #8b6f47;
+  gap: 12px;
+  background: #ebf8ff;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 12px;
+  color: #2b6cb0;
   line-height: 1.5;
 }
 
 .info-icon {
-  flex: 0 0 20px;
-  display: grid;
-  place-items: center;
-  background: #f0e6cc;
-  border-radius: 50%;
-  font-weight: 600;
+  font-weight: 800;
+  font-size: 16px;
 }
 
 .info-box p {
@@ -420,65 +429,43 @@ function undoVerification() {
 .verification-result {
   display: flex;
   gap: 12px;
-  padding: 12px;
-  border-radius: 6px;
-  align-items: flex-start;
+  padding: 16px;
+  border-radius: 8px;
+  align-items: center;
 }
 
 .verification-result.success {
-  background: #e8f5f0;
-  border-left: 4px solid #0f6e70;
+  background: #f0fff4;
+  border-left: 4px solid #38a169;
 }
 
 .verification-result.error {
-  background: #ffe8e8;
-  border-left: 4px solid #d73a49;
+  background: #fff5f5;
+  border-left: 4px solid #e53e3e;
 }
 
 .result-icon {
-  font-size: 20px;
-  flex: 0 0 24px;
-  display: grid;
-  place-items: center;
+  font-size: 24px;
 }
 
 .result-title {
-  margin: 0 0 2px 0;
-  font-size: 13px;
-  font-weight: 600;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
   color: #1a1a1a;
 }
 
 .result-desc {
-  margin: 0;
+  margin: 2px 0 0 0;
   font-size: 12px;
   color: #666;
 }
 
-.verification-result.success .result-title {
-  color: #0f6e70;
-}
-
-.undo-btn {
-  margin-left: auto;
-  padding: 4px 8px;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  cursor: pointer;
-  font-size: 11px;
-  font-weight: 600;
-  color: #666;
-}
-
-.undo-btn:hover {
-  background: #f5f5f5;
-}
-
 .guest-list-section {
   background: white;
-  border-radius: 6px;
+  border-radius: 12px;
   padding: 24px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
   display: flex;
   flex-direction: column;
 }
@@ -487,28 +474,25 @@ function undoVerification() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .guest-list-header h2 {
   margin: 0;
   font-size: 18px;
+  font-weight: 700;
   color: #1a1a1a;
 }
 
 .download-btn {
-  padding: 8px 12px;
+  padding: 8px 16px;
   background: white;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 12px;
   font-weight: 600;
   color: #1a1a1a;
-}
-
-.download-btn:hover {
-  background: #f5f5f5;
 }
 
 .guest-list {
@@ -521,26 +505,30 @@ function undoVerification() {
 .guest-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: #f9f9f9;
-  border-radius: 6px;
+  gap: 16px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 12px;
   transition: all 0.2s;
+  position: relative;
 }
 
 .guest-card:hover {
-  background: #f0f0f0;
+  background: #f3f4f6;
 }
 
 .guest-card.checked {
-  background: #e8f5f0;
+  background: #f0fff4;
+  border: 1px solid #c6f6d5;
 }
 
 .guest-avatar {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   object-fit: cover;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .guest-info {
@@ -549,16 +537,16 @@ function undoVerification() {
 
 .guest-name {
   margin: 0;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   color: #1a1a1a;
 }
 
 .guest-package {
   margin: 2px 0 0 0;
-  font-size: 11px;
+  font-size: 12px;
   color: #0f6e70;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .guest-booking {
@@ -572,67 +560,36 @@ function undoVerification() {
   flex-direction: column;
   align-items: flex-end;
   gap: 4px;
-  font-size: 11px;
 }
 
 .time {
+  font-size: 12px;
   color: #1a1a1a;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .status {
-  padding: 2px 6px;
-  border-radius: 3px;
+  padding: 2px 8px;
+  border-radius: 6px;
   font-size: 10px;
-  font-weight: 500;
-  white-space: nowrap;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
-.status.arrival {
-  background: #fff4e6;
-  color: #9b6b1f;
-}
-
-.status.checked-in {
-  background: #e8f5f0;
-  color: #0f6e70;
-}
-
-.status.delayed {
-  background: #ffe8e8;
-  color: #d73a49;
-}
-
-.status.tour {
-  background: #e8f0ff;
-  color: #0e5ba8;
-}
+.status.arrival { background: #feebc8; color: #9c4221; }
+.status.checked-in { background: #c6f6d5; color: #22543d; }
+.status.delayed { background: #fed7d7; color: #822727; }
 
 .checked-badge {
   display: grid;
   place-items: center;
   width: 24px;
   height: 24px;
-  background: #0f6e70;
+  background: #38a169;
   color: white;
   border-radius: 50%;
-  font-size: 14px;
-  font-weight: bold;
-}
-
-.view-all-btn {
-  padding: 12px;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  cursor: pointer;
   font-size: 12px;
-  font-weight: 600;
-  color: #0f6e70;
-}
-
-.view-all-btn:hover {
-  background: #f5f5f5;
+  font-weight: 800;
 }
 
 @media (max-width: 1024px) {

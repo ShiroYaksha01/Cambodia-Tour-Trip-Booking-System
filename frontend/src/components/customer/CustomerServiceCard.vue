@@ -1,13 +1,13 @@
 <template>
   <div
-    class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100
+    class="group bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100
            hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
   >
     <!-- Image -->
     <div class="relative overflow-hidden h-52">
       <img
-        :src="tour.image"
-        :alt="tour.title"
+        :src="tour.image || 'https://freedomdestinations.co.uk/wp-content/uploads/Angkor-Wat-Cambodia-4.jpg'"
+        :alt="tour.title || 'Service Image'"
         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
       />
       <!-- Rating badge -->
@@ -48,7 +48,7 @@
         <!-- Price -->
         <div>
           <span class="text-xs text-gray-400 block">From</span>
-          <span class="font-bold text-gray-900 text-xl">${{ tour.price.toFixed(2) }}</span>
+          <span class="font-bold text-gray-900 text-xl">${{ (tour.price || 0).toFixed(2) }}</span>
         </div>
         <!-- CTA -->
         <button
@@ -66,7 +66,7 @@
 
 <script setup lang="ts">
 export interface Tour {
-  id: number
+  id: string | number
   title: string
   location: string
   description: string

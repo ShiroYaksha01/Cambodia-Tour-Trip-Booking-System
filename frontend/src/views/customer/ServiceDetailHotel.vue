@@ -34,10 +34,10 @@
           <span class="category-label">Accommodation</span>
           <span class="meta-divider">·</span>
           <div class="stars-row">
-            <span v-for="s in 5" :key="s" class="star" :class="{ filled: s <= (accommodation?.star_rating || 0) }">★</span>
+            <span v-for="s in 5" :key="s" class="star" :class="{ filled: s <= (accommodation?.starRating || 0) }">★</span>
           </div>
         </div>
-        <h1 class="service-title">{{ accommodation?.hotel_name || service.title }}</h1>
+        <h1 class="service-title">{{ accommodation?.hotelName || service.title }}</h1>
         <div class="address-meta">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.4 8 13 8 13s8-7.6 8-13a8 8 0 0 0-8-8z"/></svg>
           <span>{{ accommodation?.address || service.location || 'Address not specified' }}</span>
@@ -54,7 +54,7 @@
           <section class="gallery-section">
             <div class="gallery-layout">
               <div class="gallery-main">
-                <img :src="currentMainImage" :alt="accommodation?.hotel_name || service.title" />
+                <img :src="currentMainImage" :alt="accommodation?.hotelName || service.title" />
               </div>
               <div class="gallery-sidebar">
                 <div 
@@ -86,14 +86,14 @@
               <h2>Room Details</h2>
             </div>
             <div class="room-card">
-              <h3 class="room-type-name">{{ accommodation?.room_type || 'Standard Room' }}</h3>
+              <h3 class="room-type-name">{{ accommodation?.roomType || 'Standard Room' }}</h3>
               <div class="room-stats">
                 <div class="room-stat">
                   <span class="stat-icon">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                   </span>
                   <div>
-                    <span class="stat-value">{{ accommodation?.total_rooms || 0 }}</span>
+                    <span class="stat-value">{{ accommodation?.totalRooms || 0 }}</span>
                     <span class="stat-label">Total Rooms</span>
                   </div>
                 </div>
@@ -102,7 +102,7 @@
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                   </span>
                   <div>
-                    <span class="stat-value">${{ accommodation?.price_per_night || pricePerNight }}</span>
+                    <span class="stat-value">${{ accommodation?.pricePerNight || pricePerNight }}</span>
                     <span class="stat-label">Per Night</span>
                   </div>
                 </div>
@@ -111,7 +111,7 @@
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                   </span>
                   <div>
-                    <span class="stat-value">{{ accommodation?.check_in_time || '14:00' }}</span>
+                    <span class="stat-value">{{ accommodation?.checkInTime || '14:00' }}</span>
                     <span class="stat-label">Check-in</span>
                   </div>
                 </div>
@@ -120,7 +120,7 @@
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                   </span>
                   <div>
-                    <span class="stat-value">{{ accommodation?.check_out_time || '12:00' }}</span>
+                    <span class="stat-value">{{ accommodation?.checkOutTime || '12:00' }}</span>
                     <span class="stat-label">Check-out</span>
                   </div>
                 </div>
@@ -137,13 +137,13 @@
             <div class="provider-card">
               <div class="provider-top">
                 <div class="provider-logo">
-                  <img v-if="provider?.logo" :src="provider.logo" :alt="provider?.company_name" />
+                  <img v-if="provider?.logo" :src="provider.logo" :alt="provider?.companyName" />
                   <span v-else class="provider-logo-fallback">🏛</span>
                 </div>
                 <div class="provider-info">
                   <div class="provider-name-row">
-                    <h3>{{ provider?.company_name || 'Property Manager' }}</h3>
-                    <span v-if="provider?.is_verified" class="verified-badge" title="Verified Provider">
+                    <h3>{{ provider?.companyName || 'Property Manager' }}</h3>
+                    <span v-if="provider?.isVerified" class="verified-badge" title="Verified Provider">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
                       Verified
                     </span>
@@ -151,12 +151,12 @@
                   <p class="provider-desc">{{ provider?.description || 'Professional hospitality provider in Cambodia.' }}</p>
                 </div>
               </div>
-              <div v-if="provider?.facebook_url || provider?.telegram_url" class="provider-links">
-                <a v-if="provider?.facebook_url" :href="provider.facebook_url" target="_blank" class="provider-link">
+              <div v-if="provider?.facebookUrl || provider?.telegramUrl" class="provider-links">
+                <a v-if="provider?.facebookUrl" :href="provider.facebookUrl" target="_blank" class="provider-link">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
                   Facebook
                 </a>
-                <a v-if="provider?.telegram_url" :href="provider.telegram_url" target="_blank" class="provider-link">
+                <a v-if="provider?.telegramUrl" :href="provider.telegramUrl" target="_blank" class="provider-link">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-1.97 9.289c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.88 13.67l-2.967-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.943.916z"/></svg>
                   Telegram
                 </a>
@@ -238,32 +238,32 @@ const router = useRouter()
 const route = useRoute()
 
 interface Accommodation {
-  service_id: string
-  hotel_name: string
+  serviceId: string
+  hotelName: string
   address?: string
-  star_rating: number
-  room_type: string
-  total_rooms: number
-  price_per_night: number
-  check_in_time: string
-  check_out_time: string
+  starRating: number
+  roomType: string
+  totalRooms: number
+  pricePerNight: number
+  checkInTime: string
+  checkOutTime: string
 }
 
 interface Provider {
   id: string
-  company_name: string
+  companyName: string
   logo?: string
   description?: string
-  is_verified: boolean
-  facebook_url?: string
-  telegram_url?: string
+  isVerified: boolean
+  facebookUrl?: string
+  telegramUrl?: string
 }
 
 interface ServiceImage {
   id: string
-  image_url: string
-  is_cover: boolean
-  sort_order: number
+  imageUrl: string
+  isCover: boolean
+  sortOrder: number
 }
 
 interface Service {
@@ -278,7 +278,7 @@ interface Service {
   images: ServiceImage[]
   provider: Provider
   accommodation: Accommodation
-  inventory?: { total_capacity: number }
+  inventory?: { totalCapacity: number }
 }
 
 const service = ref<Service | null>(null)
@@ -292,8 +292,8 @@ const activeImageUrl = ref<string | null>(null)
 
 const accommodation = computed(() => service.value?.accommodation)
 const provider = computed(() => service.value?.provider)
-const pricePerNight = computed(() => accommodation.value?.price_per_night || service.value?.price || 0)
-const maxRooms = computed(() => accommodation.value?.total_rooms || 1)
+const pricePerNight = computed(() => accommodation.value?.pricePerNight || service.value?.price || 0)
+const maxRooms = computed(() => accommodation.value?.totalRooms || 1)
 
 const todayStr = computed(() => new Date().toISOString().split('T')[0])
 const minCheckoutStr = computed(() => {
@@ -317,8 +317,8 @@ const displayTags = computed(() => {
   const tags: string[] = []
   const acc = accommodation.value
   if (acc) {
-    tags.push(`${acc.star_rating || 0}-Star Hotel`)
-    tags.push(acc.room_type || 'Standard')
+    tags.push(`${acc.starRating || 0}-Star Hotel`)
+    tags.push(acc.roomType || 'Standard')
     if (acc.address) tags.push(acc.address.split(',').pop()?.trim() || acc.address)
   }
   return tags
@@ -329,12 +329,12 @@ const galleryImages = computed(() => {
   const imgs = service.value.images || []
   
   const sorted = [...imgs].sort((a, b) => {
-    if (a.is_cover) return -1
-    if (b.is_cover) return 1
-    return (a.sort_order || 0) - (b.sort_order || 0)
+    if (a.isCover) return -1
+    if (b.isCover) return 1
+    return (a.sortOrder || 0) - (b.sortOrder || 0)
   })
 
-  const results = sorted.map(i => i.image_url)
+  const results = sorted.map(i => i.imageUrl)
   
   while (results.length < 4) {
     results.push(`https://placehold.co/800x600/006566/ffffff?text=Hotel+Photo+${results.length + 1}`)
@@ -375,7 +375,14 @@ const handleBooking = () => {
     router.push({ name: 'login', query: { redirect: route.fullPath } })
     return
   }
-  router.push({ name: 'booking-form', params: { id: service.value?.id } })
+  router.push({ 
+    name: 'booking-form', 
+    params: { id: service.value?.id },
+    query: {
+      quantity: rooms.value,
+      date: checkInDate.value
+    }
+  })
 }
 </script>
 

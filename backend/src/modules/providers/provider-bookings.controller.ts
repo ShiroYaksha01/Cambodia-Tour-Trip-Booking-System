@@ -1,16 +1,38 @@
-import { Controller, Get, Req, UseGuards, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Patch, Param, Req, UseGuards, ForbiddenException, Body } from '@nestjs/common';
 
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ProviderBookingsService } from './provider-bookings.service';
+import { ProvidersService } from './providers.service';
 
 @Controller('provider')
 export class ProviderBookingsController {
-  constructor(private readonly providerBookingsService: ProviderBookingsService) {}
+  constructor(
+    private readonly providerBookingsService: ProviderBookingsService,
+    private readonly providersService: ProvidersService,
+  ) {}
+
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  getProfile(@Req() request: { user: { userId: string } }) {
+    return this.providersService.getProviderProfile(request.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('profile')
+  updateProfile(@Req() request: { user: { userId: string } }, @Body() updateDto: any) {
+    return this.providersService.updateProviderProfile(request.user.userId, updateDto);
+  }
 
   @UseGuards(JwtAuthGuard)
   @Get('bookings')
   findBookings(@Req() request: { user: { userId: string; role: string } }) {
     return this.providerBookingsService.findBookingsForProvider(request.user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('bookings/:id/check-in')
+  checkIn(@Param('id') id: string, @Req() request: { user: { userId: string; role: string } }) {
+    return this.providerBookingsService.checkInBooking(request.user, id);
   }
 
   @UseGuards(JwtAuthGuard)

@@ -5,7 +5,7 @@ import { getCurrentUserRole, hasAuthSession } from "../utils/auth";
 const routes: RouteRecordRaw[] = [
   {
     path: "/",
-    redirect: "/dashboard",
+    redirect: "/customer/homepage",
   },
 
   {
@@ -339,7 +339,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: "/:pathMatch(.*)*",
-    redirect: "/dashboard",
+    redirect: "/",
   },
 ];
 
