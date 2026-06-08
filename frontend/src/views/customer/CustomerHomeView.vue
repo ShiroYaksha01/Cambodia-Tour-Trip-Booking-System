@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import CustomerNavbar from '../../components/customer/CustomerNavbar.vue'
-import CustomerHomePageSearch from '../../components/customer/CustomerHomePageSearch.vue'
-import CustomerServiceCard from '../../components/customer/CustomerServiceCard.vue'
-import CustomerFooter from '../../components/customer/CustomerFooter.vue'
+import CustomerNavbar from "../../components/customer/CustomerNavbar.vue";
+import CustomerHomePageSearch from "../../components/customer/CustomerHomePageSearch.vue";
+import CustomerServiceCard from "../../components/customer/CustomerServiceCard.vue";
+import CustomerFooter from "../../components/customer/CustomerFooter.vue";
 
 import { fetchServices } from '../../services/api'
 import { onMounted, ref } from 'vue'
@@ -30,6 +30,20 @@ const goToDetail = (service: any) => {
   else router.push({ name: 'service-detail', params: { id: service.id } })
 }
 
+const goToProviderDetail = (tour: any) => {
+  const providerId = tour.provider?.id || tour.providerId || tour.provider_id;
+
+  if (!providerId) {
+    console.error("Provider ID not found in tour:", tour);
+    return;
+  }
+
+  router.push({
+    name: "provider-detail",
+    params: { id: providerId },
+  });
+};
+
 const scrollToBottom = () => {
   window.scrollTo({
     top: document.documentElement.scrollHeight,
@@ -55,6 +69,8 @@ function mapServiceToTour(service: any) {
     reviews: Math.floor(Math.random() * 100) + 10,
     price: typeof service.price === 'string' ? parseFloat(service.price) : service.price,
     duration: service.duration || 'Flexible',
+    provider: service.provider,
+    providerId: service.provider?.id || service.providerId || service.provider_id
   }
 }
 
@@ -94,11 +110,10 @@ function handleSearch(filters: any) {
   })
 }
 
-//use try-catch to handle errors when fetching data from the API
 onMounted(async () => {
   try {
-    const data = await fetchServices()
-    console.log("API data:", data)
+    const data = await fetchServices();
+    console.log("API data:", data);
 
     allServices.value = Array.isArray(data) ? data : []
     displayedServices.value = [...allServices.value]
@@ -107,7 +122,7 @@ onMounted(async () => {
     allServices.value = []
     displayedServices.value = []
   }
-})
+});
 </script>
 
 <template>
@@ -123,9 +138,7 @@ onMounted(async () => {
         class="absolute inset-0 bg-[url('https://freedomdestinations.co.uk/wp-content/uploads/Angkor-Wat-Cambodia-4.jpg')] bg-cover bg-center opacity-20"
       />
 
-      <div
-        class="relative max-w-7xl mx-auto px-6 lg:px-8 py-24 lg:py-32"
-      >
+      <div class="relative max-w-7xl mx-auto px-6 lg:px-8 py-24 lg:py-32">
         <div class="max-w-3xl">
           <p
             class="inline-flex items-center rounded-full bg-white/20 px-4 py-2 text-sm font-medium backdrop-blur"
@@ -210,6 +223,7 @@ onMounted(async () => {
             :tour="mapServiceToTour(service)"
             @click="goToDetail(service)"
             @book="handleBook"
+            @provider-detail="goToProviderDetail"
             class="cursor-pointer"
           />
         </div>
@@ -318,9 +332,7 @@ onMounted(async () => {
 
     <!-- Destination Banner -->
     <section class="px-4 pb-20">
-      <div
-        class="relative max-w-7xl mx-auto overflow-hidden rounded-[32px]"
-      >
+      <div class="relative max-w-7xl mx-auto overflow-hidden rounded-[32px]">
         <img
           src="https://freedomdestinations.co.uk/wp-content/uploads/Angkor-Wat-Cambodia-4.jpg"
           alt="Cambodia"
@@ -331,9 +343,7 @@ onMounted(async () => {
           class="absolute inset-0 bg-gradient-to-r from-black/70 to-black/20"
         />
 
-        <div
-          class="absolute inset-0 flex items-center px-8 md:px-16"
-        >
+        <div class="absolute inset-0 flex items-center px-8 md:px-16">
           <div class="max-w-2xl text-white">
             <p class="text-sm font-semibold uppercase tracking-widest">
               Discover Cambodia

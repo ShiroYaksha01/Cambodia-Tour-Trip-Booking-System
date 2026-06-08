@@ -154,6 +154,38 @@ export class ProvidersService {
     }
   }
 
+  async getPublicProviderById(id: string) {
+    const provider = await this.providerRepository.findOne({
+      where: { id },
+      relations: ['services', 'user'],
+    });
+
+    if (!provider) {
+      throw new NotFoundException('Provider not found');
+    }
+
+    return {
+      id: provider.id,
+      name: provider.companyName,
+      location: provider.address,
+      description: provider.description,
+      logo: provider.logo,
+      coverImage: provider.coverImage,
+      isVerified: provider.isVerified,
+      email: provider.user?.email,
+      phone: provider.user?.phoneNumber,
+      services: provider.services.map(service => ({
+        id: service.id,
+        title: service.title,
+        description: service.description,
+        price: service.price,
+        location: service.location,
+        coverImage: service.coverImage,
+        duration: service.duration,
+      })),
+    };
+  }
+
   async deleteProvider(id: string) {
     const target = await this.providerRepository.findOne({ where: { id } })
     if (!target) {
