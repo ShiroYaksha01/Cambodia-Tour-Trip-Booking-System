@@ -239,12 +239,25 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: "/customer/change-password",
+    name: "customer-change-password",
+    component: () => import("../views/customer/ChangePassword.vue"),
+  },
+  {
     path: "/customer/profile",
     name: "customer-profile",
     component: () => import("../views/customer/CustomerProfileView.vue"),
     meta: {
       requiresAuth: true,
       roles: ["customer"],
+    },
+  },
+  {
+    path: "/customer/provider/:id",
+    name: "provider-detail",
+    component: () => import("../views/customer/ProviderDetail.vue"),
+    meta: {
+      requiresAuth: false,
     },
   },
   {
