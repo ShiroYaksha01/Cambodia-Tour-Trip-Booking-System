@@ -1,11 +1,11 @@
 import { createRouter, createWebHistory } from "vue-router";
 import type { RouteRecordRaw } from "vue-router";
-import { getCurrentUserRole } from "../utils/auth";
+import { getCurrentUserRole, hasAuthSession } from "../utils/auth";
 
 const routes: RouteRecordRaw[] = [
   {
     path: "/",
-    redirect: "/dashboard",
+    redirect: "/customer/homepage",
   },
 
   {
@@ -29,7 +29,19 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/forgot-password",
     name: "forgot-password",
-    component: () => import("../views/auth/ForgotPassword.vue"),
+    component: () => import("../views/auth/ForgotPasswordView.vue"),
+    meta: { guestOnly: true },
+  },
+  {
+    path: "/verify-otp",
+    name: "verify-otp",
+    component: () => import("../views/auth/VerifyOtpView.vue"),
+    meta: { guestOnly: true },
+  },
+  {
+    path: "/reset-password",
+    name: "reset-password",
+    component: () => import("../views/auth/ResetPasswordView.vue"),
     meta: { guestOnly: true },
   },
   {
@@ -85,6 +97,35 @@ const routes: RouteRecordRaw[] = [
   },
 
   {
+    path: "/admin/revenue",
+    name: "admin-revenue",
+    component: () => import("../views/AdminRevenuePage.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["admin"],
+    },
+  },
+  {
+    path: "/admin/analytics",
+    name: "admin-analytics",
+    component: () => import("../views/admin/AdminAnalyticsView.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["admin"],
+    },
+  },
+  {
+    path: "/admin/settings",
+    name: "admin-settings",
+    component: () => import("../views/admin/AdminSettingsView.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["admin"],
+    },
+  },
+
+
+  {
     path: "/admin/providers",
     name: "admin-providers",
     component: () => import("../views/admin/AdminProvidersView.vue"),
@@ -103,30 +144,90 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: "/admin/packages",
+    name: "admin-packages",
+    component: () => import("../views/admin/AdminPackagesView.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["admin"],
+    },
+  },
+  {
+    path: "/provider",
+    component: () => import("../views/dashboards/ProviderShellView.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["provider"],
+    },
+    children: [
+      {
+        path: "",
+        name: "provider-dashboard",
+        component: () => import("../views/dashboards/ProviderDashboardView.vue"),
+        meta: { title: "Command Center" },
+      },
+      {
+        path: "service",
+        name: "provider-service",
+        component: () => import("../views/dashboards/ServiceManagerView.vue"),
+        meta: { title: "Service Manager" },
+      },
+      {
+        path: "inventory",
+        name: "provider-inventory",
+        component: () => import("../views/dashboards/InventoryView.vue"),
+        meta: { title: "Inventory & Pricing" },
+      },
+      {
+        path: "manifest",
+        name: "provider-manifest",
+        component: () => import("../views/dashboards/ManifestView.vue"),
+        meta: { title: "Manifest" },
+      },
+      {
+        path: "ledger",
+        name: "provider-ledger",
+        component: () => import("../views/dashboards/FinancialLedgerView.vue"),
+        meta: { title: "Financial Ledger" },
+      },
+      {
+        path: "settings",
+        name: "provider-settings",
+        component: () => import("../views/dashboards/SettingsView.vue"),
+        meta: { title: "Profile Settings" },
+      },
+    ],
+  },
+  {
     path: "/provider/dashboard",
-    name: "provider-dashboard",
-    component: () => import("../views/provider/ProviderDashboardView.vue"),
-    meta: {
-      requiresAuth: true,
-      roles: ["provider"],
-    },
+    redirect: { name: "provider-dashboard" },
   },
   {
-    path: "/provider/bookings",
-    name: "provider-bookings",
-    component: () => import("../views/provider/ProviderBookingsView.vue"),
-    meta: {
-      requiresAuth: true,
-      roles: ["provider"],
-    },
+    path: "/provider/service",
+    redirect: { name: "provider-service" },
   },
   {
-    path: "/customer/dashboard",
-    name: "customer-dashboard",
-    component: () => import("../views/customer/CustomerDashboardView.vue"),
+    path: "/provider/inventory",
+    redirect: { name: "provider-inventory" },
+  },
+  {
+    path: "/provider/manifest",
+    redirect: { name: "provider-manifest" },
+  },
+  {
+    path: "/provider/ledger",
+    redirect: { name: "provider-ledger" },
+  },
+  {
+    path: "/provider/settings",
+    redirect: { name: "provider-settings" },
+  },
+  {
+    path: "/customer/explore",
+    name: "customer-explore",
+    component: () => import("../views/customer/CustomerExploreView.vue"),
     meta: {
-      requiresAuth: true,
-      roles: ["customer"],
+      requiresAuth: false,
     },
   },
   {
@@ -134,14 +235,13 @@ const routes: RouteRecordRaw[] = [
     name: "customer-homepage",
     component: () => import("../views/customer/CustomerHomeView.vue"),
     meta: {
-      requiresAuth: true,
-      roles: ["customer"],
+      requiresAuth: false,
     },
   },
   {
     path: "/customer/change-password",
     name: "customer-change-password",
-    component: () => import("../views/Customer/ChangePassword.vue"),
+    component: () => import("../views/customer/ChangePassword.vue"),
   },
   {
     path: "/customer/profile",
@@ -156,6 +256,9 @@ const routes: RouteRecordRaw[] = [
     path: "/customer/provider/:id",
     name: "provider-detail",
     component: () => import("../views/customer/ProviderDetail.vue"),
+    meta: {
+      requiresAuth: false,
+    },
   },
   {
     path: "/customer/feedback/:id",
@@ -167,9 +270,36 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: "/customer/tour/:id",
+    name: "customer-tour-detail",
+    component: () => import("../views/customer/ServiceDetailTour.vue"),
+    meta: {
+      requiresAuth: false,
+    },
+  },
+  {
+    path: "/customer/hotel/:id",
+    name: "customer-hotel-detail",
+    component: () => import("../views/customer/ServiceDetailHotel.vue"),
+    meta: {
+      requiresAuth: false,
+    },
+  },
+  {
+    path: "/customer/transport/:id",
+    name: "customer-transport-detail",
+    component: () => import("../views/customer/ServiceDetailTransport.vue"),
+    meta: {
+      requiresAuth: false,
+    },
+  },
+  {
     path: "/service/:id",
     name: "service-detail",
     component: () => import("../views/services/ServiceDetailView.vue"),
+    meta: {
+      requiresAuth: false,
+    },
   },
   {
     path: "/service/:id/book",
@@ -194,8 +324,7 @@ const routes: RouteRecordRaw[] = [
     name: "booking-history",
     component: () => import("../views/booking/BookingHistoryView.vue"),
     meta: {
-      requiresAuth: true,
-      roles: ["customer"],
+      requiresAuth: false,
     },
   },
   {
@@ -223,13 +352,20 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: "/:pathMatch(.*)*",
-    redirect: "/dashboard",
+    redirect: "/",
   },
 ];
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
+  scrollBehavior(_to, _from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition;
+    } else {
+      return { top: 0 };
+    }
+  },
 });
 
 router.beforeEach((to) => {
@@ -238,7 +374,7 @@ router.beforeEach((to) => {
   const guestOnly = Boolean(to.meta.guestOnly);
   const allowedRoles = (to.meta.roles as string[] | undefined) ?? [];
 
-  if (requiresAuth && !role) {
+  if (requiresAuth && !hasAuthSession()) {
     return { name: "login", query: { redirect: to.fullPath } };
   }
 

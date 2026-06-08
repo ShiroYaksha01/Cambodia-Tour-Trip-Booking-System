@@ -1,0 +1,23 @@
+# Gemini CLI & Agent Skills
+.agents/
+.gemini/
+skills-lock.json
+.mcp.json
+
+# Node & Package Managers
+node_modules/
+package-lock.json
+
+# Environment Variables
+.env
+*.env
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Documentation
+INVENTORY_API_DOCS.md
+
+# Supabase
+supabase/.temp/

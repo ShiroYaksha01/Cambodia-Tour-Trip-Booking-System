@@ -1,10 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
 import { ProvidersService } from './providers.service'
 import { CreateProviderDto } from './dto/create-provider.dto'
 import { UpdateProviderDto } from './dto/update-provider.dto'
 import { AccountStatus } from '../users/entities/user.entity'
+import { JwtAuthGuard } from '../auth/jwt-auth.guard'
+import { RolesGuard } from '../auth/roles.guard'
+import { Roles } from '../auth/roles.decorator'
+import { UserRole } from '../../shared/enums'
 
 @Controller('admin/providers')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.ADMIN)
 export class ProviderController {
   constructor(private readonly providersService: ProvidersService) {}
 

@@ -65,18 +65,11 @@ export class Booking {
   })
   bookingDate: Date;
 
-  @Column({
-    name: 'total_amount',
-    type: 'decimal',
-    precision: 12,
-    scale: 2,
-    nullable: true,
-    transformer: {
-      to: (value: number | null) => value,
-      from: (value: string | null) => (value ? parseFloat(value) : null),
-    },
-  })
+  @Column({ name: 'total_amount', type: 'decimal', precision: 12, scale: 2, nullable: true, transformer: { to: (value: number | null) => value, from: (value: string | null) => (value ? parseFloat(value) : null) } })
   totalAmount: number | null;
+
+  @Column({ name: 'reference_code', type: 'varchar', length: 20, unique: true, nullable: true })
+  referenceCode: string;
 
   @Column({ name: 'transaction_id', type: 'varchar', length: 60, nullable: true })
   transactionId: string;

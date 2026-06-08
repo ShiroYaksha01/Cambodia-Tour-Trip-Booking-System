@@ -3,9 +3,13 @@ import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import CustomerNavbar from "../../components/customer/CustomerNavbar.vue";
 import CustomerFooter from "../../components/customer/CustomerFooter.vue";
+import LogoutButton from "../../components/LogoutButton.vue";
 import api from "../../services/api";
+import { resolveImageUrl } from "../../utils/api";
+import { useTheme } from "../../composables/useTheme";
 
 const router = useRouter();
+const { isDarkMode, toggleDarkMode } = useTheme();
 
 interface ServiceInfo {
   id?: string;
@@ -45,7 +49,6 @@ const activeTab = ref<
 const bookingFilter = ref<"all" | "pending" | "confirmed" | "cancelled">("all");
 const bookingSearch = ref("");
 
-const darkMode = ref(localStorage.getItem("customerDarkMode") === "true");
 const profileImage = ref(localStorage.getItem("customerProfileImage") || "");
 const language = ref(localStorage.getItem("customerLanguage") || "English");
 const feedbackMessage = ref("");
@@ -74,10 +77,6 @@ const user = ref({
 
 const editForm = ref({ ...user.value });
 const bookings = ref<Booking[]>([]);
-
-watch(darkMode, (value) => {
-  localStorage.setItem("customerDarkMode", String(value));
-});
 
 watch(language, (value) => {
   localStorage.setItem("customerLanguage", value);
@@ -255,6 +254,12 @@ function handleProfileImageUpload(event: Event) {
 
   if (!file) return;
 
+  if (file.size > 10 * 1024 * 1024) {
+    alert("File is too large. Please select an image smaller than 10MB.");
+    input.value = "";
+    return;
+  }
+
   if (!file.type.startsWith("image/")) {
     alert("Please upload an image file.");
     return;
@@ -317,7 +322,11 @@ async function fetchProfile() {
 
   try {
     const response = await api.get("/users/me");
-    const profile = response.data.data;
+    const profile = response.data.data || response.data;
+
+    if (!profile) {
+      throw new Error("Profile data not found in response");
+    }
 
     user.value = {
       id: profile.id || "",
@@ -329,6 +338,10 @@ async function fetchProfile() {
         ? new Date(profile.createdAt).getFullYear().toString()
         : "2026",
     };
+
+    if (profile.profilePicture) {
+      profileImage.value = profile.profilePicture;
+    }
 
     editForm.value = { ...user.value };
   } catch (err) {
@@ -461,6 +474,16 @@ function goToBookingHistory() {
   router.push("/booking/history");
 }
 
+function scrollToSettings() {
+  activeTab.value = "settings";
+  setTimeout(() => {
+    const el = document.querySelector(".main-panel");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, 100);
+}
+
 onMounted(() => {
   fetchProfile();
   fetchBookings();
@@ -469,7 +492,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="profile-page" :class="{ dark: darkMode }">
+  <div class="profile-page" :class="{ dark: isDarkMode }">
     <CustomerNavbar />
 
     <main class="profile-container">
@@ -478,7 +501,7 @@ onMounted(() => {
           <div class="profile-photo-wrap">
             <img
               v-if="profileImage"
-              :src="profileImage"
+              :src="resolveImageUrl(profileImage)"
               alt="Customer profile"
               class="profile-photo"
             />
@@ -519,17 +542,17 @@ onMounted(() => {
         </div>
 
         <div class="profile-actions">
-          <button class="dark-btn" @click="darkMode = !darkMode">
-            {{ darkMode ? "Light Mode" : "Dark Mode" }}
+          <button class="dark-btn" @click="toggleDarkMode">
+            {{ isDarkMode ? "Light Mode" : "Dark Mode" }}
           </button>
 
-          <button class="edit-btn" @click="activeTab = 'settings'">
+          <button class="edit-btn" @click="scrollToSettings">
             Edit Profile
           </button>
         </div>
       </section>
 
-      <section class="customer-dashboard">
+      <section class="customer-explore">
         <div
           class="dashboard-card unpaid-card"
           :class="{ danger: unpaidBookings.length > 0 }"
@@ -639,6 +662,10 @@ onMounted(() => {
           >
             Settings
           </button>
+
+          <div class="sidebar-footer">
+            <LogoutButton />
+          </div>
         </aside>
 
         <section class="main-panel">
@@ -986,7 +1013,7 @@ onMounted(() => {
 
                     <div class="form-group">
                       <label>Theme</label>
-                      <select v-model="darkMode">
+                      <select v-model="isDarkMode">
                         <option :value="false">Light Mode</option>
                         <option :value="true">Dark Mode</option>
                       </select>
@@ -1308,7 +1335,7 @@ onMounted(() => {
   box-shadow: 0 8px 18px rgba(15, 110, 112, 0.22);
 }
 
-.customer-dashboard {
+.customer-explore {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
@@ -1510,6 +1537,39 @@ onMounted(() => {
   background: #eef7f7;
   color: #0f6e70;
   border-left-color: #0f6e70;
+}
+
+.sidebar-footer {
+  border-top: 1px solid #e5e7eb;
+  margin-top: 10px;
+}
+
+:deep(.sidebar-footer .logout-button) {
+  width: 100%;
+  padding: 15px 18px;
+  justify-content: flex-start;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  color: #ef4444;
+  font-weight: 700;
+  font-size: inherit;
+  font-family: inherit;
+  border-left: 4px solid transparent;
+}
+
+:deep(.sidebar-footer .logout-button:hover) {
+  background: #fef2f2;
+  color: #dc2626;
+  border-left-color: #ef4444;
+}
+
+:deep(.sidebar-footer .logout-button .logout-icon) {
+  font-size: 1.1rem;
+}
+
+:deep(.sidebar-footer .logout-button .logout-text) {
+  letter-spacing: normal;
 }
 
 .main-panel {
@@ -2140,7 +2200,7 @@ onMounted(() => {
     width: 100%;
   }
 
-  .customer-dashboard {
+  .customer-explore {
     grid-template-columns: 1fr;
   }
 

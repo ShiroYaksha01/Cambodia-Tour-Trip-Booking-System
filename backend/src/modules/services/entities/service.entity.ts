@@ -15,6 +15,7 @@ import { ServiceType } from '../../../shared/enums';
 import type { Provider } from '../../providers/entities/provider.entity';
 import type { ServiceImage } from './service-image.entity';
 import type { ServiceInventory } from './service-inventory.entity';
+import type { InventorySlot } from './inventory-slot.entity';
 import type { TourPackage } from './tour-package.entity';
 import type { Accommodation } from './accommodation.entity';
 import type { Transportation } from './transportation.entity';
@@ -74,6 +75,9 @@ export class Service {
   @Column({ type: 'varchar', length: 100, nullable: true })
   duration: string;
 
+  @Column({ name: 'cover_image', type: 'text', nullable: true })
+  coverImage: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
@@ -91,6 +95,9 @@ export class Service {
 
   @OneToOne('ServiceInventory', 'service', { cascade: true })
   inventory: ServiceInventory;
+
+  @OneToMany('InventorySlot', 'service', { cascade: true })
+  inventorySlots: InventorySlot[];
 
   @OneToOne('TourPackage', 'service', { cascade: true })
   tourPackage: TourPackage;

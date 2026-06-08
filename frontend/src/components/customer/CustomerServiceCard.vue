@@ -1,26 +1,22 @@
 <template>
   <div
-    class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
+    class="group bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-700
+           hover:shadow-xl dark:hover:shadow-gray-900/50 hover:-translate-y-1 transition-all duration-300 flex flex-col"
   >
     <!-- Image -->
     <div class="relative overflow-hidden h-52">
       <img
-        :src="tour.image"
-        :alt="tour.title"
+        :src="tour.image || 'https://freedomdestinations.co.uk/wp-content/uploads/Angkor-Wat-Cambodia-4.jpg'"
+        :alt="tour.title || 'Service Image'"
         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
       />
 
       <!-- Rating badge -->
-      <div
-        class="absolute top-3 right-3 flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-sm"
-      >
+      <div class="absolute top-3 right-3 flex items-center gap-1
+                  bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-sm">
         <span class="text-gold text-xs">★</span>
-        <span class="text-xs font-semibold text-gray-800">
-          {{ tour.rating }}
-        </span>
-        <span class="text-xs text-gray-400">
-          ({{ tour.reviews }} reviews)
-        </span>
+        <span class="text-xs font-semibold text-gray-800 dark:text-gray-200">{{ tour.rating }}</span>
+        <span class="text-xs text-gray-400 dark:text-gray-400">({{ tour.reviews }} reviews)</span>
       </div>
 
       <!-- Duration badge -->
@@ -42,23 +38,21 @@
       </div>
 
       <!-- Title -->
-      <h3 class="font-serif font-bold text-gray-900 text-lg leading-tight mb-2">
+      <h3 class="font-serif font-bold text-gray-900 dark:text-white text-lg leading-tight mb-2 transition-colors duration-200">
         {{ tour.title }}
       </h3>
 
       <!-- Description -->
-      <p class="text-gray-500 text-sm leading-relaxed mb-4 flex-1 line-clamp-2">
+      <p class="text-gray-500 dark:text-gray-400 text-sm leading-relaxed mb-4 flex-1 line-clamp-2 transition-colors duration-200">
         {{ tour.description }}
       </p>
 
       <!-- Divider -->
-      <div class="border-t border-gray-100 pt-4">
+      <div class="border-t border-gray-100 dark:border-gray-700 pt-4">
         <!-- Price -->
         <div class="mb-4">
           <span class="text-xs text-gray-400 block">From</span>
-          <span class="font-bold text-gray-900 text-xl">
-            ${{ tour.price.toFixed(2) }}
-          </span>
+          <span class="font-bold text-gray-900 dark:text-white text-xl transition-colors duration-200">${{ (tour.price || 0).toFixed(2) }}</span>
         </div>
 
         <!-- Buttons -->
@@ -67,7 +61,7 @@
           <button
             type="button"
             @click.stop="$emit('provider-detail', tour)"
-            class="flex-1 px-4 py-2 rounded-lg border border-emerald-600 text-emerald-600 text-sm font-medium hover:bg-emerald-600 hover:text-white transition-all active:scale-[0.97]"
+            class="flex-1 px-4 py-2 rounded-lg border border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-500 text-sm font-medium hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-500 dark:hover:text-gray-900 transition-all active:scale-[0.97]"
           >
             Provider Detail
           </button>
@@ -76,7 +70,7 @@
           <button
             type="button"
             @click.stop="$emit('book', tour)"
-            class="flex-1 px-4 py-2 rounded-lg border border-dark-green text-dark-green text-sm font-medium hover:bg-dark-green hover:text-white transition-all active:scale-[0.97]"
+            class="flex-1 px-4 py-2 rounded-lg border border-dark-green dark:border-emerald-500 text-dark-green dark:text-emerald-500 text-sm font-medium hover:bg-dark-green dark:hover:bg-emerald-500 hover:text-white dark:hover:text-gray-900 transition-all active:scale-[0.97]"
           >
             Book Now
           </button>
@@ -88,7 +82,7 @@
 
 <script setup lang="ts">
 export interface Tour {
-  id: number;
+  id: string | number;
   title: string;
   location: string;
   description: string;

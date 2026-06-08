@@ -19,9 +19,9 @@
           :to="item.href"
           class="provider-nav__item"
         >
-          <span class="provider-nav__icon" aria-hidden="true">{{
-            item.icon
-          }}</span>
+          <span class="provider-nav__icon" aria-hidden="true">
+            <component :is="item.icon" />
+          </span>
           <span>{{ item.label }}</span>
         </router-link>
       </nav>
@@ -38,7 +38,6 @@
       <div class="brand-block">
         <div class="brand-mark" aria-hidden="true">A</div>
         <div>
-          <p class="eyebrow">{{ roleLabel }} Central</p>
           <strong>Tour Booking System</strong>
           <small>System Supervisor</small>
         </div>
@@ -50,7 +49,7 @@
           :key="section.label"
           class="nav-section"
         >
-          <p class="nav-section__label">{{ section.label }}</p>
+          <p v-if="section.label" class="nav-section__label">{{ section.label }}</p>
           <component
             :is="item.href.startsWith('/') ? 'router-link' : 'a'"
             v-for="item in section.items"
@@ -60,9 +59,9 @@
             class="nav-item"
             :class="{ 'nav-item--active': isActiveItem(item) }"
           >
-            <span class="nav-item__icon" aria-hidden="true">{{
-              item.icon
-            }}</span>
+            <span class="nav-item__icon" aria-hidden="true">
+              <component :is="item.icon" />
+            </span>
             <span>
               <strong>{{ item.label }}</strong>
               <small>{{ item.description }}</small>
@@ -91,6 +90,18 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import {
+  BanknotesIcon,
+  BookOpenIcon,
+  BuildingStorefrontIcon,
+  CalendarDaysIcon,
+  ChartBarSquareIcon,
+  Cog6ToothIcon,
+  CubeIcon,
+  EnvelopeIcon,
+  HomeIcon,
+  UserGroupIcon,
+} from "@heroicons/vue/24/outline";
 import LogoutButton from "../LogoutButton.vue";
 
 type DashboardRole = "admin" | "provider";
@@ -100,7 +111,7 @@ type NavItem = {
   description: string;
   href: string;
   icon: string;
-  group?: "Main" | "Management" | "Support";
+  group?: "Main" | "Management";
 };
 
 const navMap: Record<DashboardRole, NavItem[]> = {
@@ -109,55 +120,49 @@ const navMap: Record<DashboardRole, NavItem[]> = {
       label: "Dashboard",
       description: "Financial overview",
       href: "/admin/dashboard",
-      icon: "⌾",
+      icon: "HomeIcon",
     },
     {
       label: "Users",
-      description: "Manage user accounts",
+      description: "Manage accounts",
       href: "/admin/users",
-      icon: "◭",
+      icon: "UserGroupIcon",
     },
     {
       label: "Providers",
-      description: "Vendors and partners",
+      description: "Vendors & partners",
       href: "/admin/providers",
-      icon: "▣",
+      icon: "BuildingStorefrontIcon",
     },
     {
-      label: "Package Oversight",
-      description: "Trip quality review",
-      href: "#reports",
-      icon: "⌁",
-    },
-    {
-      label: "Booking Ledger",
-      description: "Settlement activity",
+      label: "Bookings",
+      description: "Booking Ledger",
       href: "/admin/bookings",
-      icon: "○",
+      icon: "CalendarDaysIcon",
     },
     {
-      label: "Finance & Escrow",
-      description: "Transactions and holds",
-      href: "#reports",
-      icon: "▥",
+      label: "Packages",
+      description: "Service catalog",
+      href: "/admin/packages",
+      icon: "CubeIcon",
     },
     {
-      label: "Payment Logs",
-      description: "Recent payment records",
-      href: "#reports",
-      icon: "≡",
+      label: "Revenue",
+      description: "Financial analytics",
+      href: "/admin/revenue",
+      icon: "BanknotesIcon",
     },
     {
-      label: "Review Moderation",
-      description: "Content and ratings",
-      href: "#reports",
-      icon: "✦",
+      label: "Analytics",
+      description: "Business intelligence",
+      href: "/admin/analytics",
+      icon: "ChartBarSquareIcon",
     },
     {
-      label: "Support Tickets",
-      description: "Customer escalations",
-      href: "#reports",
-      icon: "✉",
+      label: "Settings",
+      description: "Platform controls",
+      href: "/admin/settings",
+      icon: "Cog6ToothIcon",
     },
   ],
   provider: [
@@ -165,31 +170,31 @@ const navMap: Record<DashboardRole, NavItem[]> = {
       label: "Inventory",
       description: "Stock and availability",
       href: "/provider/dashboard",
-      icon: "◌",
+      icon: "CubeIcon",
     },
     {
       label: "Bookings",
       description: "Reservation ledger",
       href: "/provider/bookings",
-      icon: "▣",
+      icon: "BookOpenIcon",
     },
     {
       label: "Finance",
       description: "Pricing and markup",
       href: "#pricing",
-      icon: "◫",
+      icon: "ChartBarSquareIcon",
     },
     {
       label: "Messages",
       description: "Inbox and requests",
       href: "#controller",
-      icon: "✉",
+      icon: "EnvelopeIcon",
     },
     {
       label: "Settings",
       description: "Provider preferences",
       href: "#changes",
-      icon: "⚙",
+      icon: "Cog6ToothIcon",
     },
   ],
 };
@@ -198,6 +203,16 @@ export default defineComponent({
   name: "DashboardSidebar",
   components: {
     LogoutButton,
+    BanknotesIcon,
+    BookOpenIcon,
+    BuildingStorefrontIcon,
+    CalendarDaysIcon,
+    ChartBarSquareIcon,
+    Cog6ToothIcon,
+    CubeIcon,
+    EnvelopeIcon,
+    HomeIcon,
+    UserGroupIcon,
   },
   props: {
     role: {
@@ -210,13 +225,7 @@ export default defineComponent({
       return navMap[this.role];
     },
     groupedNavItems(): Array<{ label: string; items: NavItem[] }> {
-      const groups: Array<NavItem["group"]> = ["Main", "Management", "Support"];
-      return groups
-        .map((group) => ({
-          label: group || "",
-          items: this.navItems.filter((item) => item.group === group),
-        }))
-        .filter((section) => section.items.length > 0);
+      return [{ label: "", items: this.navItems }];
     },
     providerNavItems(): NavItem[] {
       return navMap.provider;
@@ -235,8 +244,8 @@ export default defineComponent({
 
 <style scoped>
 .sidebar-shell {
-  min-height: 100%;
-  border-radius: 0;
+  height: 100%;
+  border-radius: 22px;
   overflow: hidden;
   background: #ffffff;
   border-right: 1px solid #e8eeef;
@@ -248,7 +257,7 @@ export default defineComponent({
 }
 
 .sidebar-inner {
-  min-height: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -318,10 +327,17 @@ export default defineComponent({
 
 .provider-nav__icon {
   width: 18px;
+  height: 18px;
   display: grid;
   place-items: center;
-  font-size: 0.82rem;
   color: #67807d;
+}
+
+.provider-nav__icon svg,
+.nav-item__icon svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
 }
 
 .provider-cta {
@@ -437,13 +453,22 @@ export default defineComponent({
   border-color: rgba(15, 110, 112, 0.1);
 }
 
+.router-link-active.nav-item {
+  background: rgba(15, 110, 112, 0.08) !important;
+  border-color: rgba(15, 110, 112, 0.12) !important;
+  transform: translateX(4px);
+}
+
 .nav-item__icon {
   width: 20px;
   height: 20px;
   display: grid;
   place-items: center;
-  font-size: 0.82rem;
   color: currentColor;
+}
+
+.router-link-active .nav-item__icon {
+  color: #0f6e70;
 }
 
 .nav-item strong,

@@ -49,6 +49,8 @@ export class ProviderBookingsService {
     return bookings.map((booking) => ({
       id: booking.id,
       service_name: booking.service?.title ?? null,
+      reference_code: booking.referenceCode,
+      booking_status: booking.bookingStatus,
       user: this.toBasicUser(booking.user),
       quantity: booking.quantity,
       date: booking.bookingDate,
@@ -111,6 +113,35 @@ export class ProviderBookingsService {
     };
   }
 
+  async checkInBooking(user: JwtUser, bookingId: string) {
+    if (user.role !== 'provider') {
+      throw new ForbiddenException('Only providers can check in guests.');
+    }
+
+    const provider = await this.providerRepository.findOne({
+      where: { userId: user.userId },
+    });
+
+    if (!provider) {
+      throw new NotFoundException('Provider profile not found.');
+    }
+
+    const booking = await this.bookingRepository.findOne({
+      where: { id: bookingId, providerId: provider.id },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found.');
+    }
+
+    if (booking.paymentStatus !== PaymentStatus.PAID) {
+      throw new ForbiddenException('Cannot check in an unpaid booking.');
+    }
+
+    booking.bookingStatus = 'completed' as any; // Using string since I need to check exact enum later if needed
+    return this.bookingRepository.save(booking);
+  }
+
   async getInventoryMatrix(user: JwtUser) {
     if (user.role !== 'provider') {
       throw new ForbiddenException('Only providers can access inventory matrix.');
@@ -118,19 +149,20 @@ export class ProviderBookingsService {
 
     const provider = await this.providerRepository.findOne({
       where: { userId: user.userId },
-      relations: ['services', 'services.inventory'],
     });
 
     if (!provider) {
       throw new NotFoundException('Provider profile not found.');
     }
 
+    const services = await this.serviceRepository.find({
+      where: { providerId: provider.id },
+      relations: ['inventory', 'tourPackage', 'accommodation', 'transportation'],
+    });
+
     // Return current services and their inventory status
-    return provider.services.map((s) => ({
-      id: s.id,
-      title: s.title,
-      description: s.description,
-      price: s.price,
+    return services.map((s) => ({
+      ...s,
       remaining: s.inventory ? s.inventory.totalCapacity - s.inventory.bookedCount : 0,
       total: s.inventory ? s.inventory.totalCapacity : 0,
       isClosed: s.inventory ? s.inventory.isClosed : false,

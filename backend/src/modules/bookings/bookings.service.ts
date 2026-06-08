@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Between } from 'typeorm';
 import { Booking } from './entities/booking.entity';
 import { BookingStatus, PaymentStatus } from '../../shared/enums';
 import { CreateBookingDto } from './dto/create-booking.dto';
@@ -46,6 +46,7 @@ export class BookingsService {
     // Calculate total price
     const totalAmount = service.price * quantity;
     const transactionId = `TX-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+    const referenceCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
     const booking = this.bookingRepository.create({
       userId,
@@ -57,6 +58,7 @@ export class BookingsService {
       bookingStatus: BookingStatus.PENDING,
       paymentStatus: PaymentStatus.PENDING,
       transactionId,
+      referenceCode,
     });
 
     return this.bookingRepository.save(booking);
@@ -142,7 +144,6 @@ export class BookingsService {
     return booking;
   }
 
-<<<<<<< HEAD
   async getAdminDashboard() {
     const [
       totalUsers,
@@ -176,12 +177,6 @@ export class BookingsService {
 
   async getAdminDashboardSummary() {
     const totalBookings = await this.bookingRepository.count();
-
-    const revenueResult = await this.bookingRepository
-      .createQueryBuilder('booking')
-      .select('COALESCE(SUM(booking.totalAmount), 0)', 'total')
-      .getRawOne<{ total: string }>();
-    const totalRevenue = Number(revenueResult?.total || 0);
 
     const totalProviders = await this.providerRepository.count();
     const totalUsers = await this.userRepository.count();
@@ -253,15 +248,27 @@ export class BookingsService {
       where: { paymentStatus: PaymentStatus.PAID },
     });
 
+    const paidTotals = await this.bookingRepository
+      .createQueryBuilder('booking')
+      .leftJoin('booking.provider', 'provider')
+      .select('COALESCE(SUM(booking.totalAmount), 0)', 'total_revenue')
+      .addSelect(
+        'COALESCE(SUM(booking.totalAmount * COALESCE(provider.commissionRate, 10) / 100), 0)',
+        'total_platform_fee',
+      )
+      .where('booking.paymentStatus = :paymentStatus', { paymentStatus: PaymentStatus.PAID })
+      .getRawOne<{ total_revenue: string; total_platform_fee: string }>();
+
     return {
       stats: {
         totalBookings,
-        totalRevenue,
+        totalRevenue: Number(paidTotals?.total_revenue || 0),
         totalProviders,
         totalUsers,
         totalServices,
         verifiedProviders,
         paidPaymentCount,
+        totalPlatformFee: Number(paidTotals?.total_platform_fee || 0),
       },
       statusBreakdown,
       recentBookings: recentBookings.map(b => ({
@@ -278,7 +285,8 @@ export class BookingsService {
       })),
       monthlyStats,
     };
-=======
+  }
+
   async confirmPayment(bookingId: string, transactionId?: string): Promise<Booking> {
     const booking = await this.bookingRepository.findOne({ where: { id: bookingId } });
     if (!booking) throw new NotFoundException('Booking not found');
@@ -287,6 +295,72 @@ export class BookingsService {
     if (transactionId) booking.transactionId = transactionId;
 
     return this.bookingRepository.save(booking);
->>>>>>> 05e91c7cedad26aac52e8543ad44910700c128de
+  }
+
+  async getRevenueAnalytics(range: number) {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - range);
+
+    // Overview Stats
+    const allBookings = await this.bookingRepository.find({
+      where: { createdAt: Between(startDate, endDate) }
+    });
+
+    const totalRevenue = allBookings
+      .filter(b => b.paymentStatus === PaymentStatus.PAID)
+      .reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+
+    const pendingAmount = allBookings
+      .filter(b => b.paymentStatus === PaymentStatus.PENDING)
+      .reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+
+    const refundAmount = allBookings
+      .filter(b => b.paymentStatus === PaymentStatus.REFUNDED)
+      .reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+
+    const overview = {
+      totalRevenue,
+      bookingsTotal: allBookings.length,
+      bookingsPaid: allBookings.filter(b => b.paymentStatus === PaymentStatus.PAID).length,
+      pendingAmount,
+      pendingCount: allBookings.filter(b => b.paymentStatus === PaymentStatus.PENDING).length,
+      refundAmount,
+      refundCount: allBookings.filter(b => b.paymentStatus === PaymentStatus.REFUNDED).length
+    };
+
+    // Trend Data
+    const query = this.bookingRepository
+      .createQueryBuilder('booking')
+      .select("DATE_TRUNC('day', booking.createdAt)", 'date')
+      .addSelect('SUM(booking.totalAmount)', 'value')
+      .where('booking.paymentStatus = :status', { status: PaymentStatus.PAID })
+      .andWhere('booking.createdAt BETWEEN :start AND :end', { start: startDate, end: endDate })
+      .groupBy("DATE_TRUNC('day', booking.createdAt)")
+      .orderBy("DATE_TRUNC('day', booking.createdAt)", 'ASC');
+
+    if (range > 90) {
+      query.select("DATE_TRUNC('month', booking.createdAt)", 'date')
+           .groupBy("DATE_TRUNC('month', booking.createdAt)");
+    }
+
+    const rawTrend = await query.getRawMany();
+    const trend: { label: string; value: number }[] = rawTrend.map(t => ({
+      label: range > 90 
+        ? new Date(t.date).toLocaleDateString('en-US', { month: 'short' })
+        : new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      value: parseFloat(t.value)
+    }));
+
+    return { overview, trend };
+  }
+
+  async getRecentPaidBookings(limit: number) {
+    return this.bookingRepository.find({
+      where: { paymentStatus: PaymentStatus.PAID },
+      relations: ['user', 'service'],
+      order: { createdAt: 'DESC' },
+      take: limit
+    });
   }
 }

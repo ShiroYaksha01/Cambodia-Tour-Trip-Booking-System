@@ -11,41 +11,41 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { memoryStorage } from 'multer';
 
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UpdateUserDto } from '../users/dto/update-user.dto';
+import { SupabaseService } from '../../common/services/supabase.service';
 
 @Controller('/users')
 export class UsersController {
-  constructor(private usersService: UsersService) {}
+  constructor(
+    private usersService: UsersService,
+    private supabaseService: SupabaseService,
+  ) {}
  
   @UseGuards(JwtAuthGuard)
   @Put(':id')
   @UseInterceptors(
     FileInterceptor('profilePicture', {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, cb) => {
-          const name = Date.now() + '-' + file.originalname;
-          cb(null, name);
-        },
-      }),
+      storage: memoryStorage(),
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB
+      },
     }),
   )
-  updateUser(
+  async updateUser(
     @Param('id') id: string,
     @UploadedFile() file: any,
     @Body() dto: UpdateUserDto,
     @Request() req: any,
   ) {
-    // Security: Only admins can change 'role' or 'status'
+    // Security: Only admins can change 'status'
     const isAdmin = req.user?.role === 'admin';
     const updateData: any = { ...dto };
 
     if (!isAdmin) {
-      delete updateData.role;
       delete updateData.status;
       
       // Also, non-admins should only be able to update their own profile
@@ -54,9 +54,14 @@ export class UsersController {
       }
     }
 
+    let profilePictureUrl = updateData.profilePicture;
+    if (file) {
+      profilePictureUrl = await this.supabaseService.uploadImage(file, 'users');
+    }
+
     return this.usersService.updateUser(id, {
       ...updateData,
-      profilePicture: file?.filename,  
+      profilePicture: profilePictureUrl,  
     });
   }
 
@@ -68,6 +73,12 @@ export class UsersController {
   }
 
   
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  getMe(@Request() req: any) {
+    return this.usersService.findById(req.user.userId);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   findById(@Param('id') id: string) {

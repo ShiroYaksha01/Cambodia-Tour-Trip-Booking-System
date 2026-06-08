@@ -259,9 +259,9 @@ const serviceId = Array.isArray(rawId)
   : rawId || "19f3d5e8-040f-407f-9386-bdeabab7591e";
 
 const form = reactive({
-  date: "",
-  quantity: 1,
-});
+  date: (route.query.date as string) || '',
+  quantity: Number(route.query.quantity) || 1,
+})
 
 const errors = reactive({
   date: "",

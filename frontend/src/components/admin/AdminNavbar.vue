@@ -1,54 +1,92 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { BellIcon, CalendarDaysIcon, ChevronDownIcon, MagnifyingGlassIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { clearAuthData } from '../../utils/auth'
 
-const props = defineProps<{ breadcrumb?: string }>()
-const router = useRouter()
+const props = defineProps<{ 
+  breadcrumb?: string
+  searchPlaceholder?: string
+}>()
+
+const emit = defineEmits(['search'])
 const showProfile = ref(false)
+const searchQuery = ref('')
 
 const authUser = computed(() => {
-  try { return JSON.parse(localStorage.getItem('auth_user') || '{}') }
-  catch { return {} }
+  try {
+    const stored = localStorage.getItem('auth_user') || localStorage.getItem('user')
+    return stored ? JSON.parse(stored) : null
+  } catch {
+    return null
+  }
 })
+
 const adminName    = computed(() => authUser.value?.username || 'Admin')
-const adminEmail   = computed(() => authUser.value?.email    || '—')
+const adminEmail   = computed(() => authUser.value?.email    || 'admin@tourbooking.local')
 const adminRole    = computed(() => authUser.value?.role     || 'admin')
-const adminInitial = computed(() => adminName.value.charAt(0).toUpperCase())
+const adminInitial = computed(() => adminName.value.substring(0, 2).toUpperCase())
+const currentDateLabel = new Date().toLocaleDateString('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+})
 
 const handleLogout = () => {
-  localStorage.removeItem('token')
-  localStorage.removeItem('auth_role')
-  localStorage.removeItem('auth_user')
-  router.push('/login')
+  if (confirm("Are you sure you want to log out?")) {
+    clearAuthData();
+    window.location.href = "/customer/homepage";
+  }
+}
+
+const onSearchInput = () => {
+  emit('search', searchQuery.value)
 }
 </script>
 
 <template>
-  <header class="navbar">
-    <!-- Left: breadcrumb -->
-    <div class="breadcrumb">
-      <p>Management / <span>User & Provider Central</span></p>
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-trigger" aria-label="Toggle Menu" type="button">
+        <span class="menu-icon">☰</span>
+      </button>
+      <div class="searchbar">
+        <MagnifyingGlassIcon class="searchbar__icon" aria-hidden="true" />
+        <input
+          v-model.trim="searchQuery"
+          type="search"
+          :placeholder="props.searchPlaceholder || 'Search bookings, clients, providers...'"
+          @input="onSearchInput"
+        />
+        <span class="search-shortcut">⌘K</span>
+      </div>
     </div>
 
-    <!-- Right: profile only -->
-    <div class="profile" @click="showProfile = true">
-      <div class="profile-info">
-        <span class="pname">{{ adminName }}</span>
-        <span class="prole">{{ adminRole }}</span>
-      </div>
-      <div class="avatar">{{ adminInitial }}</div>
+    <div class="topbar-actions">
+      <button class="date-range-btn" type="button">
+        <CalendarDaysIcon aria-hidden="true" />
+        <span>{{ currentDateLabel }}</span>
+      </button>
+      <button class="notification-btn" type="button" aria-label="Notifications">
+        <BellIcon aria-hidden="true" />
+      </button>
+      <button class="profile-chip" type="button" @click="showProfile = true">
+        <div class="avatar">{{ adminInitial }}</div>
+        <div class="profile-meta">
+          <strong>{{ adminName }}</strong>
+          <span>{{ adminRole === 'admin' ? 'System Administrator' : adminRole }}</span>
+        </div>
+        <ChevronDownIcon class="chevron-icon" aria-hidden="true" />
+      </button>
     </div>
   </header>
 
-  <!-- Profile modal -->
+  <!-- Profile modal (Keeping existing functionality but styling it slightly to match) -->
   <transition name="fade">
     <div v-if="showProfile" class="modal-bd">
       <div class="overlay" @click="showProfile = false"></div>
       <div class="prof-modal">
-        <button class="xbtn" @click="showProfile = false">
-          <svg viewBox="0 0 14 14" fill="none" width="12" height="12">
-            <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
+        <button class="xbtn" @click="showProfile = false" aria-label="Close profile">
+          <XMarkIcon aria-hidden="true" />
         </button>
         <div class="prof-head">
           <div class="prof-av">{{ adminInitial }}</div>
@@ -70,40 +108,188 @@ const handleLogout = () => {
 </template>
 
 <style scoped>
-.navbar {
-  height: 64px;
-  background: white;
-  border-bottom: 1px solid #ece7df;
+.topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 34px;
+  gap: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid #E5E7EB;
+  padding: 11px 34px;
+  height: 64px;
+  box-sizing: border-box;
+  backdrop-filter: blur(18px);
 }
 
-.breadcrumb { color: #89938f; margin-bottom: 5px; font-size: 17 px; }
-.breadcrumb span { color: #006566; font-weight: 600; }
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+}
 
-.profile {
+.menu-trigger {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.searchbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #F3F4F6;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  height: 40px;
+  width: 100%;
+  max-width: 410px;
+  padding: 0 14px;
+  transition: all 0.2s ease;
+}
+
+.searchbar:focus-within {
+  background: #ffffff;
+  border-color: rgba(20, 138, 116, 0.42);
+  box-shadow: 0 0 0 4px rgba(20, 138, 116, 0.08);
+}
+
+.searchbar__icon {
+  width: 17px;
+  height: 17px;
+  color: #9CA3AF;
+}
+
+.searchbar input {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-size: 0.83rem;
+  color: #111827;
+  background: transparent;
+}
+
+.searchbar input::placeholder {
+  color: #9CA3AF;
+}
+
+.search-shortcut {
+  font-size: 0.68rem;
+  background: #ffffff;
+  color: #9CA3AF;
+  padding: 3px 7px;
+  border: 1px solid #E5E7EB;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.topbar-actions {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 12px;
-  border-radius: 14px;
-  cursor: pointer;
-  transition: 0.18s;
 }
-.profile:hover { background: #f5f2ee; }
 
-.profile-info { text-align: right; }
-.pname { display: block; font-size: 14px; font-weight: 600; color: #1d2a26; }
-.prole { display: block; font-size: 12px; color: #8a938f; text-transform: capitalize; }
+.date-range-btn,
+.notification-btn,
+.profile-chip {
+  border: 1px solid #E5E7EB;
+  background: #ffffff;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.date-range-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 13px;
+  border-radius: 999px;
+  color: #4B5563;
+  font-size: 0.78rem;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.date-range-btn svg {
+  width: 17px;
+  height: 17px;
+  color: #148A74;
+}
+
+.notification-btn {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #6B7280;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.notification-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.date-range-btn:hover,
+.notification-btn:hover,
+.profile-chip:hover {
+  transform: translateY(-1px);
+  border-color: rgba(20, 138, 116, 0.28);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.profile-chip {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 42px;
+  padding: 4px 11px 4px 5px;
+  border-radius: 999px;
+}
+
+.profile-meta {
+  text-align: left;
+}
+
+.profile-meta strong {
+  display: block;
+  font-size: 0.82rem;
+  color: #111827;
+  font-weight: 700;
+}
+
+.profile-meta span {
+  display: block;
+  margin-top: 1px;
+  font-size: 0.7rem;
+  color: #6B7280;
+}
 
 .avatar {
-  width: 40px; height: 40px; border-radius: 50%;
-  background: linear-gradient(135deg, #006566, #00888a);
-  color: white; font-size: 16px; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #148A74;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: bold;
+  display: grid;
+  place-items: center;
+}
+
+.chevron-icon {
+  width: 14px;
+  height: 14px;
+  color: #9CA3AF;
 }
 
 /* Modal */
@@ -112,41 +298,57 @@ const handleLogout = () => {
 .prof-modal {
   position: relative; width: 380px; background: white;
   border-radius: 24px; padding: 32px;
-  box-shadow: 0 20px 48px rgba(0,0,0,0.13); z-index: 301;
-  animation: pop 0.28s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 20px 50px rgba(15,23,42,0.08); z-index: 301;
 }
-@keyframes pop { from { opacity:0; transform:scale(0.93) translateY(16px); } to { opacity:1; transform:scale(1) translateY(0); } }
 
 .xbtn {
   position: absolute; top: 16px; right: 16px;
   width: 34px; height: 34px; border: none;
-  background: #f4f2ee; border-radius: 10px;
+  background: #F3F4F6; border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; transition: 0.18s; color: #57645d;
+  cursor: pointer; transition: 0.18s; color: #4B5563;
 }
-.xbtn:hover { background: #e8e4d9; transform: rotate(90deg); }
+
+.xbtn svg { width: 16px; height: 16px; }
+.xbtn:hover { background: #E5E7EB; transform: rotate(90deg); }
 
 .prof-head { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
 .prof-av {
   width: 64px; height: 64px; border-radius: 18px;
-  background: linear-gradient(135deg, #006566, #00888a);
+  background: #148A74;
   color: white; font-size: 24px; font-weight: 700;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.prof-label { font-size: 10px; color: #006566; font-weight: 700; letter-spacing: 1.5px; margin: 0 0 3px; }
-.prof-head h3 { margin: 0 0 3px; font-size: 20px; color: #13211c; }
-.prof-sub { font-size: 13px; color: #7b8781; text-transform: capitalize; margin: 0; }
+.prof-label { font-size: 10px; color: #148A74; font-weight: 700; letter-spacing: 1.5px; margin: 0 0 3px; }
+.prof-head h3 { margin: 0 0 3px; font-size: 20px; color: #111827; }
+.prof-sub { font-size: 13px; color: #6B7280; text-transform: capitalize; margin: 0; }
 
-.prof-details { background: #f8f6f2; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+.prof-details { background: #F9FAFB; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; border: 1px solid #E5E7EB; }
 .drow { display: flex; justify-content: space-between; font-size: 13px; }
-.drow span:first-child { color: #8a938f; }
-.drow span:last-child { color: #1d2a26; font-weight: 500; }
+.drow span:first-child { color: #6B7280; }
+.drow span:last-child { color: #111827; font-weight: 500; }
 .capitalize { text-transform: capitalize; }
-.badge-active { background: #e8f7f5; color: #00817f; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.badge-active { background: rgba(20, 138, 116, 0.1); color: #148A74; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
 
-.logout-btn { width: 100%; height: 46px; border-radius: 13px; border: none; background: #fff0f0; color: #c93b3b; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.18s; }
-.logout-btn:hover { background: #ffe0e0; }
+.logout-btn { width: 100%; height: 46px; border-radius: 13px; border: none; background: #FEF2F2; color: #DC2626; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.18s; }
+.logout-btn:hover { background: #FEE2E2; }
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+@media (max-width: 1024px) {
+  .menu-trigger {
+    display: block;
+  }
+
+  .topbar {
+    padding: 10px 18px;
+  }
+
+  .date-range-btn span,
+  .profile-meta,
+  .search-shortcut {
+    display: none;
+  }
+}
 </style>

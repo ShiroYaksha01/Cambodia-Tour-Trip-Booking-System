@@ -1,3 +1,5 @@
+import axios from 'axios'
+
 const API_BASE_URL = (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:3000'
 const LOCAL_BOOKING_KEY = 'mockBookings'
 
@@ -15,104 +17,49 @@ export function getAuthHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
-function buildUrl(path: string) {
-  const base = API_BASE_URL.replace(/\/+$|^\s+|\s+$/g, '')
-  const normalizedPath = path.replace(/^\/+/, '')
-  return `${base}/${normalizedPath}`
+/**
+ * Utility to resolve image URLs.
+ * If the path is a full URL (starting with http), it returns it as is.
+ * If it's a relative path, it appends the backend's upload URL.
+ */
+export function resolveImageUrl(path: string | null | undefined): string {
+  if (!path) return '';
+  if (path.startsWith('http') || path.startsWith('blob:') || path.startsWith('data:')) return path;
+  
+  // Ensure no double slashes
+  const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+  return `${baseUrl}/uploads/${path}`;
 }
 
-async function parseResponse(response: Response) {
-  try {
-    return await response.json()
-  } catch {
-    return null
-  }
-}
+// Generic API wrappers with generic support
+export const apiGet = <T = any>(url: string, params?: any): Promise<T> => 
+  axios.get(`${API_BASE_URL}${url}`, { headers: getAuthHeaders(), params }).then(res => res.data)
 
-export async function apiPost<T>(path: string, body: unknown): Promise<T> {
-  const url = buildUrl(path)
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeaders(),
-    },
-    body: JSON.stringify(body),
-  })
+export const apiPost = <T = any>(url: string, data?: any): Promise<T> => 
+  axios.post(`${API_BASE_URL}${url}`, data, { headers: getAuthHeaders() }).then(res => res.data)
 
-  const payload = await parseResponse(response)
-  if (!response.ok) {
-    throw new Error(payload?.message || payload?.error || response.statusText || 'Request failed')
-  }
-  return payload as T
-}
+export const apiPut = <T = any>(url: string, data?: any): Promise<T> => 
+  axios.put(`${API_BASE_URL}${url}`, data, { headers: getAuthHeaders() }).then(res => res.data)
 
-export async function apiPut<T>(path: string, body: unknown): Promise<T> {
-  const url = buildUrl(path)
-  const response = await fetch(url, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeaders(),
-    },
-    body: JSON.stringify(body),
-  })
+export const apiPatch = <T = any>(url: string, data?: any): Promise<T> => 
+  axios.patch(`${API_BASE_URL}${url}`, data, { headers: getAuthHeaders() }).then(res => res.data)
 
-  const payload = await parseResponse(response)
-  if (!response.ok) {
-    throw new Error(payload?.message || payload?.error || response.statusText || 'Request failed')
-  }
-  return payload as T
-}
+export const apiDelete = <T = any>(url: string): Promise<T> => 
+  axios.delete(`${API_BASE_URL}${url}`, { headers: getAuthHeaders() }).then(res => res.data)
 
-export async function apiDelete<T>(path: string): Promise<T> {
-  const url = buildUrl(path)
-  const response = await fetch(url, {
-    method: 'DELETE',
-    headers: {
-      ...getAuthHeaders(),
-    },
-  })
 
-  const payload = await parseResponse(response)
-  if (!response.ok) {
-    throw new Error(payload?.message || payload?.error || response.statusText || 'Request failed')
-  }
-  return payload as T
-}
-
-export async function apiGet<T>(path: string): Promise<T> {
-  const url = buildUrl(path)
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      ...getAuthHeaders(),
-    },
-  })
-
-  const payload = await parseResponse(response)
-  if (!response.ok) {
-    throw new Error(payload?.message || payload?.error || response.statusText || 'Request failed')
-  }
-  return payload as T
-}
-
-export function saveBookingLocally(booking: unknown) {
-  const existing = loadLocalBookings()
-  existing.push(booking)
-  localStorage.setItem(LOCAL_BOOKING_KEY, JSON.stringify(existing))
-}
-
-export function loadLocalBookings(): unknown[] {
+// ... rest of the file (mock data etc)
+export function mockBookings() {
   const raw = localStorage.getItem(LOCAL_BOOKING_KEY)
-  if (!raw) {
-    return []
-  }
-
-  try {
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
+  if (raw) return JSON.parse(raw)
+  return [
+    {
+      id: 1,
+      service: { title: 'Angkor Wat Sunrise', price: 120, location: 'Siem Reap' },
+      bookingDate: '2024-05-15',
+      bookingStatus: 'confirmed',
+      paymentStatus: 'paid',
+      quantity: 2,
+    },
+  ]
 }

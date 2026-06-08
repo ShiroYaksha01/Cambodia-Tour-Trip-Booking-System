@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -12,6 +11,10 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { ProvidersModule } from './modules/providers/providers.module';
 import { BookingsModule } from './modules/bookings/bookings.module';
+import { CommonModule } from './common/common.module';
+import { SettingsModule } from './modules/settings/settings.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { UploadsController } from './uploads.controller';
 
 @Module({
   imports: [
@@ -26,13 +29,16 @@ import { BookingsModule } from './modules/bookings/bookings.module';
         configService.get('typeorm')!,
     }),
 
+    CommonModule,
     AuthModule,
     UsersModule,
     ProvidersModule,
     BookingsModule,
     ServicesModule,
+    SettingsModule,
+    AnalyticsModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, UploadsController],
   providers: [AppService],
 })
 export class AppModule {}

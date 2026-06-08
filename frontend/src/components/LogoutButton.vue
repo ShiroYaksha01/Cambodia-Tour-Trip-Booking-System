@@ -15,19 +15,22 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from "vue-router";
 import { ref } from "vue";
 import { clearAuthData } from "../utils/auth";
 
-const router = useRouter();
 const isLoading = ref(false);
 
 async function logout() {
+  if (!confirm("Are you sure you want to log out?")) {
+    return;
+  }
   isLoading.value = true;
   try {
     clearAuthData();
-    await router.push({ name: "login" });
-  } finally {
+    // Using location.href ensures a full reload and redirect to the public home
+    window.location.href = "/customer/homepage";
+  } catch (error) {
+    console.error("Logout failed:", error);
     isLoading.value = false;
   }
 }

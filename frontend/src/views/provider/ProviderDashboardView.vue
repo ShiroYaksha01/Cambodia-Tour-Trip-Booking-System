@@ -18,6 +18,36 @@
           <div class="provider-avatar">AT</div>          <LogoutButton />        </div>
       </header>
 
+      <section class="earnings-panel">
+        <div class="panel-header">
+          <div>
+            <p class="section-kicker">Provider Earnings Tracker</p>
+            <h2>Money Logic</h2>
+          </div>
+          <span class="chart-note">10% platform commission</span>
+        </div>
+
+        <div class="earnings-grid">
+          <article class="earnings-card earnings-card--teal">
+            <span>Total Revenue</span>
+            <strong>{{ formatMoney(earnings.totalRevenue) }}</strong>
+            <small>Sum of all paid bookings</small>
+          </article>
+
+          <article class="earnings-card earnings-card--gold">
+            <span>Platform Commission</span>
+            <strong>{{ formatMoney(earnings.platformCommission) }}</strong>
+            <small>Automatically reserved by the platform</small>
+          </article>
+
+          <article class="earnings-card earnings-card--forest">
+            <span>Payout Balance</span>
+            <strong>{{ formatMoney(earnings.payoutBalance) }}</strong>
+            <small>Actual money the provider earns</small>
+          </article>
+        </div>
+      </section>
+
       <section class="summary-grid" id="overview">
         <article class="summary-card summary-card--teal">
           <span>AVG. OCCUPANCY</span>
@@ -193,13 +223,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import DashboardSidebar from '../../components/dashboard/DashboardSidebar.vue'
 import LogoutButton from '../../components/LogoutButton.vue'
 import ServiceModal from '../../components/provider/ServiceModal.vue'
 import { 
   getProviderDashboardStats, 
   getProviderInventoryMatrix,
+  getProviderBookings,
   createService,
   updateService,
   deleteService
@@ -217,6 +248,7 @@ const stats = ref({
 })
 
 const inventory = ref<any[]>([])
+const bookings = ref<any[]>([])
 
 const currentMonth = 'May'
 const currentYear = '2026'
@@ -225,18 +257,55 @@ const displayDays = ['TUE 19', 'WED 20', 'THU 21', 'FRI 22', 'SAT 23', 'SUN 24']
 async function fetchData() {
   loading.value = true
   try {
-    const [statsRes, matrixRes] = await Promise.all([
+    const [statsRes, matrixRes, bookingsRes] = await Promise.all([
       getProviderDashboardStats(),
-      getProviderInventoryMatrix()
+      getProviderInventoryMatrix(),
+      getProviderBookings()
     ])
     stats.value = statsRes.data
     inventory.value = matrixRes.data
+    bookings.value = Array.isArray(bookingsRes.data) ? bookingsRes.data : bookingsRes.data?.bookings ?? []
   } catch (error) {
     console.error('Failed to fetch provider dashboard data:', error)
   } finally {
     loading.value = false
   }
 }
+
+function bookingAmount(booking: any) {
+  const rawValue = booking.amount ?? booking.total_amount ?? booking.price
+  const numericValue = typeof rawValue === 'string' ? Number(rawValue) : rawValue
+  return Number.isFinite(numericValue as number) ? Number(numericValue) : 0
+}
+
+function normalizedStatus(booking: any) {
+  return String(booking.payment_status ?? booking.status ?? '').trim().toLowerCase()
+}
+
+function isPaid(booking: any) {
+  const value = normalizedStatus(booking)
+  return value === 'paid' || value === 'released' || value === 'success'
+}
+
+function formatMoney(value: number) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
+const earnings = computed(() => {
+  const totalRevenue = bookings.value.filter((booking) => isPaid(booking)).reduce((total, booking) => total + bookingAmount(booking), 0)
+  const platformCommission = totalRevenue * 0.1
+  const payoutBalance = totalRevenue - platformCommission
+
+  return {
+    totalRevenue,
+    platformCommission,
+    payoutBalance,
+  }
+})
 
 function openCreateModal() {
   selectedService.value = null
@@ -248,17 +317,60 @@ function openEditModal(service: any) {
   showModal.value = true
 }
 
+function cleanServicePayload(formData: any) {
+  const payload: any = {}
+  
+  // Whitelist of fields from CreateServiceDto/UpdateServiceDto
+  const allowedFields = [
+    'serviceType', 'title', 'description', 'price', 'isActive', 
+    'image', 'location', 'rating', 'duration', 'totalCapacity',
+    'numDays', 'maxPeople', 'travelDate', 'endDate', 
+    'departurePoint', 'destination', 'includesAccommodation', 
+    'includesTransportation', 'includesMeals',
+    'hotelName', 'address', 'starRating', 'roomType', 
+    'totalRooms', 'checkInTime', 'checkOutTime',
+    'transportType', 'vehicleModel', 'totalSeats', 
+    'departureTime', 'arrivalTime', 'pickupNotes'
+  ]
+
+  allowedFields.forEach(field => {
+    const value = formData[field]
+    if (value !== undefined && value !== null && value !== '') {
+      // Convert numeric fields
+      if ([
+        'price', 'rating', 'totalCapacity', 'numDays', 'maxPeople', 
+        'starRating', 'totalRooms', 'totalSeats'
+      ].includes(field)) {
+        payload[field] = Number(value)
+      } 
+      // Convert boolean fields
+      else if ([
+        'isActive', 'includesAccommodation', 'includesTransportation', 'includesMeals'
+      ].includes(field)) {
+        payload[field] = Boolean(value)
+      }
+      else {
+        payload[field] = value
+      }
+    }
+  })
+
+  return payload
+}
+
 async function handleSaveService(formData: any) {
   try {
+    const payload = cleanServicePayload(formData)
     if (selectedService.value && selectedService.value.id.length > 5) {
-      await updateService(selectedService.value.id, formData)
+      await updateService(selectedService.value.id, payload)
     } else {
-      await createService(formData)
+      await createService(payload)
     }
     showModal.value = false
     await fetchData()
   } catch (error) {
-    alert('Failed to save service')
+    console.error('Save failed:', error)
+    alert('Failed to save service. Check console for details.')
   }
 }
 
@@ -423,6 +535,82 @@ onMounted(() => {
 .summary-card--gold { border-top-color: #c68a22; }
 .summary-card--red { border-top-color: #e03a3a; }
 .summary-card--forest { border-top-color: #4a7a65; }
+
+.earnings-panel {
+  display: grid;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(20, 31, 31, 0.07);
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panel-header h2 {
+  margin: 2px 0 0;
+  color: #173f42;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.chart-note {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #f0f3f2;
+  color: #60706d;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.earnings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.earnings-card {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #eef1f0;
+  border-top: 3px solid transparent;
+}
+
+.earnings-card span {
+  display: block;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  color: #7f8b88;
+  text-transform: uppercase;
+}
+
+.earnings-card strong {
+  display: block;
+  margin-top: 6px;
+  color: #173f42;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.earnings-card small {
+  display: block;
+  margin-top: 4px;
+  color: #6c7b77;
+  font-size: 0.72rem;
+}
+
+.earnings-card--teal { border-top-color: #1b8d90; }
+.earnings-card--gold { border-top-color: #c68a22; }
+.earnings-card--forest { border-top-color: #4a7a65; }
 
 .workspace-grid {
   display: grid;
@@ -841,6 +1029,7 @@ onMounted(() => {
   }
 
   .summary-grid,
+  .earnings-grid,
   .workspace-grid {
     grid-template-columns: 1fr;
   }

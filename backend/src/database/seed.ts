@@ -36,6 +36,7 @@ async function upsertUser(
     existingUser.passwordHash = passwordHash;
     existingUser.phoneNumber = input.phoneNumber ?? existingUser.phoneNumber;
     existingUser.status = AccountStatus.ACTIVE;
+    existingUser.isEmailVerified = true;
     existingUser.emailVerifiedAt = existingUser.emailVerifiedAt ?? new Date();
     return userRepository.save(existingUser);
   }
@@ -48,6 +49,7 @@ async function upsertUser(
       phoneNumber: input.phoneNumber,
       passwordHash,
       status: AccountStatus.ACTIVE,
+      isEmailVerified: true,
       emailVerifiedAt: new Date(),
     }),
   );
@@ -143,6 +145,7 @@ async function seed() {
           price: 85.00,
           location: 'Cambodia-wide',
           inventory: 10,
+          coverImage: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80',
           details: {
             transportType: TransportType.CAR,
             vehicleModel: 'Lexus LX570',
@@ -165,6 +168,7 @@ async function seed() {
           location: item.location,
           duration: 'Variable',
           rating: 4.8,
+          coverImage: item.coverImage,
         }));
         await inventoryRepo.save(inventoryRepo.create({ serviceId: s.id, totalCapacity: item.inventory }));
         await transportRepo.save(transportRepo.create({ serviceId: s.id, ...item.details }));
@@ -178,6 +182,7 @@ async function seed() {
           price: 120.00,
           location: 'Phnom Penh',
           inventory: 5,
+          coverImage: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80',
           details: {
             hotelName: 'Heritage Riverside',
             roomType: 'Colonial Suite',
@@ -200,6 +205,7 @@ async function seed() {
           location: item.location,
           duration: 'Per Night',
           rating: 4.9,
+          coverImage: item.coverImage,
         }));
         await inventoryRepo.save(inventoryRepo.create({ serviceId: s.id, totalCapacity: item.inventory }));
         await accommodationRepo.save(accommodationRepo.create({ serviceId: s.id, ...item.details }));
@@ -213,6 +219,7 @@ async function seed() {
           price: 45.00,
           location: 'Siem Reap',
           inventory: 20,
+          coverImage: 'https://images.unsplash.com/photo-1506461883276-594a12b11cf3?auto=format&fit=crop&w=800&q=80',
           details: {
             numDays: 1,
             maxPeople: 20,
@@ -234,6 +241,7 @@ async function seed() {
           location: item.location,
           duration: '1 Day',
           rating: 5.0,
+          coverImage: item.coverImage,
         }));
         await inventoryRepo.save(inventoryRepo.create({ serviceId: s.id, totalCapacity: item.inventory }));
         await tourRepo.save(tourRepo.create({ serviceId: s.id, ...item.details }));

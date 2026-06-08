@@ -76,15 +76,6 @@ const save = async () => {
             </select>
           </div>
 
-          <div class="fg">
-            <label>Role</label>
-            <select v-model="form.role">
-              <option value="Customer">Customer</option>
-              <option value="Provider">Provider</option>
-              <option value="Admin">Admin</option>
-            </select>
-          </div>
-
           <div class="fg span2">
             <label>Email</label>
             <input v-model="form.email" type="text" autocomplete="off" placeholder="user@email.com" />

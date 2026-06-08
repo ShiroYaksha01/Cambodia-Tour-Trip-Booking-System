@@ -4,20 +4,31 @@ import CustomerHomePageSearch from "../../components/customer/CustomerHomePageSe
 import CustomerServiceCard from "../../components/customer/CustomerServiceCard.vue";
 import CustomerFooter from "../../components/customer/CustomerFooter.vue";
 
-import { fetchServices } from "../../services/api";
-import { onMounted, ref } from "vue";
-import { useRouter } from "vue-router";
+import { fetchServices } from '../../services/api'
+import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { hasAuthSession } from '../../utils/auth'
+import { resolveImageUrl } from '../../utils/api'
 
-const router = useRouter();
-const tours = ref<any[]>([]);
+const router = useRouter()
+const allServices = ref<any[]>([])
+const displayedServices = ref<any[]>([])
 
 const handleBook = (tour: any) => {
-  router.push({ name: "booking-form", params: { id: tour.id } });
-};
+  if (!hasAuthSession()) {
+    router.push({ name: 'login', query: { redirect: router.currentRoute.value.fullPath } })
+    return
+  }
+  router.push({ name: 'booking-form', params: { id: tour.id } })
+}
 
-const goToDetail = (id: string) => {
-  router.push({ name: "service-detail", params: { id } });
-};
+const goToDetail = (service: any) => {
+  const st = service?.serviceType
+  if (st === 'tour') router.push({ name: 'customer-tour-detail', params: { id: service.id } })
+  else if (st === 'accommodation') router.push({ name: 'customer-hotel-detail', params: { id: service.id } })
+  else if (st === 'transportation') router.push({ name: 'customer-transport-detail', params: { id: service.id } })
+  else router.push({ name: 'service-detail', params: { id: service.id } })
+}
 
 const goToProviderDetail = (tour: any) => {
   const providerId = tour.provider?.id || tour.providerId || tour.provider_id;
@@ -33,21 +44,89 @@ const goToProviderDetail = (tour: any) => {
   });
 };
 
+const scrollToBottom = () => {
+  window.scrollTo({
+    top: document.documentElement.scrollHeight,
+    behavior: 'smooth'
+  })
+}
+
+function mapServiceToTour(service: any) {
+  const rawImage = service.coverImage
+    || service.images?.find((img: any) => img.isCover)?.imageUrl
+    || service.images?.[0]?.imageUrl;
+  
+  const coverImage = resolveImageUrl(rawImage)
+    || 'https://freedomdestinations.co.uk/wp-content/uploads/Angkor-Wat-Cambodia-4.jpg';
+
+  return {
+    id: service.id,
+    title: service.title,
+    location: service.location || 'Cambodia',
+    description: service.description || '',
+    image: coverImage,
+    rating: service.rating || 4.5,
+    reviews: Math.floor(Math.random() * 100) + 10,
+    price: typeof service.price === 'string' ? parseFloat(service.price) : service.price,
+    duration: service.duration || 'Flexible',
+    provider: service.provider,
+    providerId: service.provider?.id || service.providerId || service.provider_id
+  }
+}
+
+function handleSearch(filters: any) {
+  console.log("Applying filters:", filters)
+  displayedServices.value = allServices.value.filter(service => {
+    // Skip type filtering if 'all' is selected
+    if (filters.type !== 'all' && service.serviceType !== filters.type) return false
+
+    // Tab-specific filters
+    if (filters.type === 'all') {
+      if (filters.title && !service.title.toLowerCase().includes(filters.title.toLowerCase())) return false
+      return true
+    }
+
+    if (filters.type === 'tour') {
+      if (filters.location && !service.location?.toLowerCase().includes(filters.location.toLowerCase())) return false
+      if (filters.title && !service.title.toLowerCase().includes(filters.title.toLowerCase())) return false
+      if (filters.date && service.tourPackage?.travelDate) {
+        const serviceDate = new Date(service.tourPackage.travelDate).toISOString().split('T')[0]
+        if (serviceDate !== filters.date) return false
+      }
+    } else if (filters.type === 'accommodation') {
+      if (filters.location && !service.location?.toLowerCase().includes(filters.location.toLowerCase())) return false
+      // Simple capacity check (mocking rooms/people logic)
+      if (filters.travelers && service.accommodation?.totalRooms < Math.ceil(filters.travelers / 2)) return false
+    } else if (filters.type === 'transportation') {
+      if (filters.from && !service.transportation?.departurePoint?.toLowerCase().includes(filters.from.toLowerCase())) return false
+      if (filters.to && !service.transportation?.destination?.toLowerCase().includes(filters.to.toLowerCase())) return false
+      if (filters.date && service.transportation?.departureTime) {
+        const serviceDate = new Date(service.transportation.departureTime).toISOString().split('T')[0]
+        if (serviceDate !== filters.date) return false
+      }
+    }
+
+    return true
+  })
+}
+
 onMounted(async () => {
   try {
     const data = await fetchServices();
     console.log("API data:", data);
 
-    tours.value = Array.isArray(data) ? data : [];
+    allServices.value = Array.isArray(data) ? data : []
+    displayedServices.value = [...allServices.value]
   } catch (error) {
-    console.error("Failed to fetch services:", error);
-    tours.value = [];
+    console.error("Failed to fetch services:", error)
+    allServices.value = []
+    displayedServices.value = []
   }
 });
 </script>
 
 <template>
-  <div class="bg-gray-50 min-h-screen">
+  <div class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-200">
     <!-- Navbar -->
     <CustomerNavbar />
 
@@ -56,7 +135,7 @@ onMounted(async () => {
       class="relative overflow-hidden bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-500 text-white"
     >
       <div
-        class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=1600&auto=format&fit=crop')] bg-cover bg-center opacity-20"
+        class="absolute inset-0 bg-[url('https://freedomdestinations.co.uk/wp-content/uploads/Angkor-Wat-Cambodia-4.jpg')] bg-cover bg-center opacity-20"
       />
 
       <div class="relative max-w-7xl mx-auto px-6 lg:px-8 py-24 lg:py-32">
@@ -80,12 +159,14 @@ onMounted(async () => {
 
           <div class="mt-8 flex flex-wrap gap-4">
             <button
+              @click="router.push({ name: 'customer-explore' })"
               class="rounded-xl bg-white px-6 py-3 font-semibold text-emerald-700 shadow-lg transition hover:-translate-y-1 hover:shadow-2xl"
             >
               Explore Tours
             </button>
 
             <button
+              @click="scrollToBottom"
               class="rounded-xl border border-white/40 bg-white/10 px-6 py-3 font-semibold backdrop-blur transition hover:bg-white/20"
             >
               Learn More
@@ -98,7 +179,7 @@ onMounted(async () => {
     <!-- Search Section -->
     <section class="relative z-10 -mt-12 px-4">
       <div class="max-w-7xl mx-auto">
-        <CustomerHomePageSearch />
+        <CustomerHomePageSearch @search="handleSearch" />
       </div>
     </section>
 
@@ -109,59 +190,65 @@ onMounted(async () => {
           class="mb-12 flex flex-col gap-4 md:flex-row md:items-end md:justify-between"
         >
           <div>
-            <p
-              class="text-sm font-semibold uppercase tracking-wide text-emerald-600"
-            >
+            <p class="text-sm font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
               Popular Packages
             </p>
 
-            <h2 class="mt-2 text-3xl md:text-4xl font-bold text-gray-900">
+            <h2 class="mt-2 text-3xl md:text-4xl font-bold text-gray-900 dark:text-white transition-colors duration-200">
               Featured Cambodia Tours
             </h2>
 
-            <p class="mt-4 max-w-2xl text-gray-600">
+            <p class="mt-4 max-w-2xl text-gray-600 dark:text-gray-300 transition-colors duration-200">
               Discover handpicked travel experiences designed for adventure,
               relaxation, and cultural exploration.
             </p>
           </div>
 
           <button
-            class="w-fit rounded-xl border border-emerald-600 px-5 py-3 font-medium text-emerald-600 transition hover:bg-emerald-600 hover:text-white"
+            @click="router.push({ name: 'customer-explore' })"
+            class="w-fit rounded-xl border border-emerald-600 dark:border-emerald-500 px-5 py-3 font-medium text-emerald-600 dark:text-emerald-500 transition hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-500 dark:hover:text-gray-900"
           >
             View All Tours
           </button>
         </div>
 
         <!-- Tour Cards Grid -->
-        <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 xl:grid-cols-3">
+        <div
+          v-if="displayedServices.length > 0"
+          class="grid grid-cols-1 gap-8 sm:grid-cols-2 xl:grid-cols-3"
+        >
           <CustomerServiceCard
-            v-for="tour in tours"
-            :key="tour.id"
-            :tour="tour"
-            @click="goToDetail(tour.id)"
+            v-for="service in displayedServices"
+            :key="service.id"
+            :tour="mapServiceToTour(service)"
+            @click="goToDetail(service)"
             @book="handleBook"
             @provider-detail="goToProviderDetail"
             class="cursor-pointer"
           />
         </div>
+        <div v-else class="text-center py-20 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 transition-colors duration-200">
+          <p class="text-gray-500 dark:text-gray-400 text-lg">No services found matching your criteria.</p>
+          <button @click="displayedServices = [...allServices]" class="mt-4 text-emerald-600 dark:text-emerald-400 font-semibold underline">
+            Clear all filters
+          </button>
+        </div>
       </div>
     </section>
 
     <!-- Why Choose Us -->
-    <section class="bg-white py-20 px-4">
+    <section class="bg-white dark:bg-gray-800 py-20 px-4 transition-colors duration-200">
       <div class="max-w-7xl mx-auto">
         <div class="text-center max-w-3xl mx-auto">
-          <p
-            class="text-sm font-semibold uppercase tracking-wide text-emerald-600"
-          >
+          <p class="text-sm font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
             Why Choose Us
           </p>
 
-          <h2 class="mt-3 text-3xl md:text-4xl font-bold text-gray-900">
+          <h2 class="mt-3 text-3xl md:text-4xl font-bold text-gray-900 dark:text-white transition-colors duration-200">
             Travel With Confidence
           </h2>
 
-          <p class="mt-5 text-gray-600 leading-relaxed">
+          <p class="mt-5 text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-200">
             We help travelers discover the beauty of Cambodia with secure
             booking, trusted providers, and unforgettable travel experiences.
           </p>
@@ -169,67 +256,73 @@ onMounted(async () => {
 
         <div class="mt-14 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           <div
-            class="rounded-2xl border border-gray-100 bg-gray-50 p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+            class="rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:hover:shadow-gray-900/50"
           >
             <div
-              class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-2xl"
+              class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 dark:bg-emerald-900 text-2xl"
             >
               ✈️
             </div>
 
-            <h3 class="text-xl font-semibold text-gray-900">Easy Booking</h3>
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white transition-colors duration-200">
+              Easy Booking
+            </h3>
 
-            <p class="mt-3 text-gray-600 leading-relaxed">
+            <p class="mt-3 text-gray-600 dark:text-gray-400 leading-relaxed transition-colors duration-200">
               Book your favorite tours quickly with a smooth and secure process.
             </p>
           </div>
 
           <div
-            class="rounded-2xl border border-gray-100 bg-gray-50 p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+            class="rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:hover:shadow-gray-900/50"
           >
             <div
-              class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-100 text-2xl"
+              class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-100 dark:bg-orange-900 text-2xl"
             >
               🏝️
             </div>
 
-            <h3 class="text-xl font-semibold text-gray-900">
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white transition-colors duration-200">
               Best Destinations
             </h3>
 
-            <p class="mt-3 text-gray-600 leading-relaxed">
+            <p class="mt-3 text-gray-600 dark:text-gray-400 leading-relaxed transition-colors duration-200">
               Explore Cambodia's top islands, temples, and cultural attractions.
             </p>
           </div>
 
           <div
-            class="rounded-2xl border border-gray-100 bg-gray-50 p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+            class="rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:hover:shadow-gray-900/50"
           >
             <div
-              class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 text-2xl"
+              class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 dark:bg-blue-900 text-2xl"
             >
               ⭐
             </div>
 
-            <h3 class="text-xl font-semibold text-gray-900">Trusted Reviews</h3>
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white transition-colors duration-200">
+              Trusted Reviews
+            </h3>
 
-            <p class="mt-3 text-gray-600 leading-relaxed">
+            <p class="mt-3 text-gray-600 dark:text-gray-400 leading-relaxed transition-colors duration-200">
               Real traveler reviews help you choose the best experiences.
             </p>
           </div>
 
           <div
-            class="rounded-2xl border border-gray-100 bg-gray-50 p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+            class="rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:hover:shadow-gray-900/50"
           >
             <div
-              class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-pink-100 text-2xl"
+              class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-pink-100 dark:bg-pink-900 text-2xl"
             >
               💬
             </div>
 
-            <h3 class="text-xl font-semibold text-gray-900">24/7 Support</h3>
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white transition-colors duration-200">
+              24/7 Support
+            </h3>
 
-            <p class="mt-3 text-gray-600 leading-relaxed">
+            <p class="mt-3 text-gray-600 dark:text-gray-400 leading-relaxed transition-colors duration-200">
               Our support team is available anytime to help your journey.
             </p>
           </div>
@@ -241,7 +334,7 @@ onMounted(async () => {
     <section class="px-4 pb-20">
       <div class="relative max-w-7xl mx-auto overflow-hidden rounded-[32px]">
         <img
-          src="https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?q=80&w=1600&auto=format&fit=crop"
+          src="https://freedomdestinations.co.uk/wp-content/uploads/Angkor-Wat-Cambodia-4.jpg"
           alt="Cambodia"
           class="h-[420px] w-full object-cover"
         />
@@ -266,6 +359,7 @@ onMounted(async () => {
             </p>
 
             <button
+              @click="router.push({ name: 'customer-explore' })"
               class="mt-8 rounded-xl bg-emerald-500 px-6 py-3 font-semibold transition hover:bg-emerald-400"
             >
               Start Booking

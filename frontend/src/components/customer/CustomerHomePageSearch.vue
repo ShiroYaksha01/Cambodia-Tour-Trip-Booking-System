@@ -1,419 +1,361 @@
 <template>
-  <section id="search" class="search-engine">
-    <div class="search-hero">
-      <div>
-        <h1></h1>
-        <p class="intro-copy"><br><br></p>
-      </div>
+  <div class="search-container">
+    <div class="search-tabs">
+      <button
+        v-for="tab in tabs"
+        :key="tab.id"
+        :class="['tab-btn', { active: activeTab === tab.id }]"
+        @click="activeTab = tab.id"
+      >
+        <span class="tab-icon">{{ tab.icon }}</span>
+        {{ tab.label }}
+      </button>
     </div>
 
-    <form class="search-panel" @submit.prevent="applySearch">
-      <label>
-        <span>Destination</span>
-        <input v-model="form.keyword" type="search" placeholder="Phnom Penh, Siem Reap, Koh Rong" />
-      </label>
+    <div class="search-panel">
+      <form @submit.prevent="handleSearch" class="search-form">
+        <!-- ALL TAB -->
+        <template v-if="activeTab === 'all'">
+          <label class="all-search-label">
+            <span>Search Anything</span>
+            <input type="text" v-model="tourForm.title" placeholder="Find tours, hotels, or transfers..." />
+          </label>
+        </template>
 
-      <label>
-        <span>Travel style</span>
-        <select v-model="form.style">
-          <option value="all">All styles</option>
-          <option value="heritage">Heritage</option>
-          <option value="nature">Nature</option>
-          <option value="beach">Beach</option>
-          <option value="city">City</option>
-        </select>
-      </label>
+        <!-- TOUR TAB -->
+        <template v-else-if="activeTab === 'tour'">
+          <label>
+            <span>Location</span>
+            <select v-model="tourForm.location">
+              <option value="">Anywhere</option>
+              <option v-for="p in provinces" :key="p" :value="p">{{ p }}</option>
+            </select>
+          </label>
+          <label>
+            <span>Date</span>
+            <input type="date" v-model="tourForm.date" :min="minDate" />
+          </label>
+          <label>
+            <span>Title (Optional)</span>
+            <input type="text" v-model="tourForm.title" placeholder="Search by name" />
+          </label>
+        </template>
 
-      <label>
-        <span>Budget</span>
-        <select v-model="form.budget">
-          <option value="all">Any budget</option>
-          <option value="low">Under $300</option>
-          <option value="mid">$300 - $700</option>
-          <option value="high">Above $700</option>
-        </select>
-      </label>
+        <!-- ACCOMMODATION TAB -->
+        <template v-else-if="activeTab === 'accommodation'">
+          <label>
+            <span>Location</span>
+            <select v-model="accommodationForm.location">
+              <option value="">Anywhere</option>
+              <option v-for="p in provinces" :key="p" :value="p">{{ p }}</option>
+            </select>
+          </label>
+          <label>
+            <span>Check-in</span>
+            <input type="date" v-model="accommodationForm.checkIn" :min="minDate" />
+          </label>
+          <label>
+            <span>Check-out</span>
+            <input type="date" v-model="accommodationForm.checkOut" :min="accommodationForm.checkIn || minDate" />
+          </label>
+          <label>
+            <span>Guests</span>
+            <input type="number" v-model="accommodationForm.travelers" min="1" />
+          </label>
+        </template>
 
-      <label>
-        <span>Travelers</span>
-        <input v-model.number="form.travelers" type="number" min="1" max="12" />
-      </label>
+        <!-- TRANSPORTATION TAB -->
+        <template v-else-if="activeTab === 'transportation'">
+          <label>
+            <span>From</span>
+            <select v-model="transportationForm.from">
+              <option value="">Select origin</option>
+              <option v-for="p in provinces" :key="p" :value="p">{{ p }}</option>
+            </select>
+          </label>
+          <label>
+            <span>To</span>
+            <select v-model="transportationForm.to">
+              <option value="">Select destination</option>
+              <option v-for="p in provinces" :key="p" :value="p">{{ p }}</option>
+            </select>
+          </label>
+          <label>
+            <span>Date</span>
+            <input type="date" v-model="transportationForm.date" :min="minDate" />
+          </label>
+          <label>
+            <span>Time</span>
+            <input type="time" v-model="transportationForm.time" :min="minTime" />
+          </label>
+          <label>
+            <span>Passengers</span>
+            <input type="number" v-model="transportationForm.travelers" min="1" />
+          </label>
+        </template>
 
-      <label>
-        <span></span>
-        <input v-model="form.month" type="month" />
-      </label>
-
-      <button type="submit">Search Trips</button>
-    </form>
-
-    <!-- <div class="search-results" id="featured">
-      <article v-for="trip in filteredTrips" :key="trip.id" class="trip-card">
-        <div class="trip-card__image" :style="{ background: trip.gradient }">
-          <span>{{ trip.duration }}</span>
-        </div>
-        <div class="trip-card__body">
-          <div class="trip-card__top">
-            <div>
-              <p>{{ trip.destination }}</p>
-              <h2>{{ trip.title }}</h2>
-            </div>
-            <strong>${{ trip.price }}</strong>
-          </div>
-
-          <p>{{ trip.summary }}</p>
-
-          <div class="trip-tags">
-            <span>{{ trip.style }}</span>
-            <span>{{ trip.region }}</span>
-            <span>Up to {{ trip.capacity }} guests</span>
-          </div>
-        </div>
-      </article>
-    </div> -->
-  </section>
+        <button type="submit" class="search-submit-btn">Search Trips</button>
+      </form>
+    </div>
+  </div>
 </template>
 
 <script lang="ts">
 import { computed, defineComponent, reactive, ref } from 'vue'
 
-type Style = 'heritage' | 'nature' | 'beach' | 'city'
-type Budget = 'low' | 'mid' | 'high'
-
-type Trip = {
-  id: number
-  destination: string
-  title: string
-  summary: string
-  style: Style
-  region: string
-  duration: string
-  price: number
-  capacity: number
-  gradient: string
-}
-
-const trips: Trip[] = [
-  {
-    id: 1,
-    destination: 'Siem Reap',
-    title: 'Angkor Sunrise Heritage Escape',
-    summary: 'Temple dawn views with guided storytelling, private transfer, and curated dining.',
-    style: 'heritage',
-    region: 'Northwest',
-    duration: '3 days',
-    price: 420,
-    capacity: 6,
-    gradient: 'linear-gradient(135deg, #0d4b45, #f3c85f)',
-  },
-  {
-    id: 2,
-    destination: 'Koh Rong',
-    title: 'Island Resort & Reef Day Pass',
-    summary: 'Relaxed shoreline stay with snorkeling access, boat transfer, and sunset dinner.',
-    style: 'beach',
-    region: 'Coastal',
-    duration: '4 days',
-    price: 680,
-    capacity: 4,
-    gradient: 'linear-gradient(135deg, #115e59, #8ecae6)',
-  },
-  {
-    id: 3,
-    destination: 'Phnom Penh',
-    title: 'Royal Capital City Circuit',
-    summary: 'Boutique hotel, riverfront dining, and museum hopping in a compact city break.',
-    style: 'city',
-    region: 'Central',
-    duration: '2 days',
-    price: 260,
-    capacity: 8,
-    gradient: 'linear-gradient(135deg, #1f2937, #d4a373)',
-  },
-  {
-    id: 4,
-    destination: 'Mondulkiri',
-    title: 'Waterfall and Forest Retreat',
-    summary: 'Nature-focused itinerary with mountain views, slow travel, and cultural stops.',
-    style: 'nature',
-    region: 'East',
-    duration: '5 days',
-    price: 740,
-    capacity: 5,
-    gradient: 'linear-gradient(135deg, #2d6a4f, #d8f3dc)',
-  },
-]
-
 export default defineComponent({
-  name: 'CustomerSearchEngine',
-  setup() {
-    const form = reactive({
-      keyword: '',
-      style: 'all' as Style | 'all',
-      budget: 'all' as Budget | 'all',
-      travelers: 2,
-      month: '',
-    })
+  name: 'CustomerHomePageSearch',
+  emits: ['search'],
+  setup(_, { emit }) {
+    const activeTab = ref('all')
 
-    const appliedQuery = ref({
-      keyword: '',
-      style: 'all' as Style | 'all',
-      budget: 'all' as Budget | 'all',
-      travelers: 2,
-      month: '',
-    })
+    const tabs = [
+      { id: 'all', label: 'All', icon: '🔍' },
+      { id: 'tour', label: 'Tour', icon: '🗺️' },
+      { id: 'accommodation', label: 'Accommodation', icon: '🏨' },
+      { id: 'transportation', label: 'Transportation', icon: '🚐' },
+    ]
 
-    function applySearch() {
-      appliedQuery.value = { ...form }
+    const provinces = [
+      'Phnom Penh', 'Siem Reap', 'Preah Sihanouk', 'Battambang', 'Kampot',
+      'Kep', 'Koh Kong', 'Kratie', 'Mondulkiri', 'Ratanakiri', 'Pursat',
+      'Banteay Meanchey', 'Kampong Cham', 'Kampong Chhnang', 'Kampong Speu',
+      'Kampong Thom', 'Kandal', 'Oddar Meanchey', 'Pailin', 'Preah Vihear',
+      'Stung Treng', 'Svay Rieng', 'Takeo', 'Tboung Khmum', 'Prey Veng'
+    ]
+
+    const getCambodiaDate = () => {
+      return new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Phnom_Penh',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(new Date())
     }
 
-    const filteredTrips = computed(() => {
-      const query = appliedQuery.value
-      const keyword = query.keyword.trim().toLowerCase()
+    const getCambodiaTime = () => {
+      return new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Phnom_Penh',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      }).format(new Date())
+    }
 
-      return trips.filter((trip) => {
-        const matchesKeyword =
-          keyword.length === 0 ||
-          trip.destination.toLowerCase().includes(keyword) ||
-          trip.title.toLowerCase().includes(keyword) ||
-          trip.summary.toLowerCase().includes(keyword)
+    const minDate = computed(() => getCambodiaDate())
 
-        const matchesStyle = query.style === 'all' || trip.style === query.style
-        const matchesBudget =
-          query.budget === 'all' ||
-          (query.budget === 'low' && trip.price < 300) ||
-          (query.budget === 'mid' && trip.price >= 300 && trip.price <= 700) ||
-          (query.budget === 'high' && trip.price > 700)
-        const matchesCapacity = trip.capacity >= query.travelers
-
-        return matchesKeyword && matchesStyle && matchesBudget && matchesCapacity
-      })
+    const minTime = computed(() => {
+      if (transportationForm.date === minDate.value) {
+        return getCambodiaTime()
+      }
+      return '00:00'
     })
 
-    applySearch()
+    const tourForm = reactive({
+      location: '',
+      date: minDate.value,
+      title: '',
+    })
+
+    const accommodationForm = reactive({
+      location: '',
+      checkIn: minDate.value,
+      checkOut: '',
+      travelers: 2,
+    })
+
+    const transportationForm = reactive({
+      from: '',
+      to: '',
+      date: minDate.value,
+      time: '',
+      travelers: 2,
+    })
+
+    function handleSearch() {
+      const filters = {
+        type: activeTab.value,
+        ...(activeTab.value === 'all' ? { title: tourForm.title } : {}),
+        ...(activeTab.value === 'tour' ? { ...tourForm } : {}),
+        ...(activeTab.value === 'accommodation' ? { ...accommodationForm } : {}),
+        ...(activeTab.value === 'transportation' ? { ...transportationForm } : {}),
+      }
+      emit('search', filters)
+    }
 
     return {
-      form,
-      filteredTrips,
-      applySearch,
+      tabs,
+      activeTab,
+      provinces,
+      tourForm,
+      accommodationForm,
+      transportationForm,
+      handleSearch,
+      minDate,
+      minTime
     }
   },
 })
 </script>
 
 <style scoped>
-.search-engine {
-  display: grid;
-  gap: 22px;
+.search-container {
+  background: #fff;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(16, 51, 61, 0.1);
+  border: 1px solid rgba(16, 51, 61, 0.05);
+  transition: all 0.2s ease;
 }
 
-.search-hero {
+:global(.dark) .search-container {
+  background: #1f2937;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.search-tabs {
   display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 18px;
+  background: #f8fbf8;
+  border-bottom: 1px solid rgba(16, 51, 61, 0.08);
+  transition: all 0.2s ease;
 }
 
-.eyebrow {
-  margin: 0 0 12px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+:global(.dark) .search-tabs {
+  background: #111827;
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 600;
   color: #5d6d68;
-  font-size: 0.75rem;
-}
-
-h1 {
-  margin: 0;
-  font-size: clamp(2.2rem, 4vw, 4rem);
-  line-height: 0.95;
-  max-width: 11ch;
-  color: #10333d;
-}
-
-.intro-copy {
-  max-width: 44rem;
-  margin-top: 16px;
-  color: #45606b;
-  line-height: 1.7;
-}
-
-.hero-badge {
-  min-width: 160px;
-  padding: 18px 20px;
-  border-radius: 24px;
-  background: linear-gradient(180deg, #10333d, #1e5963);
-  color: #f5fbf7;
-  box-shadow: 0 24px 48px rgba(16, 51, 61, 0.18);
-}
-
-.hero-badge strong {
-  display: block;
-  font-size: 2.2rem;
-  line-height: 1;
-}
-
-.hero-badge span {
-  display: block;
-  margin-top: 8px;
-  color: rgba(245, 251, 247, 0.75);
-}
-
-.search-panel {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr)) auto;
-  gap: 14px;
-  padding: 18px;
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(16, 51, 61, 0.08);
-  box-shadow: 0 24px 50px rgba(16, 51, 61, 0.08);
-}
-
-.search-panel label {
-  display: grid;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 8px;
 }
 
-.search-panel span {
-  font-size: 0.76rem;
-  letter-spacing: 0.12em;
+:global(.dark) .tab-btn {
+  color: #9ca3af;
+}
+
+.tab-btn.active {
+  background: #fff;
+  color: #006566;
+  box-shadow: 0 -3px 0 #006566 inset;
+}
+
+:global(.dark) .tab-btn.active {
+  background: #1f2937;
+  color: #34d399;
+  box-shadow: 0 -3px 0 #34d399 inset;
+}
+
+.search-panel {
+  padding: 20px;
+}
+
+.search-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.search-form label {
+  flex: 1;
+  min-width: 150px;
+  display: grid;
+  gap: 6px;
+}
+
+.all-search-label {
+  flex: 3 !important;
+}
+
+.search-form span {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #5d6d68;
+  font-weight: 700;
 }
 
-.search-panel input,
-.search-panel select {
+:global(.dark) .search-form span {
+  color: #d1d5db;
+}
+
+.search-form input,
+.search-form select {
   width: 100%;
   border: 1px solid rgba(16, 51, 61, 0.12);
-  border-radius: 16px;
+  border-radius: 10px;
   background: #f8fbf8;
   color: #10333d;
-  min-height: 48px;
-  padding: 0 14px;
+  min-height: 44px;
+  padding: 0 12px;
   font: inherit;
   box-sizing: border-box;
+  transition: all 0.2s ease;
 }
 
-.search-panel input:focus,
-.search-panel select:focus {
-  outline: 2px solid rgba(17, 95, 89, 0.18);
-  border-color: rgba(17, 95, 89, 0.42);
+:global(.dark) .search-form input,
+:global(.dark) .search-form select {
+  background: #374151;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #f3f4f6;
 }
 
-.search-panel button {
-  align-self: end;
-  min-height: 48px;
-  padding: 0 18px;
+:global(.dark) .search-form input::placeholder {
+  color: #9ca3af;
+}
+
+.search-form input:focus,
+.search-form select:focus {
+  border-color: #006566;
+}
+
+:global(.dark) .search-form input:focus,
+:global(.dark) .search-form select:focus {
+  border-color: #34d399;
+}
+
+.search-submit-btn {
+  min-height: 44px;
+  padding: 0 24px;
   border: 0;
-  border-radius: 16px;
+  border-radius: 10px;
   background: #006566;
   color: white;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.search-results {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+.search-submit-btn:hover {
+  background: #004d4d;
 }
 
-.trip-card {
-  overflow: hidden;
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(16, 51, 61, 0.08);
-  box-shadow: 0 20px 40px rgba(16, 51, 61, 0.08);
+:global(.dark) .search-submit-btn {
+  background: #059669;
 }
 
-.trip-card__image {
-  min-height: 170px;
-  padding: 18px;
-  display: flex;
-  align-items: end;
-  justify-content: flex-end;
-  color: #fef9f1;
-  font-weight: 700;
+:global(.dark) .search-submit-btn:hover {
+  background: #047857;
 }
 
-.trip-card__body {
-  padding: 18px;
-  display: grid;
-  gap: 14px;
-}
-
-.trip-card__top {
-  display: flex;
-  align-items: start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.trip-card__top p {
-  margin: 0 0 6px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #6a7b76;
-  font-size: 0.74rem;
-}
-
-.trip-card__top h2 {
-  margin: 0;
-  font-size: 1.35rem;
-  line-height: 1.15;
-  color: #10333d;
-}
-
-.trip-card__top strong {
-  font-size: 1.5rem;
-  color: #0d4b45;
-}
-
-.trip-card__body > p {
-  margin: 0;
-  color: #48616b;
-  line-height: 1.6;
-}
-
-.trip-tags {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.trip-tags span {
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(16, 51, 61, 0.06);
-  color: #27424b;
-  font-size: 0.85rem;
-}
-
-@media (max-width: 1200px) {
-  .search-panel {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+@media (max-width: 768px) {
+  .search-form label {
+    min-width: 100%;
   }
-
-  .search-panel button {
-    grid-column: 1 / -1;
+  .search-submit-btn {
     width: 100%;
-  }
-
-  .search-results {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 900px) {
-  .search-hero {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-
-@media (max-width: 640px) {
-  .search-panel {
-    grid-template-columns: 1fr;
   }
 }
 </style>

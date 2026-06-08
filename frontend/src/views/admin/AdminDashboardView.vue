@@ -1,447 +1,342 @@
 <template>
-  <main class="admin-shell">
-    <!-- Sidebar Component Integration (Flush to left, styled via deep selectors) -->
-    <DashboardSidebar role="admin" />
-
-    <!-- Main Content Area -->
-    <div class="admin-main-area">
-      <!-- Horizontal Top Nav Bar (Exactly matching the mockup) -->
-      <header class="topbar">
-        <div class="topbar-left">
-          <button class="menu-trigger" aria-label="Toggle Menu" type="button">
-            <span class="menu-icon">☰</span>
-          </button>
-          <div class="searchbar">
-            <span class="searchbar__icon" aria-hidden="true">⌕</span>
-            <input
-              v-model.trim="searchQuery"
-              type="search"
-              placeholder="Search bookings, clients, providers..."
-            />
-            <span class="search-shortcut">⌘K</span>
-          </div>
+  <AdminLayout @search="(q) => searchQuery = q">
+    <section class="admin-content">
+      <div class="welcome-banner">
+        <div class="banner-text">
+          <h2 class="banner-title">🌟 {{ greeting }}, Admin!</h2>
+          <p>Monitor revenue, booking movement, providers, and customer growth from one calm workspace.</p>
         </div>
+      </div>
 
-        <div class="topbar-actions">
-          <button class="icon-button notification-btn" type="button" aria-label="Notifications">
-            <span aria-hidden="true">○</span>
-            <span v-if="notificationCount" class="notification-badge">{{ notificationCount }}</span>
-          </button>
-          <button class="icon-button" type="button" aria-label="Toggle Theme">
-            <span aria-hidden="true">◐</span>
-          </button>
-
-          <div class="profile-chip">
-            <div class="avatar">AS</div>
-            <div class="profile-meta">
-              <strong>Admin Supervisor</strong>
-              <span>System Administrator</span>
+      <section class="kpi-grid">
+        <article class="kpi-card hover-lift">
+          <div class="kpi-card__header">
+            <div class="kpi-icon-wrapper theme-green">
+              <CurrencyDollarIcon aria-hidden="true" />
             </div>
-            <span class="chevron-down">▾</span>
+            <div class="kpi-pill kpi-pill--up">
+              <span>+12%</span>
+            </div>
           </div>
+          <span class="kpi-title">Total Revenue</span>
+          <div class="kpi-value">${{ formatNumber(stats.totalRevenue) }}</div>
+          <router-link to="/admin/revenue" class="kpi-link">See details &rarr;</router-link>
+        </article>
+
+        <article class="kpi-card hover-lift">
+          <div class="kpi-card__header">
+            <div class="kpi-icon-wrapper theme-blue">
+              <ClipboardDocumentListIcon aria-hidden="true" />
+            </div>
+            <div class="kpi-pill" :class="stats.totalBookings > 0 ? 'kpi-pill--up' : 'kpi-pill--neutral'">
+              <span>{{ stats.totalBookings > 0 ? '+5%' : '0%' }}</span>
+            </div>
+          </div>
+          <span class="kpi-title">Total Bookings</span>
+          <div class="kpi-value">{{ formatInteger(stats.totalBookings) }}</div>
+          <router-link to="/admin/bookings" class="kpi-link">See details &rarr;</router-link>
+        </article>
+
+        <article class="kpi-card hover-lift">
+          <div class="kpi-card__header">
+            <div class="kpi-icon-wrapper theme-purple">
+              <BuildingStorefrontIcon aria-hidden="true" />
+            </div>
+            <div class="kpi-pill" :class="stats.verifiedProviders > 0 ? 'kpi-pill--up' : 'kpi-pill--neutral'">
+              <span>{{ stats.verifiedProviders }} Verified</span>
+            </div>
+          </div>
+          <span class="kpi-title">Active Providers</span>
+          <div class="kpi-value">{{ formatInteger(stats.totalProviders) }}</div>
+          <router-link to="/admin/providers" class="kpi-link">See details &rarr;</router-link>
+        </article>
+
+        <article class="kpi-card hover-lift">
+          <div class="kpi-card__header">
+            <div class="kpi-icon-wrapper theme-orange">
+              <UserGroupIcon aria-hidden="true" />
+            </div>
+            <div class="kpi-pill kpi-pill--up">
+              <span>+8%</span>
+            </div>
+          </div>
+          <span class="kpi-title">Total Users</span>
+          <div class="kpi-value">{{ formatInteger(stats.totalUsers) }}</div>
+          <router-link to="/admin/users" class="kpi-link">See details &rarr;</router-link>
+        </article>
+      </section>
+
+      <div v-if="isLoading" class="skeleton-container">
+        <div class="skeleton-grid">
+          <div class="skeleton-panel skeleton-pulse" style="height: 380px;"></div>
+          <div class="skeleton-panel skeleton-pulse" style="height: 380px;"></div>
         </div>
-      </header>
+      </div>
 
-      <!-- Main Dashboard Viewport -->
-      <section class="admin-content">
-        <!-- Welcome Hero Section -->
-        <div class="welcome-banner">
-          <div class="banner-text">
-            <h2>{{ greeting }}, Admin</h2>
-            <p>Operational overview for bookings, revenue, providers, and platform health.</p>
-          </div>
-          <div class="banner-actions">
-            <div class="datepicker-dropdown">
-              <span class="calendar-icon">□</span>
-              <span>{{ currentDateLabel }}</span>
-              <span class="chevron-down">▾</span>
-            </div>
-          </div>
-        </div>
+      <div v-else-if="loadError" class="dashboard-body">
+        <article class="panel error-panel">
+          <h3>Dashboard data is unavailable</h3>
+          <p>{{ loadError }}</p>
+          <button class="retry-button" type="button" @click="loadStatsData">Retry</button>
+        </article>
+      </div>
 
-        <!-- KPI Cards Grid (Exactly 5 Columns) -->
-        <section class="kpi-grid">
-          <!-- 1. Total Revenue Card -->
-          <article class="kpi-card hover-lift">
-            <div class="kpi-card__header">
-              <div class="kpi-icon-wrapper theme-green">
-                <span>$</span>
+      <div v-else class="dashboard-body">
+        <section class="revenue-hero-grid">
+          <article class="panel panel--revenue">
+            <div class="panel-header-row">
+              <div class="panel-title-block">
+                <span class="panel-eyebrow">Revenue Overview</span>
+                <p>Total paid booking revenue across the current operating period.</p>
               </div>
-              <span class="kpi-title">Revenue</span>
-            </div>
-            <div class="kpi-value">${{ formatNumber(stats.totalRevenue) }}</div>
-            <div class="kpi-trend" :class="stats.totalRevenue > 0 ? 'trend-up' : 'trend-neutral'">
-              <span>{{ stats.totalRevenue > 0 ? 'Live' : 'No data' }}</span> <small>paid bookings only</small>
-            </div>
-            <div class="kpi-sparkline stroke-green">
-              <svg viewBox="0 0 100 28" class="sparkline-svg" preserveAspectRatio="none">
-                <path :d="sparklineAreaPaths.revenue" class="sparkline-area"></path>
-                <path :d="sparklinePaths.revenue" fill="none" stroke-width="2" stroke-linecap="round"></path>
-              </svg>
-            </div>
-          </article>
-
-          <!-- 2. Total Bookings Card -->
-          <article class="kpi-card hover-lift">
-            <div class="kpi-card__header">
-              <div class="kpi-icon-wrapper theme-blue">
-                <span>□</span>
+              <div class="panel-controls">
+                <div class="segmented-dropdown">
+                  <span>This Week</span>
+                  <span class="chevron-down">▾</span>
+                </div>
               </div>
-              <span class="kpi-title">Total Bookings</span>
             </div>
-            <div class="kpi-value">{{ formatInteger(stats.totalBookings) }}</div>
-            <div class="kpi-trend" :class="stats.totalBookings > 0 ? 'trend-up' : 'trend-neutral'">
-              <span>{{ stats.totalBookings > 0 ? 'Live' : 'No data' }}</span> <small>from bookings table</small>
-            </div>
-            <div class="kpi-sparkline stroke-blue">
-              <svg viewBox="0 0 100 28" class="sparkline-svg" preserveAspectRatio="none">
-                <path :d="sparklineAreaPaths.bookings" class="sparkline-area"></path>
-                <path :d="sparklinePaths.bookings" fill="none" stroke-width="2" stroke-linecap="round"></path>
-              </svg>
-            </div>
-          </article>
 
-          <!-- 3. Total Providers Card -->
-          <article class="kpi-card hover-lift">
-            <div class="kpi-card__header">
-              <div class="kpi-icon-wrapper theme-purple">
-                <span>○</span>
-              </div>
-              <span class="kpi-title">Total Providers</span>
+            <div class="revenue-metric-row">
+              <strong class="revenue-main-val">${{ formatNumber(stats.totalRevenue) }}</strong>
+              <span class="trend-badge-pill green-badge">{{ formatInteger(stats.totalBookings) }} bookings</span>
+              <span class="subtext-label">Paid booking performance</span>
             </div>
-            <div class="kpi-value">{{ formatInteger(stats.totalProviders) }}</div>
-            <div class="kpi-trend" :class="stats.verifiedProviders > 0 ? 'trend-up' : 'trend-neutral'">
-              <span>{{ formatInteger(stats.verifiedProviders) }}</span> <small>verified</small>
-            </div>
-            <div class="kpi-sparkline stroke-purple">
-              <svg viewBox="0 0 100 28" class="sparkline-svg" preserveAspectRatio="none">
-                <path :d="sparklineAreaPaths.providers" class="sparkline-area"></path>
-                <path :d="sparklinePaths.providers" fill="none" stroke-width="2" stroke-linecap="round"></path>
-              </svg>
-            </div>
-          </article>
 
-          <!-- 4. Total Clients Card -->
-          <article class="kpi-card hover-lift">
-            <div class="kpi-card__header">
-              <div class="kpi-icon-wrapper theme-orange">
-                <span>◌</span>
-              </div>
-              <span class="kpi-title">Total Clients</span>
-            </div>
-            <div class="kpi-value">{{ formatInteger(stats.totalUsers) }}</div>
-            <div class="kpi-trend" :class="stats.totalUsers > 0 ? 'trend-up' : 'trend-neutral'">
-              <span>{{ stats.totalUsers > 0 ? 'Live' : 'No data' }}</span> <small>registered users</small>
-            </div>
-            <div class="kpi-sparkline stroke-orange">
-              <svg viewBox="0 0 100 28" class="sparkline-svg" preserveAspectRatio="none">
-                <path :d="sparklineAreaPaths.users" class="sparkline-area"></path>
-                <path :d="sparklinePaths.users" fill="none" stroke-width="2" stroke-linecap="round"></path>
+            <div class="chart-area-container">
+              <svg
+                v-if="hasRevenueLineChart"
+                viewBox="0 0 600 180"
+                class="main-svg-chart"
+                preserveAspectRatio="none"
+              >
+                <defs>
+                  <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#148A74" stop-opacity="0.18" />
+                    <stop offset="100%" stop-color="#148A74" stop-opacity="0.00" />
+                  </linearGradient>
+                </defs>
+                <line x1="0" y1="30" x2="600" y2="30" stroke="#E7EAEE" stroke-width="1" />
+                <line x1="0" y1="80" x2="600" y2="80" stroke="#E7EAEE" stroke-width="1" />
+                <line x1="0" y1="130" x2="600" y2="130" stroke="#E7EAEE" stroke-width="1" />
+                <path :d="chartAreaPath" fill="url(#chartGrad)"></path>
+                <path :d="chartLinePath" fill="none" stroke="#148A74" stroke-width="3" stroke-linecap="round"></path>
+                <circle 
+                  v-for="(pt, idx) in chartPoints" 
+                  :key="idx" 
+                  :cx="pt.x" 
+                  :cy="pt.y" 
+                  r="3.5" 
+                  fill="#ffffff" 
+                  stroke="#148A74" 
+                  stroke-width="2.5"
+                />
               </svg>
-            </div>
-          </article>
 
-          <!-- 5. Platform Fee Card -->
-          <article class="kpi-card hover-lift">
-            <div class="kpi-card__header">
-              <div class="kpi-icon-wrapper theme-teal">
-                <span>◇</span>
+              <div v-else class="ghost-chart" aria-label="Revenue trend preview">
+                <div class="ghost-chart__line"></div>
+                <div class="ghost-chart__metrics">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
               </div>
-              <span class="kpi-title">Platform Fee</span>
+
+              <div v-if="hasRevenueLineChart" class="chart-labels-row">
+                <span v-for="stat in monthlyStats" :key="stat.month">{{ stat.month }}</span>
+              </div>
             </div>
-            <div class="kpi-value">${{ formatNumber(stats.totalPlatformFee) }}</div>
-            <div class="kpi-trend" :class="stats.totalPlatformFee > 0 ? 'trend-up' : 'trend-neutral'">
-              <span>{{ stats.totalPlatformFee > 0 ? 'Live' : 'No data' }}</span> <small>commission earned</small>
-            </div>
-            <div class="kpi-sparkline stroke-teal">
-              <svg viewBox="0 0 100 28" class="sparkline-svg" preserveAspectRatio="none">
-                <path :d="sparklineAreaPaths.platformFee" class="sparkline-area"></path>
-                <path :d="sparklinePaths.platformFee" fill="none" stroke-width="2" stroke-linecap="round"></path>
-              </svg>
+
+            <div class="revenue-insights-grid">
+              <div class="insight-item">
+                <span>Highest revenue</span>
+                <strong>{{ highestRevenueLabel }}</strong>
+              </div>
+              <div class="insight-item">
+                <span>Average booking value</span>
+                <strong>${{ formatNumber(averageBookingValue) }}</strong>
+              </div>
+              <div class="insight-item">
+                <span>Paid bookings</span>
+                <strong>{{ formatInteger(stats.paidPaymentCount || stats.totalBookings) }}</strong>
+              </div>
             </div>
           </article>
         </section>
 
-        <!-- Loading State Overlay -->
-        <div v-if="isLoading" class="skeleton-container">
-          <div class="skeleton-grid">
-            <div class="skeleton-panel skeleton-pulse" style="height: 380px;"></div>
-            <div class="skeleton-panel skeleton-pulse" style="height: 380px;"></div>
-          </div>
-        </div>
+        <section class="operations-grid">
+          <article class="panel panel--bookings">
+            <div class="panel-header-row">
+              <h3>Recent Bookings</h3>
+              <router-link to="/admin/bookings" class="view-all-link">View All</router-link>
+            </div>
 
-        <!-- Real Dynamic Analytics Section -->
-        <div v-else-if="loadError" class="dashboard-body">
-          <article class="panel error-panel">
-            <h3>Dashboard data is unavailable</h3>
-            <p>{{ loadError }}</p>
-            <button class="retry-button" type="button" @click="loadStatsData">Retry</button>
+            <div class="table-wrapper">
+              <table class="saas-table">
+                <thead>
+                  <tr>
+                    <th>Booking ID</th>
+                    <th>Customer</th>
+                    <th>Package</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="booking in filteredBookings" :key="booking.id" class="table-row">
+                    <td>
+                      <span class="booking-id-text">
+                        {{ booking.transactionId || booking.id.substring(0, 11) }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="client-name">{{ booking.customerName }}</span>
+                    </td>
+                    <td>
+                      <span class="tour-title" :title="booking.serviceTitle">
+                        {{ booking.serviceTitle }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="row-date">{{ formatDate(booking.date) }}</span>
+                    </td>
+                    <td>
+                      <strong class="row-amount">${{ formatNumber(booking.amount) }}</strong>
+                    </td>
+                    <td>
+                      <span 
+                        class="badge-saas" 
+                        :class="`badge-saas--${booking.status.toLowerCase()}`"
+                      >
+                        {{ booking.status }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr v-if="!filteredBookings.length">
+                    <td colspan="6" class="empty-state-cell">
+                      <div class="empty-state-msg">
+                        <InboxIcon class="empty-state-icon" aria-hidden="true" />
+                        <strong>No recent bookings yet</strong>
+                        <p>New booking activity will appear here as customers reserve tours.</p>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </article>
-        </div>
 
-        <!-- Real Dynamic Analytics Section -->
-        <div v-else class="dashboard-body">
-          <section class="main-analytics-grid">
-            <!-- Left Column: Revenue Chart & Recent Bookings Table -->
-            <div class="analytics-main-column">
-              <!-- Revenue Overview Card -->
-              <article class="panel panel--revenue">
-                <div class="panel-header-row">
-                  <div class="panel-title-block">
-                    <span class="panel-eyebrow">Revenue Overview</span>
-                  </div>
-                  <div class="panel-controls">
-                    <div class="segmented-dropdown">
-                      <span>This Week</span>
-                      <span class="chevron-down">▾</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="revenue-metric-row">
-                  <strong class="revenue-main-val">${{ formatNumber(stats.totalRevenue) }}</strong>
-                  <span class="trend-badge-pill green-badge">{{ formatInteger(stats.totalBookings) }} bookings</span>
-                  <span class="subtext-label">Total revenue from paid bookings</span>
-                </div>
-
-                <div class="chart-area-container" :class="{ 'chart-area-container--empty': !hasRevenueVisual }">
-                  <svg
-                    v-if="hasRevenueLineChart"
-                    viewBox="0 0 600 180"
-                    class="main-svg-chart"
-                    preserveAspectRatio="none"
-                  >
-                    <defs>
-                      <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="#0f8f89" stop-opacity="0.16" />
-                        <stop offset="100%" stop-color="#24a874" stop-opacity="0.00" />
-                      </linearGradient>
-                    </defs>
-                    <line x1="0" y1="30" x2="600" y2="30" stroke="#edf2f3" stroke-width="1" />
-                    <line x1="0" y1="80" x2="600" y2="80" stroke="#edf2f3" stroke-width="1" />
-                    <line x1="0" y1="130" x2="600" y2="130" stroke="#edf2f3" stroke-width="1" />
-                    <path :d="chartAreaPath" fill="url(#chartGrad)"></path>
-                    <path :d="chartLinePath" fill="none" stroke="#0f8f89" stroke-width="2.6" stroke-linecap="round"></path>
-                    <circle 
-                      v-for="(pt, idx) in chartPoints" 
-                      :key="idx" 
-                      :cx="pt.x" 
-                      :cy="pt.y" 
-                      r="3.5" 
-                      fill="#ffffff" 
-                      stroke="#0f8f89" 
-                      stroke-width="2.5"
-                    />
-                  </svg>
-
-                  <div v-else-if="hasRevenueSummaryVisual" class="revenue-summary-visual">
-                    <div v-for="item in revenueSummaryItems" :key="item.label" class="summary-bar">
-                      <div class="summary-bar__meta">
-                        <span>{{ item.label }}</span>
-                        <strong>{{ item.display }}</strong>
-                      </div>
-                      <div class="summary-bar__track">
-                        <span :style="{ width: `${item.percent}%` }"></span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div v-else class="chart-empty-state">
-                    <span class="chart-empty-state__icon">≋</span>
-                    <strong>Not enough revenue data yet</strong>
-                    <p>Paid bookings will appear here once revenue activity is available.</p>
-                  </div>
-
-                  <div v-if="hasRevenueLineChart" class="chart-labels-row">
-                    <span v-for="stat in monthlyStats" :key="stat.month">{{ stat.month }}</span>
-                  </div>
-                </div>
-
-                <div class="revenue-insights-grid">
-                  <div class="insight-item">
-                    <span>Highest revenue day</span>
-                    <strong>{{ highestRevenueLabel }}</strong>
-                  </div>
-                  <div class="insight-item">
-                    <span>Average daily revenue</span>
-                    <strong>${{ formatNumber(averageDailyRevenue) }}</strong>
-                  </div>
-                  <div class="insight-item">
-                    <span>Paid bookings</span>
-                    <strong>{{ formatInteger(stats.paidPaymentCount || stats.totalBookings) }}</strong>
-                  </div>
-                  <div class="insight-item">
-                    <span>Platform fee</span>
-                    <strong>${{ formatNumber(stats.totalPlatformFee) }}</strong>
-                  </div>
-                </div>
-              </article>
-
-              <!-- Recent Bookings Table Panel -->
-              <article class="panel panel--bookings">
-                <div class="panel-header-row">
-                  <h3>Recent Bookings</h3>
-                  <router-link to="/admin/bookings" class="view-all-link">View All</router-link>
-                </div>
-
-                <div class="table-wrapper">
-                  <table class="saas-table">
-                    <thead>
-                      <tr>
-                        <th>Booking ID</th>
-                        <th>Client</th>
-                        <th>Tour</th>
-                        <th>Date</th>
-                        <th>Amount</th>
-                        <th>Status</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="booking in filteredBookings" :key="booking.id" class="table-row">
-                        <td>
-                          <span class="booking-id-text">
-                            {{ booking.transactionId || booking.id.substring(0, 11) }}
-                          </span>
-                        </td>
-                        <td>
-                          <span class="client-name">{{ booking.customerName }}</span>
-                        </td>
-                        <td>
-                          <span class="tour-title" :title="booking.serviceTitle">
-                            {{ booking.serviceTitle }}
-                          </span>
-                        </td>
-                        <td>
-                          <span class="row-date">{{ formatDate(booking.date) }}</span>
-                        </td>
-                        <td>
-                          <strong class="row-amount">${{ formatNumber(booking.amount) }}</strong>
-                        </td>
-                        <td>
-                          <span 
-                            class="badge-saas" 
-                            :class="`badge-saas--${booking.status.toLowerCase()}`"
-                          >
-                            {{ booking.status }}
-                          </span>
-                        </td>
-                        <td class="action-cell">
-                          <button class="row-action-btn" type="button" aria-label="Actions">•••</button>
-                        </td>
-                      </tr>
-                      <tr v-if="!filteredBookings.length">
-                        <td colspan="7" class="empty-state-cell">
-                          <div class="empty-state-msg">
-                            <span>□</span>
-                            <strong>No recent bookings yet</strong>
-                            <p>New booking activity will appear here as customers reserve tours.</p>
-                          </div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </article>
+          <article class="panel panel--status">
+            <div class="panel-header-row panel-header-row--compact">
+              <h3>Booking Status</h3>
             </div>
+            <div class="donut-wrapper">
+              <div v-if="hasStatusData" class="donut-chart-box" :style="{ background: donutGradient }">
+                <div class="donut-inner-hole">
+                  <strong>{{ dominantStatusPercent }}%</strong>
+                  <span>{{ dominantStatusLabel }}</span>
+                </div>
+              </div>
 
-            <!-- Right Column: Booking Status, System Health & Recent Activity -->
-            <div class="analytics-side-column">
-              <!-- 1. Booking Status Donut Chart -->
-              <article class="panel panel--status">
-                <h3>Booking Status</h3>
-                <div class="donut-wrapper">
-                  <div v-if="hasStatusData" class="donut-chart-box" :style="{ background: donutGradient }">
-                    <div class="donut-inner-hole"></div>
-                  </div>
-
-                  <div v-else class="status-empty-state">
-                    <span>◇</span>
-                    <strong>No booking status data</strong>
-                    <p>Status distribution will appear after bookings are recorded.</p>
-                  </div>
-                  
-                  <div class="donut-legend">
-                    <div v-for="item in statusLegend" :key="item.status" class="legend-item">
-                      <span class="indicator-dot" :style="{ background: item.color }"></span>
-                      <span class="legend-name">{{ item.label }}</span>
-                      <strong class="legend-percent">{{ item.percent }}%</strong>
-                      <span class="legend-count">({{ item.count }})</span>
-                    </div>
-                  </div>
+              <div v-else class="status-empty-state">
+                <ChartPieIcon class="empty-state-icon" aria-hidden="true" />
+                <strong>No status data</strong>
+                <p>Status distribution will appear after bookings are recorded.</p>
+              </div>
+              
+              <div class="donut-legend">
+                <div v-for="item in compactStatusLegend" :key="item.status" class="legend-item">
+                  <span class="indicator-dot" :style="{ background: item.color }"></span>
+                  <span class="legend-name">{{ item.label }}</span>
+                  <strong class="legend-percent">{{ item.percent }}%</strong>
                 </div>
-              </article>
-
-              <!-- 2. System Health Widget -->
-              <article class="panel panel--health">
-                <div class="panel-header-row">
-                  <h3>System Health</h3>
-                  <a href="#" class="view-all-link">View All</a>
-                </div>
-                <div class="health-list">
-                  <div class="health-item">
-                    <span class="health-label">API Gateway</span>
-                    <span class="status-pill" :class="loadError ? 'status-pill--down' : 'status-pill--ok'">
-                      ● {{ loadError ? 'Unavailable' : 'Operational' }}
-                    </span>
-                  </div>
-                  <div class="health-item">
-                    <span class="health-label">Database</span>
-                    <span class="status-pill" :class="loadError ? 'status-pill--down' : 'status-pill--ok'">
-                      ● {{ loadError ? 'Unavailable' : 'Operational' }}
-                    </span>
-                  </div>
-                  <div class="health-item">
-                    <span class="health-label">Payment Service</span>
-                    <span class="status-pill" :class="stats.paidPaymentCount > 0 ? 'status-pill--ok' : 'status-pill--idle'">
-                      ● {{ stats.paidPaymentCount > 0 ? 'Receiving payments' : 'No paid bookings' }}
-                    </span>
-                  </div>
-                  <div class="health-item">
-                    <span class="health-label">Email Service</span>
-                    <span class="status-pill status-pill--idle">● Not connected</span>
-                  </div>
-                </div>
-              </article>
-
-              <!-- 3. Recent Activity Widget -->
-              <article class="panel panel--activity">
-                <div class="panel-header-row">
-                  <h3>Recent Activity</h3>
-                  <a href="#" class="view-all-link">View All</a>
-                </div>
-                <div class="timeline-list">
-                  <div v-for="activity in recentActivities" :key="activity.id" class="timeline-item">
-                    <div class="timeline-icon-box theme-green-soft">
-                      <span>{{ activity.icon }}</span>
-                    </div>
-                    <div class="timeline-body">
-                      <p><strong>{{ activity.title }}</strong></p>
-                      <span>{{ activity.detail }} · {{ activity.time }}</span>
-                    </div>
-                  </div>
-                  <div v-if="!recentActivities.length" class="empty-activity">
-                    No recent booking activity yet
-                  </div>
-                </div>
-              </article>
+              </div>
             </div>
-          </section>
-        </div>
+          </article>
+        </section>
 
-        <!-- Quick Action Navigation floating buttons -->
-        <div class="quick-nav-actions">
-          <router-link class="quick-nav-btn" to="/admin/providers">Manage Providers</router-link>
-          <router-link class="quick-nav-btn" to="/admin/bookings">View All Bookings</router-link>
-        </div>
-      </section>
-    </div>
-  </main>
+        <section class="insight-grid">
+          <article class="panel insight-panel">
+            <div class="panel-header-row panel-header-row--compact">
+              <h3>Provider Insights</h3>
+            </div>
+            <div class="metric-stack">
+              <div class="metric-line">
+                <span>Active providers</span>
+                <strong>{{ formatInteger(stats.totalProviders) }}</strong>
+              </div>
+              <div class="metric-line">
+                <span>Verified providers</span>
+                <strong>{{ formatInteger(stats.verifiedProviders) }}</strong>
+              </div>
+              <div class="metric-progress">
+                <span :style="{ width: `${providerVerificationRate}%` }"></span>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel insight-panel">
+            <div class="panel-header-row panel-header-row--compact">
+              <h3>User Growth</h3>
+            </div>
+            <div class="metric-stack">
+              <div class="metric-line">
+                <span>Total users</span>
+                <strong>{{ formatInteger(stats.totalUsers) }}</strong>
+              </div>
+              <div class="metric-line">
+                <span>Bookings per user</span>
+                <strong>{{ bookingsPerUser }}</strong>
+              </div>
+              <div class="mini-bars">
+                <span v-for="bar in userGrowthBars" :key="bar" :style="{ height: `${bar}%` }"></span>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel panel--activity">
+            <div class="panel-header-row panel-header-row--compact">
+              <h3>Recent Activity</h3>
+            </div>
+            <div class="timeline-list">
+              <div v-for="activity in recentActivities" :key="activity.id" class="timeline-item">
+                <div class="timeline-icon-box" :class="activity.iconClass">
+                  <CheckCircleIcon v-if="activity.icon === 'confirmed'" aria-hidden="true" />
+                  <XCircleIcon v-else-if="activity.icon === 'cancelled'" aria-hidden="true" />
+                  <ClockIcon v-else aria-hidden="true" />
+                </div>
+                <div class="timeline-body">
+                  <p><strong>{{ activity.title }}</strong></p>
+                  <span>{{ activity.detail }} · {{ activity.time }}</span>
+                </div>
+              </div>
+              <div v-if="!recentActivities.length" class="empty-activity">
+                No recent booking activity yet
+              </div>
+            </div>
+          </article>
+        </section>
+      </div>
+    </section>
+  </AdminLayout>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
-import DashboardSidebar from '../../components/dashboard/DashboardSidebar.vue'
+import axios from 'axios'
+import {
+  BuildingStorefrontIcon,
+  ChartPieIcon,
+  CheckCircleIcon,
+  ClipboardDocumentListIcon,
+  ClockIcon,
+  CurrencyDollarIcon,
+  InboxIcon,
+  UserGroupIcon,
+  XCircleIcon,
+} from '@heroicons/vue/24/outline'
+import AdminLayout from '../../components/admin/AdminLayout.vue'
 import { getAdminDashboardSummary } from '../../services/api'
 
 type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'refunded'
@@ -455,14 +350,6 @@ type DashboardStats = {
   verifiedProviders: number
   paidPaymentCount: number
   totalPlatformFee: number
-}
-
-type AdminDashboardResponse = {
-  total_users: number
-  total_providers: number
-  total_bookings: number
-  total_revenue: number
-  total_platform_fee: number
 }
 
 type RecentBooking = {
@@ -504,14 +391,13 @@ const emptyStatusBreakdown = (): Record<BookingStatus, number> => ({
 })
 
 const statusMeta: Record<BookingStatus, { label: string; color: string }> = {
-  pending: { label: 'Pending', color: '#d88a12' },
-  confirmed: { label: 'Confirmed', color: '#1f9f72' },
-  cancelled: { label: 'Cancelled', color: '#dc4c4c' },
-  completed: { label: 'Completed', color: '#0f8f89' },
-  refunded: { label: 'Refunded', color: '#64748b' },
+  pending: { label: 'Pending', color: '#C6922F' },
+  confirmed: { label: 'Confirmed', color: '#148A74' },
+  cancelled: { label: 'Cancelled', color: '#D64545' },
+  completed: { label: 'Completed', color: '#3B82F6' },
+  refunded: { label: 'Refunded', color: '#98A2B3' },
 }
 
-// Core reactive states
 const searchQuery = ref('')
 const isLoading = ref(true)
 const loadError = ref('')
@@ -521,13 +407,6 @@ const statusBreakdown = ref<Record<BookingStatus, number>>(emptyStatusBreakdown(
 
 const recentBookings = ref<RecentBooking[]>([])
 const monthlyStats = ref<MonthlyStat[]>([])
-const currentDateLabel = new Date().toLocaleDateString('en-US', {
-  month: 'long',
-  day: 'numeric',
-  year: 'numeric',
-})
-
-// Fetch dynamic data on mount
 const loadStatsData = async () => {
   try {
     isLoading.value = true
@@ -535,29 +414,53 @@ const loadStatsData = async () => {
     const res = await getAdminDashboardSummary()
     const data = res?.success && res?.data ? res.data : res
 
-    if (isDashboardResponse(data)) {
+    if (data && typeof data === 'object') {
+      const s = data.stats || {}
       stats.value = {
-        ...emptyStats(),
-        totalUsers: Number(data.total_users || 0),
-        totalProviders: Number(data.total_providers || 0),
-        totalBookings: Number(data.total_bookings || 0),
-        totalRevenue: Number(data.total_revenue || 0),
-        totalPlatformFee: Number(data.total_platform_fee || 0),
+        totalBookings: Number(s.totalBookings || 0),
+        totalRevenue: Number(s.totalRevenue || 0),
+        totalProviders: Number(s.totalProviders || 0),
+        totalUsers: Number(s.totalUsers || 0),
+        totalServices: Number(s.totalServices || 0),
+        verifiedProviders: Number(s.verifiedProviders || 0),
+        paidPaymentCount: Number(s.paidPaymentCount || 0),
+        totalPlatformFee: Number(s.totalPlatformFee || 0),
       }
-      statusBreakdown.value = emptyStatusBreakdown()
-      recentBookings.value = []
-      monthlyStats.value = []
-    } else if (res && res.success && res.data) {
-      stats.value = { ...emptyStats(), ...(data.stats || {}) }
       statusBreakdown.value = { ...emptyStatusBreakdown(), ...(data.statusBreakdown || {}) }
-      recentBookings.value = data.recentBookings || []
+      recentBookings.value = (data.recentBookings || []).map((b: any) => ({
+        id: b.id,
+        customerName: b.customerName || b.user?.username || 'Guest',
+        customerEmail: b.customerEmail || b.user?.email,
+        serviceTitle: b.serviceTitle || b.service?.title,
+        providerName: b.providerName || b.provider?.companyName,
+        amount: Number(b.amount || b.totalAmount || 0),
+        status: (b.status || b.bookingStatus || 'pending').toLowerCase(),
+        date: b.date || b.createdAt,
+        transactionId: b.transactionId || b.referenceCode || b.id.substring(0, 8).toUpperCase(),
+        createdAt: b.createdAt
+      }))
       monthlyStats.value = data.monthlyStats || []
     } else {
       throw new Error('The backend returned an invalid dashboard response.')
     }
   } catch (err) {
     console.error("Failed to load SaaS stats dashboard data:", err)
-    loadError.value = 'Please make sure the backend is running and the database is reachable.'
+    if (axios.isAxiosError(err)) {
+      if (!err.response) {
+        loadError.value =
+          'Cannot reach the backend. Start it with `npm run start:dev` in the backend folder (http://localhost:3000).'
+      } else if (err.response.status === 401) {
+        loadError.value =
+          'Your session has expired or you are not signed in. Log in again with an admin account.'
+      } else if (err.response.status === 403) {
+        loadError.value = 'Your account does not have admin access to this dashboard.'
+      } else {
+        const message = (err.response.data as { message?: string })?.message
+        loadError.value = message || `Server error (${err.response.status}).`
+      }
+    } else {
+      loadError.value = 'An unexpected error occurred while loading dashboard data.'
+    }
     stats.value = emptyStats()
     statusBreakdown.value = emptyStatusBreakdown()
     recentBookings.value = []
@@ -567,22 +470,10 @@ const loadStatsData = async () => {
   }
 }
 
-const isDashboardResponse = (data: unknown): data is AdminDashboardResponse => {
-  if (!data || typeof data !== 'object') return false
-  return (
-    'total_users' in data &&
-    'total_providers' in data &&
-    'total_bookings' in data &&
-    'total_revenue' in data &&
-    'total_platform_fee' in data
-  )
-}
-
 onMounted(() => {
   loadStatsData()
 })
 
-// Search query logic
 const filteredBookings = computed(() => {
   const query = searchQuery.value.toLowerCase().trim()
   if (!query) return recentBookings.value
@@ -599,7 +490,6 @@ const filteredBookings = computed(() => {
   })
 })
 
-// Donut Chart logic
 const totalStatusCount = computed(() => {
   const s = statusBreakdown.value
   return Object.values(s).reduce((sum, count) => sum + Number(count || 0), 0)
@@ -620,6 +510,23 @@ const statusLegend = computed(() => {
   })
 })
 
+const compactStatusLegend = computed(() => {
+  return statusLegend.value
+    .filter((item) => item.count > 0)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3)
+})
+
+const dominantStatus = computed(() => {
+  return compactStatusLegend.value[0] || {
+    label: 'No data',
+    percent: 0,
+  }
+})
+
+const dominantStatusLabel = computed(() => dominantStatus.value.label)
+const dominantStatusPercent = computed(() => dominantStatus.value.percent)
+
 const donutGradient = computed(() => {
   if (!hasStatusData.value) return ''
 
@@ -637,14 +544,20 @@ const donutGradient = computed(() => {
 const recentActivities = computed(() => {
   return recentBookings.value.slice(0, 3).map((booking) => ({
     id: booking.id,
-    icon: booking.status === 'confirmed' ? '✓' : booking.status === 'cancelled' ? '×' : '□',
+    icon: booking.status === 'confirmed' ? 'confirmed' : booking.status === 'cancelled' ? 'cancelled' : 'pending',
+    iconClass:
+      booking.status === 'confirmed'
+        ? 'timeline-icon-box--success'
+        : booking.status === 'cancelled'
+          ? 'timeline-icon-box--danger'
+          : 'timeline-icon-box--pending',
     title: `${statusMeta[booking.status]?.label || 'New'} booking`,
     detail: booking.serviceTitle || booking.transactionId || 'Booking activity',
     time: formatRelativeTime(booking.createdAt || booking.date),
   }))
 })
 
-const notificationCount = computed(() => recentActivities.value.length)
+
 
 const greeting = computed(() => {
   const hour = new Date().getHours()
@@ -653,50 +566,11 @@ const greeting = computed(() => {
   return 'Good evening'
 })
 
-// SVG Smooth Chart Path Calculations
 const chartWidth = 600
 const chartHeight = 180
-const sparklineWidth = 100
-const sparklineHeight = 28
 
 const hasRevenueLineChart = computed(() => {
   return monthlyStats.value.length > 1 && monthlyStats.value.some((stat) => Number(stat.revenue || 0) > 0)
-})
-
-const hasRevenueSummaryVisual = computed(() => {
-  return !hasRevenueLineChart.value && (
-    stats.value.totalRevenue > 0 ||
-    stats.value.totalPlatformFee > 0 ||
-    stats.value.totalBookings > 0
-  )
-})
-
-const hasRevenueVisual = computed(() => hasRevenueLineChart.value || hasRevenueSummaryVisual.value)
-
-const revenueSummaryItems = computed(() => {
-  const items = [
-    {
-      label: 'Paid revenue',
-      value: stats.value.totalRevenue,
-      display: `$${formatNumber(stats.value.totalRevenue)}`,
-    },
-    {
-      label: 'Platform fee',
-      value: stats.value.totalPlatformFee,
-      display: `$${formatNumber(stats.value.totalPlatformFee)}`,
-    },
-    {
-      label: 'Bookings',
-      value: stats.value.totalBookings,
-      display: formatInteger(stats.value.totalBookings),
-    },
-  ]
-  const maxValue = Math.max(...items.map((item) => Number(item.value || 0)), 1)
-
-  return items.map((item) => ({
-    ...item,
-    percent: item.value > 0 ? Math.max(10, Math.round((item.value / maxValue) * 100)) : 0,
-  }))
 })
 
 const highestRevenueLabel = computed(() => {
@@ -709,62 +583,27 @@ const highestRevenueLabel = computed(() => {
   return stats.value.totalRevenue > 0 ? `Current period · $${formatNumber(stats.value.totalRevenue)}` : 'No revenue yet'
 })
 
-const averageDailyRevenue = computed(() => {
-  const revenueStats = monthlyStats.value.filter((stat) => Number(stat.revenue || 0) > 0)
-  if (revenueStats.length > 0) {
-    const total = revenueStats.reduce((sum, stat) => sum + Number(stat.revenue || 0), 0)
-    return total / revenueStats.length
-  }
-
-  const divisor = Math.max(Number(stats.value.totalBookings || 0), 1)
+const averageBookingValue = computed(() => {
+  const divisor = Math.max(Number(stats.value.paidPaymentCount || stats.value.totalBookings || 0), 1)
   return stats.value.totalRevenue > 0 ? stats.value.totalRevenue / divisor : 0
 })
 
-const buildSparklineValues = (value: number, seed: number): number[] => {
-  if (value <= 0) return [0.18, 0.18, 0.19, 0.18, 0.2, 0.19]
-
-  const normalized = Math.min(Math.log10(value + 1) / 4, 1)
-  const base = 0.28 + normalized * 0.3
-  return [0, 1, 2, 3, 4, 5].map((idx) => {
-    const drift = idx * 0.045
-    const wave = Math.sin((idx + seed) * 1.1) * 0.055
-    return Math.min(0.88, Math.max(0.18, base + drift + wave))
-  })
-}
-
-const pathFromValues = (values: number[]): string => {
-  const xStep = sparklineWidth / (values.length - 1)
-  return values
-    .map((value, index) => {
-      const x = index * xStep
-      const y = sparklineHeight - value * (sparklineHeight - 7) - 3
-      return `${index === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`
-    })
-    .join(' ')
-}
-
-const areaPathFromLine = (linePath: string): string => {
-  return `${linePath} L ${sparklineWidth} ${sparklineHeight} L 0 ${sparklineHeight} Z`
-}
-
-const sparklinePaths = computed(() => {
-  return {
-    revenue: pathFromValues(buildSparklineValues(stats.value.totalRevenue, 1)),
-    bookings: pathFromValues(buildSparklineValues(stats.value.totalBookings, 2)),
-    providers: pathFromValues(buildSparklineValues(stats.value.totalProviders, 3)),
-    users: pathFromValues(buildSparklineValues(stats.value.totalUsers, 4)),
-    platformFee: pathFromValues(buildSparklineValues(stats.value.totalPlatformFee, 5)),
-  }
+const providerVerificationRate = computed(() => {
+  if (!stats.value.totalProviders) return 0
+  return Math.min(100, Math.round((stats.value.verifiedProviders / stats.value.totalProviders) * 100))
 })
 
-const sparklineAreaPaths = computed(() => {
-  return {
-    revenue: areaPathFromLine(sparklinePaths.value.revenue),
-    bookings: areaPathFromLine(sparklinePaths.value.bookings),
-    providers: areaPathFromLine(sparklinePaths.value.providers),
-    users: areaPathFromLine(sparklinePaths.value.users),
-    platformFee: areaPathFromLine(sparklinePaths.value.platformFee),
-  }
+const bookingsPerUser = computed(() => {
+  if (!stats.value.totalUsers) return '0.0'
+  return (stats.value.totalBookings / stats.value.totalUsers).toFixed(1)
+})
+
+const userGrowthBars = computed(() => {
+  const base = Math.max(stats.value.totalUsers, 1)
+  return [36, 52, 45, 68, 74, 88].map((value, index) => {
+    const lift = Math.min(12, Math.log10(base + index + 1) * 4)
+    return Math.min(96, Math.round(value + lift))
+  })
 })
 
 const chartPoints = computed(() => {
@@ -791,7 +630,6 @@ const chartAreaPath = computed(() => {
   return `${line} L ${chartWidth} ${chartHeight} L 0 ${chartHeight} Z`
 })
 
-// Number & Date formatters
 const formatNumber = (num: number): string => {
   return Number(num).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
 }
@@ -825,455 +663,202 @@ const formatRelativeTime = (dateStr: string): string => {
 </script>
 
 <style scoped>
-/* Scoped CSS targeting the clean Vercel/Linear/Stripe Startup Mockup Visual Aesthetics */
-.admin-shell {
-  height: 100vh;
-  display: grid;
-  grid-template-columns: 264px minmax(0, 1fr);
-  gap: 0;
-  padding: 0;
-  background: #ffffff; /* pure white sidebar container base */
-  box-sizing: border-box;
-<<<<<<< HEAD:frontend/src/views/dashboards/AdminDashboardView.vue
-  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  color: #173f42;
-}
-
-.admin-main-area {
-  display: flex;
-  flex-direction: column;
-  background: #f8fafb; /* The light page backdrop exactly matching the mockup */
-  min-height: 100vh;
-=======
-  overflow: hidden;
->>>>>>> 05e91c7cedad26aac52e8543ad44910700c128de:frontend/src/views/admin/AdminDashboardView.vue
-}
-
 .admin-content {
   min-width: 0;
-<<<<<<< HEAD:frontend/src/views/dashboards/AdminDashboardView.vue
-  padding: 32px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
-=======
-  padding: 14px 18px 18px 2px;
-  display: grid;
-  gap: 18px;
-  background: linear-gradient(180deg, #f3f3f2 0%, #f8f8f6 100%);
-  border-radius: 24px;
-  position: relative;
-  overflow-y: auto;
->>>>>>> 05e91c7cedad26aac52e8543ad44910700c128de:frontend/src/views/admin/AdminDashboardView.vue
+  gap: 22px;
+  animation: fade-in-up 420ms ease both;
 }
 
-/* Sidebar Custom Styling - Scoped overrides to look EXACTLY like the mockup */
-:deep(.sidebar-shell) {
-  height: 100%;
-  min-height: 100vh;
-  border-radius: 0 !important;
-  border: none !important;
-  border-right: 1px solid #edf2f5 !important;
-  box-shadow: none !important;
-  background: #ffffff !important;
-  padding: 24px 16px !important;
-  display: flex;
-  flex-direction: column;
-}
-
-:deep(.brand-block) {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 4px 24px 4px !important;
-}
-
-:deep(.brand-block p.eyebrow) {
-  display: none !important;
-}
-
-:deep(.brand-block strong) {
-  font-size: 1.05rem !important;
-  color: #123c3e !important;
-  font-weight: 700 !important;
-}
-
-:deep(.brand-block small) {
-  font-size: 0.72rem !important;
-  color: #72817d !important;
-}
-
-:deep(.brand-mark) {
-  background: #0f6e70 !important;
-  color: #ffffff !important;
-  border-radius: 8px !important;
-  font-weight: 800;
-  width: 32px !important;
-  height: 32px !important;
-}
-
-:deep(.nav-item) {
-  border-radius: 8px !important;
-  padding: 10px 12px !important;
-  margin-bottom: 2px !important;
-  background: transparent !important;
-  border: 1px solid transparent !important;
-  transition: all 0.2s ease !important;
-}
-
-:deep(.nav-item:hover) {
-  background: #f8fafb !important;
-}
-
-:deep(.nav-item.router-link-exact-active) {
-  background: rgba(15, 110, 112, 0.08) !important;
-  color: #0f6e70 !important;
-}
-
-:deep(.nav-item.router-link-exact-active strong) {
-  color: #0f6e70 !important;
-}
-
-:deep(.nav-item.router-link-exact-active .nav-item__icon) {
-  color: #0f6e70 !important;
-}
-
-:deep(.sidebar-card) {
-  background: #f8fafb !important;
-  border: 1px solid #edf2f5 !important;
-  border-radius: 12px !important;
-  padding: 12px !important;
-  margin-top: auto !important;
-}
-
-/* Horizontal Top Navigation Bar */
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  background: #ffffff;
-  border-bottom: 1px solid #edf2f5;
-  padding: 16px 32px;
-  height: 70px;
-  box-sizing: border-box;
-}
-
-.topbar-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex: 1;
-}
-
-.menu-trigger {
-  display: none;
-  background: none;
-  border: none;
-  font-size: 1.25rem;
-  color: #5e6e70;
-  cursor: pointer;
-}
-
-.searchbar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #ffffff;
-  border: 1px solid #edf2f5;
-  border-radius: 8px;
-  height: 38px;
-  width: 100%;
-  max-width: 420px;
-  padding: 0 12px;
-  transition: all 0.2s ease;
-}
-
-.searchbar:focus-within {
-  border-color: #0f6e70;
-  box-shadow: 0 0 0 2px rgba(15, 110, 112, 0.08);
-}
-
-.searchbar__icon {
-  font-size: 1.1rem;
-  color: #9ea9ab;
-}
-
-.searchbar input {
-  width: 100%;
-  border: none;
-  outline: none;
-  font-size: 0.88rem;
-  color: #173f42;
-  background: transparent;
-}
-
-.searchbar input::placeholder {
-  color: #9ea9ab;
-}
-
-.search-shortcut {
-  font-size: 0.72rem;
-  background: #f1f3f5;
-  color: #9ea9ab;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-weight: 600;
-}
-
-.topbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.icon-button {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  border: 1px solid #edf2f5;
-  background: #ffffff;
-  color: #5e6e70;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  font-size: 1rem;
-  transition: all 0.2s ease;
-  position: relative;
-}
-
-.icon-button:hover {
-  background: #f8fafb;
-  border-color: #d1dadc;
-}
-
-.notification-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  background: #f15d5d;
-  color: #ffffff;
-  font-size: 0.68rem;
-  font-weight: bold;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-}
-
-.profile-chip {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 4px 8px 4px 12px;
-  border-radius: 8px;
-  border: 1px solid #edf2f5;
-  background: #ffffff;
-  cursor: pointer;
-}
-
-.profile-meta {
-  text-align: left;
-}
-
-.profile-meta strong {
-  display: block;
-  font-size: 0.82rem;
-  color: #173f42;
-  font-weight: 700;
-}
-
-.profile-meta span {
-  display: block;
-  font-size: 0.68rem;
-  color: #9ea9ab;
-}
-
-.avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: #24a874;
-  color: #ffffff;
-  font-size: 0.72rem;
-  font-weight: bold;
-  display: grid;
-  place-items: center;
-}
-
-.chevron-down {
-  font-size: 0.72rem;
-  color: #9ea9ab;
-}
-
-/* Welcome Hero Section */
 .welcome-banner {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 20px;
+  padding: 4px 0 2px;
+}
+
+.page-kicker {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--accent-secondary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
 
 .banner-text h2 {
-  margin: 0 0 4px;
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: #173f42;
-  letter-spacing: -0.02em;
+  margin: 0 0 8px;
+  font-family: inherit;
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0;
+  line-height: 1.05;
 }
 
 .banner-text p {
   margin: 0;
-  color: #5e6e70;
-  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-size: 0.94rem;
 }
 
 .datepicker-dropdown {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
-  background: #ffffff;
-  border: 1px solid #edf2f5;
-  border-radius: 8px;
+  min-height: 36px;
+  padding: 0 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   font-size: 0.82rem;
   font-weight: 600;
-  color: #5e6e70;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  box-shadow: var(--shadow-card);
 }
 
 .datepicker-dropdown:hover {
-  background: #f8fafb;
-  border-color: #d1dadc;
+  background: #fbfaf7;
+  border-color: rgba(198, 146, 47, 0.22);
 }
 
-/* KPI Statistics Cards styling */
+.chevron-down {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.control-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--accent-primary);
+}
+
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
 }
 
 .kpi-card {
   background: #ffffff;
-  border: 1px solid #edf2f5;
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 16px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   position: relative;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-  overflow: hidden;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  transition: all 0.2s ease;
+  border: 1px solid #f1f3f5;
+}
+
+.dashboard-body {
+  display: grid;
+  gap: 18px;
 }
 
 .kpi-card:hover {
+  box-shadow: 0 8px 30px rgba(0,0,0,0.06);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-  border-color: #d1dadc;
 }
 
 .kpi-card__header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
+  justify-content: space-between;
+  margin-bottom: 16px;
 }
 
 .kpi-title {
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  color: #5e6e70;
-}
-
-.kpi-icon-wrapper {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-size: 0.88rem;
-  flex-shrink: 0;
-}
-
-.theme-green { background: #eefdf7; color: #24a874; font-weight: bold; }
-.theme-blue { background: #eef6fd; color: #3b82f6; }
-.theme-purple { background: #f6eeff; color: #8b5cf6; }
-.theme-orange { background: #fff6ee; color: #e59a18; }
-.theme-teal { background: #eefdfd; color: #0f6e70; }
-
-.kpi-value {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: #173f42;
-  letter-spacing: -0.02em;
+  color: #6B7280;
   margin-bottom: 4px;
 }
 
-.kpi-trend {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.74rem;
-}
-
-.trend-up span {
-  color: #24a874;
-  font-weight: 700;
-}
-
-.trend-up small {
-  color: #9ea9ab;
-}
-
-.trend-neutral span {
-  color: #5e6e70;
-  font-weight: 700;
-}
-
-.trend-neutral small {
-  color: #9ea9ab;
-}
-
-.kpi-sparkline {
-  height: 24px;
-  width: 100%;
-  margin-top: 12px;
-}
-
-.sparkline-svg {
-  width: 100%;
-  height: 100%;
-}
-
-.stroke-green path { stroke: #24a874; }
-.stroke-blue path { stroke: #3b82f6; }
-.stroke-purple path { stroke: #8b5cf6; }
-.stroke-orange path { stroke: #e59a18; }
-.stroke-teal path { stroke: #0f6e70; }
-
-/* Main Analytics Grid */
-.main-analytics-grid {
+.kpi-icon-wrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
   display: grid;
-  grid-template-columns: minmax(0, 1.8fr) minmax(280px, 0.9fr);
-  gap: 24px;
+  place-items: center;
+  flex-shrink: 0;
 }
 
-.analytics-main-column {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+.kpi-icon-wrapper svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
+}
+
+.theme-green { background: rgba(20, 138, 116, 0.1); color: #148A74; }
+.theme-blue { background: rgba(59, 130, 246, 0.1); color: #3B82F6; }
+.theme-purple { background: rgba(139, 92, 246, 0.1); color: #8B5CF6; }
+.theme-orange { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
+
+.kpi-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.kpi-pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.kpi-pill--up {
+  background: rgba(20, 138, 116, 0.1);
+  color: #148A74;
+}
+
+.kpi-pill--neutral {
+  background: #F3F4F6;
+  color: #6B7280;
+}
+
+.kpi-link {
+  margin-top: 14px;
+  font-size: 0.8rem;
+  color: #148A74;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.kpi-link:hover {
+  text-decoration: underline;
+}
+
+.revenue-hero-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.operations-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.58fr);
+  gap: 18px;
+}
+
+.insight-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
 }
 
 .panel {
   background: #ffffff;
-  border: 1px solid #edf2f5;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  border: 1px solid #f1f3f5;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
 }
 
 .error-panel {
@@ -1285,18 +870,18 @@ const formatRelativeTime = (dateStr: string): string => {
 
 .error-panel h3 {
   margin: 0;
-  color: #173f42;
+  color: #111827;
 }
 
 .error-panel p {
   margin: 0;
-  color: #5e6e70;
+  color: #6B7280;
 }
 
 .retry-button {
   border: none;
   border-radius: 8px;
-  background: #0f6e70;
+  background: #148A74;
   color: #ffffff;
   cursor: pointer;
   font-weight: 700;
@@ -1304,14 +889,15 @@ const formatRelativeTime = (dateStr: string): string => {
 }
 
 .retry-button:hover {
-  background: #0b5b5d;
+  background: #0f6e5c;
 }
 
 .panel-header-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 18px;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .panel-title-block h3,
@@ -1320,16 +906,26 @@ const formatRelativeTime = (dateStr: string): string => {
 .panel--health h3,
 .panel--activity h3 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 700;
-  color: #173f42;
+  color: #111827;
 }
 
 .panel-eyebrow {
-  font-size: 0.84rem;
+  font-size: 1.1rem;
   font-weight: 700;
-  color: #173f42;
+  color: #111827;
   display: block;
+}
+
+.panel-title-block p {
+  margin-top: 6px;
+  color: #6B7280;
+  font-size: 0.86rem;
+}
+
+.panel-header-row--compact {
+  margin-bottom: 16px;
 }
 
 .panel-controls {
@@ -1341,650 +937,118 @@ const formatRelativeTime = (dateStr: string): string => {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  background: #f8fafb;
-  border: 1px solid #edf2f5;
-  border-radius: 6px;
-  font-size: 0.78rem;
+  min-height: 32px;
+  padding: 0 12px;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 0.8rem;
   font-weight: 600;
-  color: #5e6e70;
+  color: #4B5563;
   cursor: pointer;
 }
 
 .revenue-metric-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 
 .revenue-main-val {
-  font-size: 1.8rem;
+  font-family: inherit;
+  font-size: 2.75rem;
   font-weight: 700;
-  color: #173f42;
+  color: #111827;
   letter-spacing: -0.02em;
 }
 
 .trend-badge-pill {
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-size: 0.74rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
 .green-badge {
-  background: #eefdf7;
-  color: #24a874;
+  background: rgba(20, 138, 116, 0.1);
+  color: #148A74;
 }
 
 .subtext-label {
-  font-size: 0.8rem;
-  color: #9ea9ab;
+  font-size: 0.85rem;
+  color: var(--text-muted);
 }
 
 .chart-area-container {
   width: 100%;
-  margin-top: 10px;
+  margin-top: 4px;
+  min-height: 280px;
+  padding: 14px 14px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, #ffffff 0%, #fbfaf7 100%);
+  box-sizing: border-box;
+}
+
+.chart-area-container--empty {
+  display: grid;
+  place-items: center;
 }
 
 .main-svg-chart {
   width: 100%;
-  height: 180px;
+  height: 230px;
   overflow: visible;
+  display: block;
+}
+
+.ghost-chart {
+  position: relative;
+  min-height: 230px;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(180deg, rgba(20, 138, 116, 0.1), rgba(20, 138, 116, 0)),
+    repeating-linear-gradient(0deg, transparent 0 54px, rgba(231, 234, 238, 0.9) 55px 56px);
+}
+
+.ghost-chart__line {
+  position: absolute;
+  inset: 34px 20px 48px;
+  border-bottom: 3px solid rgba(20, 138, 116, 0.28);
+  border-radius: 50%;
+  transform: skewY(-7deg);
+}
+
+.ghost-chart__metrics {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 18px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.ghost-chart__metrics span {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(152, 162, 179, 0.22);
 }
 
 .chart-labels-row {
   display: flex;
   justify-content: space-between;
   padding-top: 10px;
-  border-top: 1px solid #f1f3f5;
+  border-top: 1px solid var(--border);
 }
 
 .chart-labels-row span {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #9ea9ab;
-}
-
-/* Recent Bookings Panel & Table */
-.view-all-link {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #0f6e70;
-  text-decoration: none;
-}
-
-.view-all-link:hover {
-  text-decoration: underline;
-}
-
-.table-wrapper {
-  overflow-x: auto;
-  margin-top: 12px;
-}
-
-.saas-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-}
-
-.saas-table th {
-  padding: 10px 12px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #9ea9ab;
-  letter-spacing: 0.05em;
-  border-bottom: 1px solid #edf2f5;
-}
-
-.saas-table td {
-  padding: 14px 12px;
-  font-size: 0.84rem;
-  color: #173f42;
-  border-bottom: 1px solid #edf2f5;
-  background: #ffffff;
-}
-
-.saas-table tr:last-child td {
-  border-bottom: none;
-}
-
-.saas-table tr:hover td {
-  background: #f8fafb;
-}
-
-.booking-id-text {
-  font-family: monospace;
-  font-weight: 600;
-  color: #5e6e70;
-}
-
-.client-name {
-  font-weight: 600;
-  color: #173f42;
-}
-
-.tour-title {
-  color: #5e6e70;
-  max-width: 180px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: inline-block;
-  font-weight: 500;
-}
-
-.row-date {
-  color: #9ea9ab;
-  font-size: 0.8rem;
-}
-
-.row-amount {
-  font-weight: 700;
-  color: #173f42;
-}
-
-.badge-saas {
-  display: inline-flex;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: capitalize;
-}
-
-.badge-saas--confirmed { background: #eefdf7; color: #24a874; }
-.badge-saas--pending { background: #fff6ee; color: #e59a18; }
-.badge-saas--cancelled { background: #fdf2f2; color: #f15d5d; }
-.badge-saas--completed { background: #eef6fd; color: #3b82f6; }
-.badge-saas--refunded { background: #f6eeff; color: #7c3aed; }
-
-.row-action-btn {
-  background: none;
-  border: none;
-  color: #9ea9ab;
-  cursor: pointer;
-  font-size: 0.9rem;
-}
-
-.empty-state-cell {
-  text-align: center;
-  padding: 30px !important;
-}
-
-.empty-state-msg span {
-  font-size: 1.8rem;
-}
-
-.empty-state-msg p {
-  margin: 8px 0 0;
-  color: #9ea9ab;
-  font-size: 0.84rem;
-}
-
-/* Sidebar Analytics Widgets Column */
-.analytics-side-column {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.panel--status h3 {
-  margin: 0 0 16px;
-}
-
-.donut-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-}
-
-.donut-chart-box {
-  width: 130px;
-  height: 130px;
-  border-radius: 50%;
-  position: relative;
-  display: flex;
-  place-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
-}
-
-.donut-inner-hole {
-  width: 82px;
-  height: 82px;
-  background: #ffffff;
-  border-radius: 50%;
-}
-
-.donut-legend {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.8rem;
-}
-
-.indicator-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.legend-name {
-  flex: 1;
-  color: #5e6e70;
-  font-weight: 500;
-}
-
-.legend-percent {
-  color: #173f42;
-  font-weight: 700;
-}
-
-.legend-count {
-  color: #9ea9ab;
-  font-size: 0.74rem;
-}
-
-/* Infrastructure Health */
-.health-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 14px;
-}
-
-.health-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #f8fafb;
-}
-
-.health-item:last-child {
-  border-bottom: none;
-}
-
-.health-label {
-  font-size: 0.84rem;
-  font-weight: 600;
-  color: #5e6e70;
-}
-
-.status-pill {
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
-.status-pill--ok {
-  background: #eefdf7;
-  color: #24a874;
-}
-
-.status-pill--idle {
-  background: #f1f3f5;
-  color: #5e6e70;
-}
-
-.status-pill--down {
-  background: #fdf2f2;
-  color: #f15d5d;
-}
-
-/* Timeline Activity Widget */
-.timeline-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-top: 14px;
-}
-
-.timeline-item {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-}
-
-.timeline-icon-box {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  display: grid;
-  place-items: center;
-  font-size: 0.88rem;
-  flex-shrink: 0;
-}
-
-.theme-green-soft { background: #eefdf7; }
-.theme-purple-soft { background: #f6eeff; }
-.theme-orange-soft { background: #fff6ee; }
-
-.timeline-body p {
-  margin: 0 0 2px;
-  font-size: 0.8rem;
-  color: #173f42;
-  font-weight: 600;
-}
-
-.timeline-body span {
-  font-size: 0.72rem;
-  color: #9ea9ab;
-}
-
-.empty-activity {
-  color: #9ea9ab;
-  font-size: 0.82rem;
-  padding: 8px 0;
-}
-
-/* Quick Nav Floating Buttons */
-.quick-nav-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 10px;
-}
-
-.quick-nav-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 40px;
-  padding: 0 16px;
-  border-radius: 8px;
-  border: 1px solid #edf2f5;
-  background: #ffffff;
-  color: #5e6e70;
-  text-decoration: none;
-  font-size: 0.82rem;
-  font-weight: 700;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-  transition: all 0.2s ease;
-}
-
-.quick-nav-btn:hover {
-  background: #f8fafb;
-  border-color: #d1dadc;
-}
-
-/* Pulsating Skeleton */
-.skeleton-container {
-  display: flex;
-  flex-direction: column;
-}
-
-.skeleton-grid {
-  display: grid;
-  grid-template-columns: 1.8fr 0.9fr;
-  gap: 24px;
-}
-
-.skeleton-panel {
-  background: #ffffff;
-  border: 1px solid #edf2f5;
-  border-radius: 12px;
-}
-
-.skeleton-pulse {
-  background: linear-gradient(90deg, #f0f2f3 25%, #e1e4e6 50%, #f0f2f3 75%);
-  background-size: 200% 100%;
-  animation: pulse 1.6s infinite ease-in-out;
-}
-
-@keyframes pulse {
-  0% { background-position: 120% 0; }
-  100% { background-position: -80% 0; }
-}
-
-/* Compact SaaS admin refinement */
-.admin-shell {
-  grid-template-columns: 236px minmax(0, 1fr);
-  background: #ffffff;
-  color: #16383a;
-}
-
-.admin-main-area {
-  background: #f6f8f9;
-}
-
-.admin-content {
-  padding: 20px 24px 24px;
-  gap: 14px;
-}
-
-:deep(.sidebar-shell) {
-  padding: 18px 12px !important;
-  border-right-color: #e6ecee !important;
-}
-
-:deep(.sidebar-inner) {
-  padding: 0 !important;
-  gap: 16px !important;
-}
-
-:deep(.brand-block) {
-  padding: 0 8px 8px !important;
-}
-
-:deep(.nav-list) {
-  gap: 12px !important;
-}
-
-:deep(.nav-item) {
-  min-height: 31px !important;
-  padding: 6px 9px !important;
-  margin-bottom: 0 !important;
-}
-
-:deep(.nav-item--active),
-:deep(.nav-item.router-link-exact-active) {
-  background: #eaf5f4 !important;
-  border-color: rgba(15, 110, 112, 0.1) !important;
-  color: #0f6e70 !important;
-}
-
-:deep(.sidebar-card) {
-  padding: 10px !important;
-  border-radius: 10px !important;
-}
-
-.topbar {
-  height: 58px;
-  padding: 12px 28px;
-  border-bottom-color: #e6ecee;
-}
-
-.searchbar {
-  height: 34px;
-  max-width: 360px;
-  border-color: #e4ebed;
-  border-radius: 7px;
-}
-
-.icon-button {
-  width: 32px;
-  height: 32px;
-  border-radius: 7px;
-  border-color: #e4ebed;
-  font-size: 0.82rem;
-}
-
-.topbar-actions {
-  gap: 10px;
-}
-
-.profile-chip {
-  min-height: 32px;
-  padding: 2px 8px 2px 6px;
-  border-color: #e4ebed;
-}
-
-.avatar {
-  width: 24px;
-  height: 24px;
-  font-size: 0.66rem;
-  background: #0f6e70;
-}
-
-.profile-meta span {
-  display: none;
-}
-
-.welcome-banner {
-  align-items: flex-end;
-  padding: 2px 0 0;
-}
-
-.banner-text h2 {
-  font-size: 1.18rem;
-  letter-spacing: 0;
-  margin-bottom: 3px;
-}
-
-.banner-text p {
-  font-size: 0.82rem;
-  color: #66787a;
-}
-
-.datepicker-dropdown {
-  padding: 7px 10px;
-  border-color: #e4ebed;
-  border-radius: 7px;
-}
-
-.kpi-grid {
-  grid-template-columns: repeat(5, minmax(138px, 1fr));
-  gap: 9px;
-}
-
-.kpi-card {
-  min-height: 112px;
-  padding: 11px 11px 9px;
-  border-color: #e2e9eb;
-  border-radius: 10px;
-  box-shadow: 0 1px 2px rgba(17, 39, 41, 0.02);
-  justify-content: space-between;
-}
-
-.kpi-card:hover {
-  transform: none;
-  border-color: #cfdadc;
-  box-shadow: 0 8px 22px rgba(18, 43, 45, 0.045);
-}
-
-.kpi-icon-wrapper {
-  width: 22px;
-  height: 22px;
-  border-radius: 7px;
-  font-size: 0.72rem;
-}
-
-.kpi-card__header {
-  justify-content: space-between;
-  margin-bottom: 3px;
-}
-
-.kpi-title {
-  font-size: 0.72rem;
-  color: #66787a;
-}
-
-.kpi-value {
-  font-size: clamp(1.04rem, 1.35vw, 1.24rem);
-  letter-spacing: 0;
-  margin-bottom: 2px;
-  line-height: 1.1;
-}
-
-.kpi-trend {
-  font-size: 0.68rem;
-  min-height: 17px;
-  white-space: nowrap;
-}
-
-.kpi-trend small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.kpi-sparkline {
-  height: 20px;
-  margin-top: 5px;
-  opacity: 0.95;
-}
-
-.main-analytics-grid {
-  grid-template-columns: minmax(0, 1.76fr) minmax(268px, 0.72fr);
-  gap: 13px;
-}
-
-.analytics-main-column,
-.analytics-side-column {
-  gap: 13px;
-}
-
-.panel {
-  padding: 14px;
-  border-color: #e2e9eb;
-  border-radius: 10px;
-  box-shadow: 0 1px 2px rgba(17, 39, 41, 0.02);
-}
-
-.panel-header-row {
-  margin-bottom: 10px;
-}
-
-.revenue-main-val {
-  font-size: 1.48rem;
-  letter-spacing: -0.01em;
-}
-
-.revenue-metric-row {
-  margin-bottom: 9px;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.chart-area-container {
-  margin-top: 4px;
-  min-height: 168px;
-  padding: 10px 10px 8px;
-  border: 1px solid #e7eef0;
-  border-radius: 9px;
-  background: linear-gradient(180deg, #ffffff 0%, #fbfcfc 100%);
-}
-
-.main-svg-chart {
-  height: 144px;
-  display: block;
-}
-
-.sparkline-area {
-  opacity: 0.12;
-}
-
-.stroke-green .sparkline-area { fill: #0f8f89; }
-.stroke-blue .sparkline-area { fill: #2563eb; }
-.stroke-purple .sparkline-area { fill: #64748b; }
-.stroke-orange .sparkline-area { fill: #d88a12; }
-.stroke-teal .sparkline-area { fill: #0f6e70; }
-
-.chart-area-container--empty {
-  display: grid;
-  place-items: center;
+  color: var(--text-muted);
 }
 
 .revenue-summary-visual {
@@ -2004,11 +1068,11 @@ const formatRelativeTime = (dateStr: string): string => {
   justify-content: space-between;
   gap: 12px;
   font-size: 0.78rem;
-  color: #5d6f70;
+  color: var(--text-secondary);
 }
 
 .summary-bar__meta strong {
-  color: #173f42;
+  color: var(--text-primary);
   font-size: 0.82rem;
 }
 
@@ -2016,40 +1080,38 @@ const formatRelativeTime = (dateStr: string): string => {
   height: 7px;
   overflow: hidden;
   border-radius: 999px;
-  background: #eef3f4;
+  background: var(--bg-elevated);
 }
 
 .summary-bar__track span {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: #0f8f89;
+  background: var(--accent-primary);
 }
 
 .chart-empty-state,
 .status-empty-state {
   display: grid;
   justify-items: center;
-  gap: 5px;
+  gap: 7px;
   text-align: center;
-  color: #7a8a8b;
+  color: var(--text-secondary);
 }
 
-.chart-empty-state__icon,
-.status-empty-state span {
+.empty-state-icon {
   width: 30px;
   height: 30px;
-  display: grid;
-  place-items: center;
-  border-radius: 8px;
-  background: #edf6f5;
-  color: #0f6e70;
-  font-weight: 800;
+  padding: 7px;
+  border-radius: var(--radius-sm);
+  background: rgba(20, 138, 116, 0.1);
+  color: var(--accent-primary);
+  box-sizing: content-box;
 }
 
 .chart-empty-state strong,
 .status-empty-state strong {
-  color: #173f42;
+  color: var(--text-primary);
   font-size: 0.86rem;
 }
 
@@ -2063,20 +1125,20 @@ const formatRelativeTime = (dateStr: string): string => {
 
 .revenue-insights-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0;
-  margin-top: 10px;
-  border: 1px solid #e7eef0;
-  border-radius: 9px;
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   overflow: hidden;
-  background: #ffffff;
+  background: var(--bg-surface);
 }
 
 .insight-item {
   display: grid;
-  gap: 3px;
-  padding: 10px 12px;
-  border-right: 1px solid #e7eef0;
+  gap: 5px;
+  padding: 12px;
+  border-right: 1px solid var(--border);
 }
 
 .insight-item:last-child {
@@ -2088,233 +1150,419 @@ const formatRelativeTime = (dateStr: string): string => {
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #819193;
+  color: var(--text-muted);
 }
 
 .insight-item strong {
   min-width: 0;
   overflow: hidden;
-  color: #173f42;
-  font-size: 0.82rem;
+  color: var(--text-primary);
+  font-size: 0.86rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.saas-table th {
-  padding: 9px 10px;
-  background: #fbfcfc;
+.view-all-link {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+  text-decoration: none;
 }
 
-.saas-table td {
-  padding: 9px 10px;
+.view-all-link:hover {
+  text-decoration: underline;
 }
 
 .panel--bookings .table-wrapper {
   margin-top: 6px;
 }
 
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.saas-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.saas-table th {
+  padding: 12px 16px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #9CA3AF;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #E5E7EB;
+  background: transparent;
+}
+
+.saas-table td {
+  padding: 16px;
+  font-size: 0.85rem;
+  color: #111827;
+  border-bottom: 1px solid #F3F4F6;
+  background: transparent;
+}
+
+.saas-table tr:last-child td {
+  border-bottom: none;
+}
+
+.saas-table tr:hover td {
+  background: #F9FAFB;
+}
+
+.booking-id-text {
+  font-family: monospace;
+  font-weight: 600;
+  color: #6B7280;
+}
+
+.client-name {
+  font-weight: 600;
+  color: #111827;
+}
+
+.tour-title {
+  color: #4B5563;
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  font-weight: 500;
+}
+
+.row-date {
+  color: #6B7280;
+  font-size: 0.8rem;
+}
+
+.row-amount {
+  font-weight: 700;
+  color: #111827;
+}
+
+.badge-saas {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.badge-saas--confirmed { background: rgba(20, 138, 116, 0.1); color: #148A74; }
+.badge-saas--pending { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
+.badge-saas--cancelled { background: rgba(239, 68, 68, 0.1); color: #EF4444; }
+.badge-saas--completed { background: rgba(59, 130, 246, 0.1); color: #3B82F6; }
+.badge-saas--refunded { background: #F3F4F6; color: #6B7280; }
+
 .empty-state-cell {
+  text-align: center;
   padding: 24px 12px !important;
 }
 
 .empty-state-msg {
   display: grid;
   justify-items: center;
-  gap: 5px;
-}
-
-.empty-state-msg span {
-  width: 30px;
-  height: 30px;
-  display: grid;
-  place-items: center;
-  border-radius: 8px;
-  background: #edf6f5;
-  color: #0f6e70;
-  font-size: 0.9rem;
+  gap: 7px;
 }
 
 .empty-state-msg strong {
-  color: #173f42;
+  color: #111827;
   font-size: 0.86rem;
 }
 
 .empty-state-msg p {
   max-width: 320px;
   margin: 0;
-  color: #7a8a8b;
+  color: #6B7280;
   font-size: 0.78rem;
 }
 
-.badge-saas,
-.status-pill,
-.trend-badge-pill {
-  border-radius: 999px;
-  padding: 3px 8px;
+.panel--status h3 {
+  margin: 0;
+}
+
+.donut-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 
 .donut-chart-box {
-  width: 104px;
-  height: 104px;
+  width: 136px;
+  height: 136px;
+  border-radius: 50%;
+  position: relative;
+  display: flex;
+  place-items: center;
+  justify-content: center;
   box-shadow: inset 0 0 0 1px rgba(18, 43, 45, 0.04);
 }
 
 .donut-inner-hole {
-  width: 68px;
-  height: 68px;
-  box-shadow: inset 0 0 0 1px #edf2f3;
+  width: 88px;
+  height: 88px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px #E5E7EB;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 2px;
+  text-align: center;
 }
 
-.donut-wrapper {
-  gap: 14px;
+.donut-inner-hole strong {
+  font-family: inherit;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1;
+}
+
+.donut-inner-hole span {
+  font-size: 0.68rem;
+  color: #6B7280;
 }
 
 .donut-legend {
-  gap: 8px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
 }
 
 .legend-item {
   display: grid;
-  grid-template-columns: 10px minmax(0, 1fr) auto auto;
-  gap: 7px;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  gap: 8px;
   align-items: center;
+  min-height: 24px;
+}
+
+.metric-stack {
+  display: grid;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.metric-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: baseline;
+}
+
+.metric-line span {
+  color: #6B7280;
+  font-size: 0.82rem;
+}
+
+.metric-line strong {
+  font-family: inherit;
+  color: #111827;
+  font-size: 1.65rem;
+  font-weight: 700;
+}
+
+.metric-progress {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+}
+
+.metric-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+}
+
+.mini-bars {
+  height: 72px;
+  display: flex;
+  align-items: end;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.mini-bars span {
+  flex: 1;
+  min-height: 16px;
+  border-radius: 999px 999px 6px 6px;
+  background: linear-gradient(180deg, rgba(20, 138, 116, 0.62), rgba(20, 138, 116, 0.16));
+}
+
+.indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
 }
 
 .legend-name {
   font-size: 0.78rem;
-  color: #536668;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
-.legend-percent,
-.legend-count {
+.legend-percent {
+  color: var(--text-primary);
+  font-weight: 700;
   font-size: 0.74rem;
 }
 
-.health-list,
 .timeline-list {
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
 }
 
-.health-list {
-  margin-top: 8px;
-}
-
-.health-item {
-  padding: 7px 0;
-  border-bottom-color: #edf2f3;
-}
-
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-height: 20px;
-  padding: 2px 7px;
-  border-radius: 999px;
-  font-size: 0.68rem;
-}
-
-.status-pill--ok {
-  background: #e8f8f1;
-  color: #147a56;
-}
-
-.status-pill--idle {
-  background: #f1f4f5;
-  color: #5d6f70;
-}
-
-.status-pill--down {
-  background: #fff0f0;
-  color: #c43f3f;
+.timeline-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
 }
 
 .timeline-icon-box {
-  background: #edf6f5;
-  color: #0f6e70;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.timeline-icon-box svg {
+  width: 17px;
+  height: 17px;
+}
+
+.timeline-icon-box--success { background: rgba(20, 138, 116, 0.1); color: var(--accent-primary); }
+.timeline-icon-box--pending { background: rgba(198, 146, 47, 0.12); color: var(--accent-secondary); }
+.timeline-icon-box--danger { background: rgba(214, 69, 69, 0.1); color: var(--accent-danger); }
+
+.timeline-body p {
+  margin: 0 0 2px;
+  font-size: 0.84rem;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.timeline-body span {
+  font-size: 0.72rem;
+  color: var(--text-muted);
 }
 
 .empty-activity {
-  border: 1px dashed #dce6e8;
-  border-radius: 8px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
   padding: 10px;
   text-align: center;
-  color: #7a8a8b;
-  background: #fbfcfc;
+  color: var(--text-secondary);
+  background: #fbfaf7;
+  font-size: 0.82rem;
 }
 
-.quick-nav-actions {
-  margin-top: 0;
+.skeleton-container {
+  display: flex;
+  flex-direction: column;
 }
 
-.quick-nav-btn {
-  height: 34px;
-  border-radius: 7px;
-  box-shadow: none;
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: 1.76fr 0.72fr;
+  gap: 16px;
 }
 
-/* Responsive Scaling Rules */
+.skeleton-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.skeleton-pulse {
+  background: linear-gradient(90deg, #f0f2f3 25%, #e1e4e6 50%, #f0f2f3 75%);
+  background-size: 200% 100%;
+  animation: pulse 1.6s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% { background-position: 120% 0; }
+  100% { background-position: -80% 0; }
+}
+
 @media (max-width: 1180px) {
   .kpi-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .kpi-card--hero {
+    grid-column: 1 / -1;
   }
 
   .revenue-insights-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .insight-item:nth-child(2) {
-    border-right: 0;
-  }
-
-  .insight-item:nth-child(-n + 2) {
-    border-bottom: 1px solid #e7eef0;
+  .operations-grid,
+  .insight-grid {
+    grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 1200px) {
-  .admin-shell {
-    grid-template-columns: 1fr;
-  }
-  
-  :deep(.sidebar-shell) {
-    display: none !important;
-  }
-  
-  .menu-trigger {
-    display: block;
-  }
-  
-  .main-analytics-grid {
-    grid-template-columns: 1fr;
-  }
-  
+@media (max-width: 1024px) {
   .kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .skeleton-grid {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
-  .topbar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-    height: auto;
-    padding: 16px;
-  }
-  
-  .topbar-actions {
-    justify-content: space-between;
-  }
-  
   .welcome-banner {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
-  
+
   .kpi-grid {
     grid-template-columns: 1fr;
   }
+
+  .revenue-insights-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .insight-item {
+    border-right: 0;
+    border-bottom: 1px solid #e7eef0;
+  }
+
+  .insight-item:last-child {
+    border-bottom: 0;
+  }
+
+  .panel-header-row,
+  .revenue-metric-row {
+    align-items: flex-start;
+  }
+
+  .panel-header-row {
+    flex-direction: column;
+  }
+
 }
 </style>
