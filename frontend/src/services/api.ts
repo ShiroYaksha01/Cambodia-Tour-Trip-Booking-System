@@ -71,6 +71,8 @@ export const checkInBooking = (id: string) => api.patch(`/provider/bookings/${id
 export const getProviderProfile = () => api.get("/provider/profile");
 export const updateProviderProfile = (data: any) => api.patch("/provider/profile", data);
 
+export const getProviderDetail = (id: string) => api.get(`/providers/${id}`);
+
 export const getProviderDashboardStats = () => api.get(`/provider/dashboard-stats`).catch(() => ({
   data: {
     avgOccupancy: '84.2%',
