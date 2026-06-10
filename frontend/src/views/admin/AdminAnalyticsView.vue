@@ -108,15 +108,15 @@
           <div v-if="loading" style="text-align: center; color: #6B7280; padding: 40px;">Loading data...</div>
           <div v-else-if="categories.length === 0" style="text-align: center; color: #6B7280; padding: 40px;">No categories found in this period.</div>
           <div v-else class="donut-chart-mock">
-            <div class="donut-circle">
+            <div class="donut-circle" :style="{ background: donutGradient }">
               <div class="donut-inner">
-                <strong>100%</strong>
+                <strong>{{ totalCategoryPercent }}%</strong>
                 <span>Total</span>
               </div>
             </div>
             <div class="donut-legend">
               <div class="legend-item" v-for="(cat, idx) in categories" :key="cat.type">
-                <span :class="'dot color-' + (idx % 4 + 1)"></span> 
+                <span class="dot" :style="{ background: categoryColors[idx % categoryColors.length] }"></span> 
                 <span style="text-transform: capitalize;">{{ cat.type }} ({{ cat.percent }}%)</span>
               </div>
             </div>
@@ -128,33 +128,72 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import AdminLayout from '../../components/admin/AdminLayout.vue'
+import api from '../../services/api'
 
 const searchQuery = ref('')
 const timeframe = ref('30')
-const loading = ref(false)
+const loading = ref(true)
 
 const metrics = ref({
-  conversionRate: 3.2,
-  avgBookingValue: 145,
-  cancellationRate: 1.8
+  conversionRate: 0,
+  avgBookingValue: 0,
+  cancellationRate: 0
 })
 
-const categories = ref([
-  { type: 'Tours', percent: 45 },
-  { type: 'Hotels', percent: 30 },
-  { type: 'Transport', percent: 15 },
-  { type: 'Other', percent: 10 },
-])
+const categories = ref<{ type: string; count: number; percent: number }[]>([])
 
-const topDestinations = ref([
-  { name: 'Siem Reap', bookings: 1240, percent: 85 },
-  { name: 'Phnom Penh', bookings: 890, percent: 60 },
-  { name: 'Kampot', bookings: 420, percent: 35 },
-  { name: 'Koh Rong', bookings: 310, percent: 25 },
-  { name: 'Battambang', bookings: 180, percent: 15 },
-])
+const topDestinations = ref<{ name: string; bookings: number; percent: number }[]>([])
+
+async function loadAnalytics(days: number) {
+  loading.value = true
+  try {
+    const res = await api.get(`/admin/analytics?days=${days}`)
+    const data = res.data?.data || res.data
+
+    if (data?.overview) {
+      metrics.value = {
+        conversionRate: Number(data.overview.conversionRate) || 0,
+        avgBookingValue: Number(data.overview.avgBookingValue) || 0,
+        cancellationRate: Number(data.overview.cancellationRate) || 0,
+      }
+    }
+
+    categories.value = data?.categories || []
+
+    topDestinations.value = data?.topDestinations || []
+  } catch (err) {
+    console.error('Failed to fetch analytics', err)
+  } finally {
+    loading.value = false
+  }
+}
+
+watch(timeframe, (val) => {
+  loadAnalytics(Number(val))
+})
+
+onMounted(() => {
+  loadAnalytics(30)
+})
+
+const categoryColors = ['#148A74', '#F59E0B', '#3B82F6', '#8B5CF6', '#EF4444', '#EC4899']
+
+const totalCategoryPercent = computed(() => categories.value.reduce((sum, c) => sum + (c.percent || 0), 0))
+
+const donutGradient = computed(() => {
+  if (categories.value.length === 0) return ''
+  let start = 0
+  const segments = categories.value.map((cat, idx) => {
+    const end = start + (cat.percent || 0)
+    const color = categoryColors[idx % categoryColors.length]
+    const seg = `${color} ${start}% ${end}%`
+    start = end
+    return seg
+  })
+  return `conic-gradient(${segments.join(', ')})`
+})
 
 const exportData = () => {
   alert('Exporting analytics report as CSV...')

@@ -6,6 +6,14 @@
           <div class="section-header">
             <h2>{{ activeCategoryData.title }}</h2>
             <p class="description">{{ activeCategoryData.description }}</p>
+            <div class="category-tabs">
+              <button
+                v-for="cat in categoryKeys"
+                :key="cat"
+                :class="['tab-btn', { active: activeCategory === cat }]"
+                @click="activeCategory = cat"
+              >{{ categoryLabel(cat) }}</button>
+            </div>
           </div>
 
           <div class="services-grid">
@@ -132,7 +140,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from "vue";
-import { getProviderDashboardStats } from "../../services/api";
+import { getProviderDashboardStats, getProviderInventory } from "../../services/api";
 import { resolveImageUrl } from "../../utils/api";
 
 const props = withDefaults(
@@ -151,17 +159,8 @@ const stats = ref({
   khmerNewYear: '...',
 });
 
-onMounted(async () => {
-  try {
-    const res = await getProviderDashboardStats();
-    if (res.data) stats.value = res.data;
-  } catch (err) {
-    console.error("Failed to fetch dashboard stats", err);
-  }
-});
-
-type ServiceRow = { id: number; name: string; type: string; image: string; availability: Array<{ price: number; slots: number }>; };
-type CategoryKey = "tours" | "stays" | "transport";
+type ServiceRow = { id: string; name: string; type: string; image: string; availability: Array<{ price: number; slots: number }>; };
+type CategoryKey = "all" | "tours" | "stays" | "transport";
 
 const selectedService = ref<ServiceRow | null>(null);
 const isEditingService = ref(false);
@@ -171,6 +170,110 @@ const capacity = ref(25);
 const seasonalSurchargeEnabled = ref(true);
 const pricingRuleEnabled = ref(true);
 const panelMessage = ref("");
+
+const categoryData = ref<Record<CategoryKey, any>>({
+  all: { title: "All Services", description: "Overview of all services and availability.", days: [], services: [], metrics: { occupancy: "0%", alerts: "0", revenue: "$0" }, capacityHelper: "Sets base capacity.", panelLabel: "Pricing Engine", panelBadge: "SMART RULE", primaryRule: { title: "+20% Seasonal Surcharge", description: "Holiday range" }, updateAction: "Update All" },
+  tours: { title: "Tour Inventory", description: "Master availability control for tours.", days: [], services: [], metrics: { occupancy: "0%", alerts: "0", revenue: "$0" }, capacityHelper: "Sets base capacity for services.", panelLabel: "Pricing Engine", panelBadge: "SMART RULE", primaryRule: { title: "+20% Seasonal Surcharge", description: "Holiday range" }, updateAction: "Update Matrix" },
+  stays: { title: "Accommodation Matrix", description: "Manage room availability.", days: [], services: [], metrics: { occupancy: "0%", alerts: "0", revenue: "$0" }, capacityHelper: "Sets base capacity for rooms.", panelLabel: "Pricing Engine", panelBadge: "SMART RULE", primaryRule: { title: "Standard Rate", description: "Base pricing" }, updateAction: "Update Stays" },
+  transport: { title: "Fleet Matrix", description: "Vehicle availability.", days: [], services: [], metrics: { occupancy: "0%", alerts: "0", revenue: "$0" }, capacityHelper: "Sets fleet capacity.", panelLabel: "Pricing Engine", panelBadge: "SMART RULE", primaryRule: { title: "Standard Rate", description: "Base pricing" }, updateAction: "Update Fleet" },
+});
+
+const categoryKeys = computed<CategoryKey[]>(() => ["all", "tours", "stays", "transport"]);
+
+const categoryLabel = (cat: CategoryKey) => {
+  switch (cat) {
+    case "all": return "All";
+    case "tours": return "Tours";
+    case "stays": return "Stays";
+    case "transport": return "Transport";
+  }
+};
+
+const activeCategory = ref<CategoryKey>("all");
+
+const DAY_NAMES = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+
+function mapServiceType(type: string): CategoryKey {
+  if (type === 'accommodation') return 'stays';
+  if (type === 'transportation') return 'transport';
+  return 'tours';
+}
+
+onMounted(async () => {
+  try {
+    const [statsRes, invRes] = await Promise.all([
+      getProviderDashboardStats(),
+      getProviderInventory(),
+    ]);
+    if (statsRes.data) stats.value = statsRes.data;
+
+    const invData = invRes.data || invRes;
+    const list = Array.isArray(invData) ? invData : invData.data || [];
+
+    const grouped: Record<CategoryKey, any[]> = { all: [], tours: [], stays: [], transport: [] };
+    const allDates: Record<CategoryKey, Date[]> = { all: [], tours: [], stays: [], transport: [] };
+
+    for (const svc of list) {
+      const cat = mapServiceType(svc.serviceType || 'tour');
+      const slots = (svc.slots || []).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      const tops = slots.slice(0, 5);
+
+      tops.forEach((s: any) => {
+        const d = new Date(s.date);
+        if (!allDates[cat].some(ex => ex.getTime() === d.getTime())) {
+          allDates[cat].push(d);
+        }
+        if (!allDates['all'].some(ex => ex.getTime() === d.getTime())) {
+          allDates['all'].push(d);
+        }
+      });
+
+      const row = {
+        id: svc.id,
+        name: svc.title || 'Untitled',
+        type: svc.serviceType || 'tour',
+        image: svc.coverImage || '',
+        availability: tops.map((s: any) => ({
+          price: Number(s.price) || 0,
+          slots: s.availableSlots ?? 0,
+        })),
+      };
+      grouped[cat].push(row);
+      grouped['all'].push(row);
+    }
+
+    for (const cat of ['all', 'tours', 'stays', 'transport'] as CategoryKey[]) {
+      allDates[cat].sort((a, b) => a.getTime() - b.getTime());
+      const days = allDates[cat].map(d => ({
+        label: DAY_NAMES[d.getDay()],
+        date: String(d.getDate()).padStart(2, '0'),
+      }));
+
+      categoryData.value[cat] = {
+        ...categoryData.value[cat],
+        days: days.length > 0 ? days : [{ label: "MON", date: "01" }, { label: "TUE", date: "02" }, { label: "WED", date: "03" }, { label: "THU", date: "04" }],
+        services: grouped[cat],
+      };
+    }
+  } catch (err) {
+    console.error("Failed to fetch dashboard data", err);
+  }
+});
+
+const activeCategoryData = computed(() => {
+  const data = categoryData.value[activeCategory.value] || categoryData.value.tours;
+  return {
+    ...data,
+    metrics: { ...data.metrics, occupancy: stats.value.avgOccupancy, alerts: stats.value.lowStockAlerts, revenue: stats.value.revpar }
+  };
+});
+
+const filteredServices = computed(() => {
+  const services = activeCategoryData.value.services;
+  if (!props.searchQuery.trim()) return services;
+  const query = props.searchQuery.toLowerCase();
+  return services.filter((s: ServiceRow) => s.name.toLowerCase().includes(query) || s.type.toLowerCase().includes(query));
+});
 
 // Date Helpers
 const isoToUi = (iso: string) => {
@@ -190,64 +293,9 @@ const startDate = ref(getCurrentDateIso());
 const endDate = ref(getCurrentDateIso());
 const uiStartDate = ref(isoToUi(startDate.value));
 const uiEndDate = ref(isoToUi(endDate.value));
-const activeCategory = ref<CategoryKey>("tours");
 
 const selectedDateRangeLabel = computed(() => `${uiStartDate.value} - ${uiEndDate.value}`);
 const selectedDateRangeSubtitle = computed(() => "Selected Period");
-
-const categoryData: Record<CategoryKey, any> = {
-  tours: {
-    title: "Inventory Matrix",
-    description: "Master availability control for peak season tours.",
-    days: [{ label: "MON", date: "01" }, { label: "TUE", date: "02" }, { label: "WED", date: "03" }, { label: "THU", date: "04" }],
-    services: [{ id: 1, name: "Angkor Sunrise Tour", type: "Tour", image: "/angkor.png", availability: [{ price: 45, slots: 24 }, { price: 45, slots: 18 }, { price: 52, slots: 12 }, { price: 58, slots: 8 }] }],
-    metrics: { occupancy: "84.2%", alerts: "12", revenue: "$12.4k" },
-    capacityHelper: "Sets base capacity for services.",
-    panelLabel: "Pricing Engine",
-    panelBadge: "SMART RULE",
-    primaryRule: { title: "+20% Seasonal Surcharge", description: "Holiday range" },
-    updateAction: "Update Matrix",
-  },
-  stays: {
-    title: "Accommodation Matrix",
-    description: "Manage room availability and seasonal rates.",
-    days: [{ label: "MON", date: "01" }, { label: "TUE", date: "02" }, { label: "WED", date: "03" }, { label: "THU", date: "04" }],
-    services: [],
-    metrics: { occupancy: "0%", alerts: "0", revenue: "$0" },
-    capacityHelper: "Sets base capacity for rooms.",
-    panelLabel: "Pricing Engine",
-    panelBadge: "SMART RULE",
-    primaryRule: { title: "Standard Rate", description: "Base pricing" },
-    updateAction: "Update Stays",
-  },
-  transport: {
-    title: "Fleet Matrix",
-    description: "Vehicle availability and transfer scheduling.",
-    days: [{ label: "MON", date: "01" }, { label: "TUE", date: "02" }, { label: "WED", date: "03" }, { label: "THU", date: "04" }],
-    services: [],
-    metrics: { occupancy: "0%", alerts: "0", revenue: "$0" },
-    capacityHelper: "Sets fleet capacity.",
-    panelLabel: "Pricing Engine",
-    panelBadge: "SMART RULE",
-    primaryRule: { title: "Standard Rate", description: "Base pricing" },
-    updateAction: "Update Fleet",
-  },
-};
-
-const activeCategoryData = computed(() => {
-  const data = categoryData[activeCategory.value] || categoryData.tours;
-  return {
-    ...data,
-    metrics: { ...data.metrics, occupancy: stats.value.avgOccupancy, alerts: stats.value.lowStockAlerts, revenue: stats.value.revpar }
-  };
-});
-
-const filteredServices = computed(() => {
-  const services = activeCategoryData.value.services;
-  if (!props.searchQuery.trim()) return services;
-  const query = props.searchQuery.toLowerCase();
-  return services.filter((s: ServiceRow) => s.name.toLowerCase().includes(query) || s.type.toLowerCase().includes(query));
-});
 
 const applyDatePicker = () => {
   startDate.value = uiToIso(uiStartDate.value);
@@ -291,7 +339,7 @@ const adjustCapacity = (delta: number) => {
 };
 
 const updateMatrix = () => {
-  for (const service of categoryData[activeCategory.value].services) {
+  for (const service of categoryData.value[activeCategory.value].services) {
     service.availability = service.availability.map((availability: { price: number; slots: number }) => {
       const price = seasonalSurchargeEnabled.value && pricingRuleEnabled.value
         ? Math.round(availability.price * 1.2)
@@ -363,6 +411,38 @@ const restorePricingRule = () => {
   color: #4b5563;
   font-size: 1rem;
   line-height: 1.5;
+}
+
+.category-tabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 14px;
+  padding: 4px;
+  border-radius: 10px;
+  background: #f3f4f6;
+  width: fit-content;
+}
+
+.tab-btn {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #6b7280;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.tab-btn:hover {
+  color: #111827;
+}
+
+.tab-btn.active {
+  background: #ffffff;
+  color: #148a74;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 .services-grid,
