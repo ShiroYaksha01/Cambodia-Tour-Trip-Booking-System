@@ -36,13 +36,7 @@
 
     <div v-else class="sidebar-inner">
       <div class="brand-block">
-        <div class="brand-mark" aria-hidden="true">
-          <img src="/logo-mark.png" alt="" />
-        </div>
-        <div>
-          <strong>Anajak Tour</strong>
-          <small>System Supervisor</small>
-        </div>
+        <img class="brand-logo" src="/logo-wordmark.png" alt="Anajak Tour" />
       </div>
 
       <nav class="nav-list" aria-label="Dashboard navigation">
@@ -369,40 +363,15 @@ export default defineComponent({
 
 .brand-block {
   display: flex;
-  gap: 12px;
-  align-items: start;
-  padding: 0 6px 6px;
+  align-items: center;
+  padding: 0 4px 18px;
 }
 
-.brand-block strong {
-  display: block;
-  font-size: 0.94rem;
-  color: #173f42;
-  line-height: 1.15;
-}
-
-.brand-block small {
-  display: block;
-  margin-top: 2px;
-  color: #7a8a8b;
-  font-size: 0.72rem;
-}
-
-.brand-mark {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  background: #ffffff;
-  border: 1px solid rgba(15, 110, 112, 0.16);
-  overflow: hidden;
-}
-
-.brand-mark img {
-  width: 24px;
-  height: 23px;
+.brand-logo {
+  width: min(100%, 224px);
+  height: 46px;
   object-fit: contain;
+  object-position: left center;
 }
 
 .eyebrow,
