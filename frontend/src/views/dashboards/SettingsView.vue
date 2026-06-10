@@ -5,72 +5,242 @@
     <!-- Content -->
     <main class="settings-content">
       <!-- Public Profile Section -->
-      <section class="settings-section">
-        <div class="section-icon">📋</div>
-        <div class="section-header">
-          <h2>Public Profile</h2>
-          <p class="section-description">This information will be visible to travelers and curators across the platform. Ensure your brand represents the quality of your services.</p>
+      <section class="public-profile-section">
+        <div class="profile-section-header">
+          <div class="profile-section-icon">
+            <BuildingStorefrontIcon />
+          </div>
+          <div>
+            <p class="profile-kicker">Marketplace Profile</p>
+            <h2>Public Profile</h2>
+            <p>This information appears on your traveler-facing provider profile.</p>
+          </div>
         </div>
 
-        <div class="settings-grid">
-          <!-- Business Logo -->
-          <div class="settings-group logo-group">
-            <label>Business Logo</label>
-            <div class="logo-upload">
-              <div class="logo-preview">
-                <img v-if="logoPreview" :src="logoPreview" :alt="companyName || 'Logo'" />
-                <div v-else class="logo-placeholder">📷</div>
+        <div class="profile-layout">
+          <div class="profile-editor">
+            <div class="profile-card profile-card--media-info">
+              <div class="card-title-row">
+                <div>
+                  <h3>Brand Media & Basic Info</h3>
+                  <p>Keep your provider profile polished, clear, and traveler-ready.</p>
+                </div>
+                <PhotoIcon class="card-title-icon" />
               </div>
-              <div class="logo-info">
-                <p class="file-name">{{ logoFileName || 'JPG, PNG or GIF, Max 2MB' }}</p>
-                <button @click="triggerLogoUpload" class="upload-btn">Update Branding</button>
-                <input
-                  ref="logoInput"
-                  type="file"
-                  accept="image/*"
-                  style="display: none"
-                  @change="handleLogoUpload"
-                />
+
+              <div class="media-info-grid">
+                <div class="media-column">
+                  <div class="cover-uploader">
+                    <div class="cover-preview" :style="coverPreview ? { backgroundImage: `url(${coverPreview})` } : undefined">
+                      <div v-if="!coverPreview" class="cover-empty">
+                        <PhotoIcon />
+                        <span>Cover banner preview</span>
+                      </div>
+                    </div>
+                    <div class="upload-row">
+                      <div>
+                        <label>Cover Banner</label>
+                        <p>{{ coverFileName || "JPG/PNG, recommended 1600x500px" }}</p>
+                      </div>
+                      <button type="button" class="profile-upload-btn" @click="triggerCoverUpload">
+                        {{ coverPreview ? "Change Cover" : "Upload Cover" }}
+                      </button>
+                      <input
+                        ref="coverInput"
+                        type="file"
+                        accept="image/png,image/jpeg"
+                        class="hidden-file-input"
+                        @change="handleCoverUpload"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="logo-uploader">
+                    <div class="brand-logo-preview">
+                      <img v-if="logoPreview" :src="logoPreview" :alt="companyName || 'Business logo'" />
+                      <BuildingStorefrontIcon v-else />
+                    </div>
+                    <div class="logo-upload-copy">
+                      <label>Business Logo</label>
+                      <p>{{ logoFileName || "JPG/PNG, max 2MB" }}</p>
+                    </div>
+                    <button type="button" class="profile-upload-btn" @click="triggerLogoUpload">
+                      {{ logoPreview ? "Change Logo" : "Upload Logo" }}
+                    </button>
+                    <input
+                      ref="logoInput"
+                      type="file"
+                      accept="image/png,image/jpeg"
+                      class="hidden-file-input"
+                      @change="handleLogoUpload"
+                    />
+                  </div>
+                </div>
+
+                <div class="profile-form-grid basic-info-grid">
+                  <div class="profile-field">
+                    <label>Business Name</label>
+                    <input v-model="companyName" type="text" placeholder="Anajak Tour" />
+                  </div>
+                  <div class="profile-field">
+                    <label>Tagline</label>
+                    <input v-model="tagline" type="text" placeholder="Premium Cambodia travel experiences" />
+                  </div>
+                  <div class="profile-field full">
+                    <label>Business Biography</label>
+                    <textarea
+                      v-model="biography"
+                      placeholder="Tell travelers what makes your tours special..."
+                      rows="4"
+                    ></textarea>
+                  </div>
+                </div>
               </div>
-              <div class="checkmark">✓</div>
+            </div>
+
+            <div class="profile-card">
+              <div class="card-title-row">
+                <div>
+                  <h3>Travel Profile Highlights</h3>
+                  <p>Select the signals and languages travelers should notice first.</p>
+                </div>
+                <CheckBadgeIcon class="card-title-icon" />
+              </div>
+              <div class="highlight-language-grid">
+                <div>
+                  <h4>Highlights</h4>
+                  <div class="chip-grid">
+                    <button
+                      v-for="highlight in highlightOptions"
+                      :key="highlight"
+                      type="button"
+                      class="select-chip"
+                      :class="{ active: selectedHighlights.includes(highlight) }"
+                      @click="toggleHighlight(highlight)"
+                    >
+                      {{ highlight }}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <h4>Languages</h4>
+                  <div class="language-chip-row">
+                    <button
+                      v-for="language in languageOptions"
+                      :key="language"
+                      type="button"
+                      class="select-chip compact"
+                      :class="{ active: selectedLanguages.includes(language) }"
+                      @click="toggleLanguage(language)"
+                    >
+                      {{ language }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="profile-card">
+              <div class="card-title-row">
+                <div>
+                  <h3>Location & Public Links</h3>
+                  <p>Help travelers find, contact, and trust your business.</p>
+                </div>
+                <MapPinIcon class="card-title-icon" />
+              </div>
+              <div class="location-social-grid">
+                <div class="profile-form-grid">
+                  <div class="profile-field">
+                    <label>City / Province</label>
+                    <input v-model="cityProvince" type="text" placeholder="Siem Reap" />
+                  </div>
+                  <div class="profile-field">
+                    <label>Google Maps Link</label>
+                    <input v-model="googleMapsLink" type="url" placeholder="https://maps.google.com/..." />
+                  </div>
+                  <div class="profile-field full">
+                    <label>Business Address</label>
+                    <input v-model="businessAddress" type="text" placeholder="Street, commune, district" />
+                  </div>
+                </div>
+
+                <div class="profile-form-grid">
+                  <div class="profile-field">
+                    <label>Public Email</label>
+                    <input v-model="officialEmail" type="email" placeholder="hello@anajaktour.com" />
+                  </div>
+                  <div class="profile-field">
+                    <label>Phone Number</label>
+                    <input v-model="phoneNumber" type="tel" placeholder="+855 12 345 678" />
+                  </div>
+                  <div class="profile-field">
+                    <label>Facebook Page</label>
+                    <input v-model="facebookUrl" type="text" placeholder="fb.com/yourbrand" />
+                  </div>
+                  <div class="profile-field">
+                    <label>Telegram Handle</label>
+                    <input v-model="telegramHandle" type="text" placeholder="@brand_support" />
+                  </div>
+                  <div class="profile-field">
+                    <label>Website</label>
+                    <input v-model="websiteUrl" type="url" placeholder="https://yourbrand.com" />
+                  </div>
+                  <div class="profile-field">
+                    <label>Instagram</label>
+                    <input v-model="instagramHandle" type="text" placeholder="@yourbrand" />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- Business Biography -->
-          <div class="settings-group full-width">
-            <label>Business Biography</label>
-            <p class="field-hint">Tell travelers about your heritage curation expertise...</p>
-            <textarea
-              v-model="biography"
-              class="textarea"
-              placeholder="Describe your heritage experiences, specialties, and what makes your curations unique..."
-              rows="4"
-            ></textarea>
-          </div>
-
-          <!-- Facebook Page -->
-          <div class="settings-group">
-            <label>Facebook Page</label>
-            <div class="social-input">
-              <span class="social-icon">f</span>
-              <input v-model="facebookUrl" type="text" placeholder="fb.com/yourbrand" />
+          <aside class="verification-preview-card">
+            <div class="preview-cover" :style="coverPreview ? { backgroundImage: `url(${coverPreview})` } : undefined"></div>
+            <div class="preview-body">
+              <div class="preview-logo">
+                <img v-if="logoPreview" :src="logoPreview" :alt="companyName || 'Business logo'" />
+                <BuildingStorefrontIcon v-else />
+              </div>
+              <div class="verified-badge">
+                <CheckBadgeIcon />
+                Verified Provider
+              </div>
+              <h3>{{ companyName || "Your Business Name" }}</h3>
+              <p class="preview-tagline">{{ tagline || "Premium Cambodia travel experiences" }}</p>
+              <p class="preview-location">
+                <MapPinIcon />
+                {{ cityProvince || "City / Province" }}
+              </p>
+              <p v-if="businessAddress" class="preview-address">{{ businessAddress }}</p>
+              <p v-if="biography" class="preview-bio">{{ biography }}</p>
+              <div class="preview-tags">
+                <span v-for="highlight in previewHighlights" :key="highlight">{{ highlight }}</span>
+              </div>
+              <div class="preview-languages">
+                <span v-for="language in previewLanguages" :key="language">{{ language }}</span>
+              </div>
+              <div class="preview-contact-actions">
+                <a :href="facebookHref" target="_blank" rel="noreferrer">
+                  <UserGroupIcon />
+                  Facebook
+                </a>
+                <a :href="telegramHref" target="_blank" rel="noreferrer">
+                  <ChatBubbleLeftRightIcon />
+                  Telegram
+                </a>
+                <a :href="websiteHref" target="_blank" rel="noreferrer">
+                  <GlobeAltIcon />
+                  Website
+                </a>
+              </div>
             </div>
-          </div>
-
-          <!-- Telegram Handle -->
-          <div class="settings-group">
-            <label>Telegram Handle</label>
-            <div class="social-input">
-              <span class="social-icon">✈</span>
-              <input v-model="telegramHandle" type="text" placeholder="@brand_support" />
-            </div>
-          </div>
+          </aside>
         </div>
       </section>
 
       <!-- Contact Details Section -->
       <section class="settings-section">
-        <div class="section-icon">📧</div>
+        <div class="section-icon"><EnvelopeIcon /></div>
         <div class="section-header">
           <div class="header-top">
             <h2>Contact Details</h2>
@@ -93,12 +263,12 @@
           </div>
         </div>
 
-        <p class="admin-note">ℹ These details are for administrative communication only.</p>
+        <p class="admin-note"><InformationCircleIcon /> These details are for administrative communication only.</p>
       </section>
 
       <!-- Payout Settings Section -->
       <section class="settings-section payout-section">
-        <div class="section-icon">🏦</div>
+        <div class="section-icon"><BanknotesIcon /></div>
         <div class="section-header">
           <h2>Payout Settings</h2>
         </div>
@@ -108,15 +278,19 @@
             <label>BANK ACCOUNT NUMBER</label>
             <div class="account-display">
               <input v-model="bankAccountMasked" class="payout-input" placeholder="e.g. 000 123 456" />
-              <button class="copy-btn" @click.prevent>📋</button>
+              <button class="copy-btn" type="button" aria-label="Copy bank account" @click.prevent="copyBankAccount">
+                <ClipboardDocumentIcon />
+              </button>
             </div>
           </div>
 
           <div class="payout-field">
             <label>BANK NAME</label>
             <div class="account-display">
-              <input v-model="bankName" class="payout-input" placeholder="e.g. ABA Bank" />
-              <button class="edit-btn" @click.prevent>✎</button>
+              <input ref="bankNameInput" v-model="bankName" class="payout-input" placeholder="e.g. ABA Bank" />
+              <button class="edit-btn" type="button" aria-label="Edit bank name" @click.prevent="focusBankName">
+                <PencilSquareIcon />
+              </button>
             </div>
           </div>
 
@@ -126,7 +300,7 @@
 
       <!-- Policy Manager Section -->
       <section class="settings-section">
-        <div class="section-icon">⚙</div>
+        <div class="section-icon"><DocumentTextIcon /></div>
         <div class="section-header">
           <h2>Policy Manager</h2>
           <p class="section-description">Define your business rules and cancellation terms for curated trips.</p>
@@ -157,7 +331,7 @@
         </div>
 
         <div class="compliance-warning">
-          <span class="warning-icon">⚠</span>
+          <span class="warning-icon"><ExclamationTriangleIcon /></span>
           <p>Legal Compliance: Changes to policies will only apply to new bookings created after the save date.</p>
         </div>
       </section>
@@ -166,9 +340,18 @@
     <!-- Footer -->
     <footer class="settings-footer">
       <div class="footer-left">
-        <button class="btn-text">➕ New Booking</button>
-        <button class="btn-text">? Support</button>
-        <button @click="handleLogout" class="btn-text">🚪 Logout</button>
+        <button class="btn-text" type="button" @click="router.push({ name: 'provider-service' })">
+          <PlusIcon />
+          New Booking
+        </button>
+        <button class="btn-text" type="button" @click="showSupport">
+          <QuestionMarkCircleIcon />
+          Support
+        </button>
+        <button @click="handleLogout" class="btn-text">
+          <ArrowRightOnRectangleIcon />
+          Logout
+        </button>
       </div>
       <div class="footer-right">
         <p class="last-updated">Last updated: Oct 24, 2023 at 09:15 AM</p>
@@ -180,7 +363,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { computed, ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import {
+  ArrowRightOnRectangleIcon,
+  BanknotesIcon,
+  BuildingStorefrontIcon,
+  ChatBubbleLeftRightIcon,
+  CheckBadgeIcon,
+  ClipboardDocumentIcon,
+  DocumentTextIcon,
+  EnvelopeIcon,
+  ExclamationTriangleIcon,
+  GlobeAltIcon,
+  InformationCircleIcon,
+  MapPinIcon,
+  PencilSquareIcon,
+  PhotoIcon,
+  PlusIcon,
+  QuestionMarkCircleIcon,
+  UserGroupIcon,
+} from "@heroicons/vue/24/outline";
 import { clearAuthData } from "../../utils/auth";
 import { getProviderProfile, updateProviderProfile } from "../../services/api";
 
@@ -188,10 +391,42 @@ defineProps<{
   searchQuery?: string;
 }>();
 
+type ProfileSnapshot = {
+  companyName: string;
+  tagline: string;
+  biography: string;
+  officialEmail: string;
+  phoneNumber: string;
+  facebookUrl: string;
+  telegramHandle: string;
+  websiteUrl: string;
+  instagramHandle: string;
+  cityProvince: string;
+  businessAddress: string;
+  googleMapsLink: string;
+  bankAccountMasked: string;
+  bankName: string;
+  refundRules: string;
+  guestRequirements: string;
+  logoPreview: string;
+  logoFileName: string;
+  coverPreview: string;
+  coverFileName: string;
+  selectedHighlights: string[];
+  selectedLanguages: string[];
+};
+
+const router = useRouter();
 const companyName = ref("");
+const tagline = ref("");
 const biography = ref("");
 const facebookUrl = ref("fb.com/yourbrand");
 const telegramHandle = ref("@brand_support");
+const websiteUrl = ref("");
+const instagramHandle = ref("");
+const cityProvince = ref("");
+const businessAddress = ref("");
+const googleMapsLink = ref("");
 const officialEmail = ref("");
 const phoneNumber = ref("");
 const bankAccountMasked = ref("801 234 567");
@@ -200,28 +435,129 @@ const refundRules = ref("");
 const guestRequirements = ref("");
 const logoFileName = ref("");
 const logoPreview = ref("");
+const coverFileName = ref("");
+const coverPreview = ref("");
+const highlightOptions = [
+  "Licensed Tour Operator",
+  "Local Expert Guides",
+  "Private Tours Available",
+  "Airport Pickup",
+  "24/7 Traveler Support",
+  "Family Friendly",
+];
+const languageOptions = ["Khmer", "English", "Chinese", "French"];
+const selectedHighlights = ref<string[]>(["Licensed Tour Operator", "Local Expert Guides"]);
+const selectedLanguages = ref<string[]>(["Khmer", "English"]);
 
 const logoInput = ref<HTMLInputElement | null>(null);
+const coverInput = ref<HTMLInputElement | null>(null);
+const bankNameInput = ref<HTMLInputElement | null>(null);
+let lastSavedProfile: ProfileSnapshot | null = null;
 
-onMounted(async () => {
+const previewHighlights = computed(() => {
+  return selectedHighlights.value.length
+    ? selectedHighlights.value.slice(0, 4)
+    : ["Licensed Tour Operator", "Local Expert Guides"];
+});
+const previewLanguages = computed(() => {
+  return selectedLanguages.value.length ? selectedLanguages.value : ["Khmer", "English"];
+});
+const facebookHref = computed(() => normalizeExternalLink(facebookUrl.value, "https://facebook.com/"));
+const telegramHref = computed(() => {
+  const value = telegramHandle.value.trim();
+  if (!value) return "#";
+  if (/^https?:\/\//i.test(value)) return value;
+  return `https://t.me/${value.replace(/^@/, "")}`;
+});
+const websiteHref = computed(() => normalizeExternalLink(websiteUrl.value, "https://"));
+
+onMounted(loadProfile);
+
+async function loadProfile() {
   try {
     const res = await getProviderProfile();
     const data = res.data || res; // Handle different response shapes
-    companyName.value = data.companyName || "";
-    biography.value = data.description || "";
-    officialEmail.value = data.user?.email || "";
-    phoneNumber.value = data.user?.phoneNumber || "";
-    facebookUrl.value = data.facebookUrl || "fb.com/yourbrand";
-    telegramHandle.value = data.telegramUrl || "@brand_support";
-    bankAccountMasked.value = data.bankAccountNumber || "Not set";
-    bankName.value = data.bankName || "Not set";
-    refundRules.value = data.refundPolicy || "";
-    guestRequirements.value = data.guestRequirements || "";
-    logoPreview.value = data.logo || "";
+    applyProfile({
+      companyName: data.companyName || "",
+      tagline: data.tagline || "Curated tours with trusted local experts",
+      biography: data.description || "",
+      officialEmail: data.user?.email || "",
+      phoneNumber: data.user?.phoneNumber || "",
+      facebookUrl: data.facebookUrl || "fb.com/yourbrand",
+      telegramHandle: data.telegramUrl || "@brand_support",
+      websiteUrl: data.websiteUrl || "",
+      instagramHandle: data.instagramHandle || "",
+      cityProvince: data.cityProvince || "Siem Reap",
+      businessAddress: data.businessAddress || "",
+      googleMapsLink: data.googleMapsLink || "",
+      bankAccountMasked: data.bankAccountNumber || "Not set",
+      bankName: data.bankName || "Not set",
+      refundRules: data.refundPolicy || "",
+      guestRequirements: data.guestRequirements || "",
+      logoPreview: data.logo || "",
+      logoFileName: "",
+      coverPreview: data.coverImage || "",
+      coverFileName: "",
+      selectedHighlights: Array.isArray(data.highlights) ? data.highlights : ["Licensed Tour Operator", "Local Expert Guides"],
+      selectedLanguages: Array.isArray(data.languages) ? data.languages : ["Khmer", "English"],
+    });
+    lastSavedProfile = currentProfileSnapshot();
   } catch (err) {
     console.error("Failed to fetch provider profile", err);
   }
-});
+}
+
+function currentProfileSnapshot() {
+  return {
+    companyName: companyName.value,
+    tagline: tagline.value,
+    biography: biography.value,
+    officialEmail: officialEmail.value,
+    phoneNumber: phoneNumber.value,
+    facebookUrl: facebookUrl.value,
+    telegramHandle: telegramHandle.value,
+    websiteUrl: websiteUrl.value,
+    instagramHandle: instagramHandle.value,
+    cityProvince: cityProvince.value,
+    businessAddress: businessAddress.value,
+    googleMapsLink: googleMapsLink.value,
+    bankAccountMasked: bankAccountMasked.value,
+    bankName: bankName.value,
+    refundRules: refundRules.value,
+    guestRequirements: guestRequirements.value,
+    logoPreview: logoPreview.value,
+    logoFileName: logoFileName.value,
+    coverPreview: coverPreview.value,
+    coverFileName: coverFileName.value,
+    selectedHighlights: [...selectedHighlights.value],
+    selectedLanguages: [...selectedLanguages.value],
+  };
+}
+
+function applyProfile(profile: ProfileSnapshot) {
+  companyName.value = profile.companyName;
+  tagline.value = profile.tagline;
+  biography.value = profile.biography;
+  officialEmail.value = profile.officialEmail;
+  phoneNumber.value = profile.phoneNumber;
+  facebookUrl.value = profile.facebookUrl;
+  telegramHandle.value = profile.telegramHandle;
+  websiteUrl.value = profile.websiteUrl;
+  instagramHandle.value = profile.instagramHandle;
+  cityProvince.value = profile.cityProvince;
+  businessAddress.value = profile.businessAddress;
+  googleMapsLink.value = profile.googleMapsLink;
+  bankAccountMasked.value = profile.bankAccountMasked;
+  bankName.value = profile.bankName;
+  refundRules.value = profile.refundRules;
+  guestRequirements.value = profile.guestRequirements;
+  logoPreview.value = profile.logoPreview;
+  logoFileName.value = profile.logoFileName;
+  coverPreview.value = profile.coverPreview;
+  coverFileName.value = profile.coverFileName;
+  selectedHighlights.value = [...profile.selectedHighlights];
+  selectedLanguages.value = [...profile.selectedLanguages];
+}
 
 function handleLogout() {
   if (confirm("Are you sure you want to log out?")) {
@@ -234,33 +570,90 @@ function triggerLogoUpload() {
   logoInput.value?.click();
 }
 
+function triggerCoverUpload() {
+  coverInput.value?.click();
+}
+
+function readImageFile(file: File, onLoad: (src: string) => void) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    onLoad(e.target?.result as string);
+  };
+  reader.readAsDataURL(file);
+}
+
 function handleLogoUpload(event: Event) {
   const target = event.target as HTMLInputElement;
   const file = target.files?.[0];
   if (file) {
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Logo file must be smaller than 2MB.");
+      target.value = "";
+      return;
+    }
     logoFileName.value = file.name;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      logoPreview.value = e.target?.result as string;
-    };
-    reader.readAsDataURL(file);
+    readImageFile(file, (src) => {
+      logoPreview.value = src;
+    });
   }
+}
+
+function handleCoverUpload(event: Event) {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (file) {
+    coverFileName.value = file.name;
+    readImageFile(file, (src) => {
+      coverPreview.value = src;
+    });
+  }
+}
+
+function toggleHighlight(highlight: string) {
+  selectedHighlights.value = selectedHighlights.value.includes(highlight)
+    ? selectedHighlights.value.filter((item) => item !== highlight)
+    : [...selectedHighlights.value, highlight];
+}
+
+function toggleLanguage(language: string) {
+  selectedLanguages.value = selectedLanguages.value.includes(language)
+    ? selectedLanguages.value.filter((item) => item !== language)
+    : [...selectedLanguages.value, language];
+}
+
+function normalizeExternalLink(value: string, fallbackPrefix: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return "#";
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (trimmed.includes(".")) return `https://${trimmed}`;
+  return `${fallbackPrefix}${trimmed.replace(/^\/+/, "")}`;
 }
 
 async function saveChanges() {
   try {
     await updateProviderProfile({
       companyName: companyName.value,
+      tagline: tagline.value,
       description: biography.value,
       email: officialEmail.value,
       phoneNumber: phoneNumber.value,
       facebookUrl: facebookUrl.value,
       telegramUrl: telegramHandle.value,
+      websiteUrl: websiteUrl.value,
+      instagramHandle: instagramHandle.value,
+      cityProvince: cityProvince.value,
+      businessAddress: businessAddress.value,
+      googleMapsLink: googleMapsLink.value,
+      highlights: selectedHighlights.value,
+      languages: selectedLanguages.value,
+      coverImage: coverPreview.value,
+      logo: logoPreview.value,
       bankAccountNumber: bankAccountMasked.value,
       bankName: bankName.value,
       refundPolicy: refundRules.value,
       guestRequirements: guestRequirements.value,
     });
+    lastSavedProfile = currentProfileSnapshot();
     alert("Settings saved successfully!");
   } catch (err) {
     console.error("Failed to save changes", err);
@@ -269,10 +662,28 @@ async function saveChanges() {
 }
 
 function discardChanges() {
-  // Reset to defaults
-  logoFileName.value = "";
-  logoPreview.value = "";
+  if (lastSavedProfile) {
+    applyProfile(lastSavedProfile);
+  }
   alert("Changes discarded.");
+}
+
+async function copyBankAccount() {
+  try {
+    await navigator.clipboard.writeText(bankAccountMasked.value);
+    alert("Bank account copied.");
+  } catch {
+    alert(`Bank account: ${bankAccountMasked.value}`);
+  }
+}
+
+function focusBankName() {
+  bankNameInput.value?.focus();
+  bankNameInput.value?.select();
+}
+
+function showSupport() {
+  alert("Support: hello@anajaktour.kh");
 }
 </script>
 
@@ -324,7 +735,7 @@ function discardChanges() {
   overflow: hidden;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, #0f6e70, #efb34f);
+  background: linear-gradient(135deg, #148a74, #efb34f);
   color: #fff;
   font-size: 0.65rem;
   font-weight: 800;
@@ -354,9 +765,536 @@ function discardChanges() {
   overflow-y: auto;
 }
 
+.public-profile-section {
+  margin-bottom: 20px;
+  --profile-primary: #148a74;
+  --profile-primary-hover: #117864;
+  --profile-primary-soft: #e8f5f0;
+  --profile-primary-border: #cfe9e3;
+  --profile-accent: #efb34f;
+  --profile-text: #111827;
+  --profile-muted: #667085;
+  --profile-subtle: #98a2b3;
+  --profile-border: #e5e7eb;
+  --profile-bg: #f5f5f5;
+  --profile-surface-soft: #f9fafb;
+}
+
+.public-profile-section,
+.public-profile-section * {
+  box-sizing: border-box;
+}
+
+.profile-section-header {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.profile-section-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: var(--profile-primary);
+  background: var(--profile-primary-soft);
+  border: 1px solid var(--profile-primary-border);
+  border-radius: 16px;
+}
+
+.profile-section-icon svg,
+.card-title-icon,
+.cover-empty svg,
+.brand-logo-preview svg,
+.preview-logo svg,
+.verified-badge svg,
+.preview-location svg,
+.preview-contact-actions svg {
+  width: 22px;
+  height: 22px;
+}
+
+.profile-kicker {
+  margin: 0 0 4px;
+  color: var(--profile-primary);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.profile-section-header h2 {
+  margin: 0;
+  color: var(--profile-text);
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.profile-section-header p {
+  margin: 6px 0 0;
+  color: var(--profile-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.profile-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 360px);
+  gap: 20px;
+  align-items: start;
+}
+
+.profile-editor {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.profile-card,
+.verification-preview-card {
+  background: #fff;
+  border: 1px solid #E5E7EB;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+}
+
+.profile-card {
+  padding: 18px;
+  min-width: 0;
+}
+
+.media-info-grid {
+  display: grid;
+  grid-template-columns: minmax(250px, 0.85fr) minmax(0, 1.15fr);
+  gap: 18px;
+  align-items: start;
+  min-width: 0;
+}
+
+.media-column {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.basic-info-grid {
+  align-content: start;
+  min-width: 0;
+}
+
+.card-title-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.card-title-row h3 {
+  margin: 0;
+  color: var(--profile-text);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.card-title-row p {
+  margin: 5px 0 0;
+  color: var(--profile-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.card-title-icon {
+  flex: 0 0 auto;
+  color: var(--profile-primary);
+}
+
+.cover-uploader {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.cover-preview {
+  min-height: 146px;
+  border: 1px dashed #d1d5db;
+  border-radius: 16px;
+  background-color: var(--profile-surface-soft);
+  background-position: center;
+  background-size: cover;
+  overflow: hidden;
+}
+
+.cover-empty {
+  height: 100%;
+  min-height: 146px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  color: var(--profile-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cover-empty svg {
+  color: var(--profile-primary);
+}
+
+.upload-row,
+.logo-uploader {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: center;
+  min-width: 0;
+}
+
+.logo-uploader {
+  grid-template-columns: 64px 1fr auto;
+  margin-top: 0;
+  padding: 12px;
+  background: var(--profile-surface-soft);
+  border: 1px solid var(--profile-border);
+  border-radius: 16px;
+}
+
+.highlight-language-grid,
+.location-social-grid {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.highlight-language-grid {
+  grid-template-columns: minmax(0, 1.15fr) minmax(220px, 0.85fr);
+}
+
+.highlight-language-grid h4 {
+  margin: 0 0 10px;
+  color: var(--profile-text);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.location-social-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.location-social-grid .profile-form-grid {
+  align-content: start;
+}
+
+.location-social-grid .profile-form-grid + .profile-form-grid {
+  padding-left: 18px;
+  border-left: 1px solid #eef0f2;
+}
+
+.brand-logo-preview {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: var(--profile-primary);
+  background: var(--profile-surface-soft);
+  border: 1px solid var(--profile-border);
+  border-radius: 16px;
+}
+
+.brand-logo-preview img,
+.preview-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.upload-row label,
+.logo-upload-copy label,
+.profile-field label {
+  display: block;
+  color: var(--profile-text);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.upload-row p,
+.logo-upload-copy p {
+  margin: 5px 0 0;
+  color: var(--profile-muted);
+  font-size: 12px;
+}
+
+.profile-upload-btn {
+  min-height: 42px;
+  padding: 0 16px;
+  color: #fff;
+  background: var(--profile-primary);
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.profile-upload-btn:hover {
+  background: var(--profile-primary-hover);
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+.profile-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  min-width: 0;
+}
+
+.profile-field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.profile-field.full {
+  grid-column: 1 / -1;
+}
+
+.profile-field input,
+.profile-field textarea {
+  width: 100%;
+  border: 1px solid var(--profile-border);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--profile-text);
+  font-family: inherit;
+  font-size: 14px;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.profile-field input {
+  height: 46px;
+  padding: 0 14px;
+}
+
+.profile-field textarea {
+  min-height: 112px;
+  max-height: 150px;
+  padding: 12px 14px;
+  resize: vertical;
+}
+
+.profile-field input::placeholder,
+.profile-field textarea::placeholder {
+  color: var(--profile-subtle);
+}
+
+.profile-field input:focus,
+.profile-field textarea:focus {
+  outline: none;
+  border-color: var(--profile-primary);
+  box-shadow: 0 0 0 4px rgba(20, 138, 116, 0.12);
+  background: #fbfffc;
+}
+
+.chip-grid,
+.language-chip-row,
+.preview-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.select-chip {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--profile-border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--profile-text);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.select-chip.compact {
+  min-height: 36px;
+}
+
+.select-chip.active {
+  border-color: var(--profile-primary);
+  background: var(--profile-primary);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(20, 138, 116, 0.18);
+}
+
+.verification-preview-card {
+  position: sticky;
+  top: 12px;
+  overflow: hidden;
+}
+
+.preview-cover {
+  height: 150px;
+  background: linear-gradient(135deg, rgba(20, 138, 116, 0.18), rgba(239, 179, 79, 0.16));
+  background-position: center;
+  background-size: cover;
+}
+
+.preview-body {
+  padding: 0 18px 18px;
+}
+
+.preview-logo {
+  width: 78px;
+  height: 78px;
+  display: grid;
+  place-items: center;
+  margin-top: -39px;
+  overflow: hidden;
+  color: var(--profile-primary);
+  background: #fff;
+  border: 4px solid #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 22px rgba(11, 43, 76, 0.12);
+}
+
+.verified-badge {
+  width: fit-content;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin: 14px 0 12px;
+  padding: 6px 10px;
+  color: var(--profile-primary);
+  background: var(--profile-primary-soft);
+  border: 1px solid var(--profile-primary-border);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.verified-badge svg,
+.preview-location svg {
+  color: var(--profile-primary);
+}
+
+.preview-body h3 {
+  margin: 0;
+  color: var(--profile-text);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.preview-tagline {
+  margin: 6px 0 12px;
+  color: var(--profile-muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.preview-location {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  margin: 0 0 8px;
+  color: var(--profile-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.preview-location svg {
+  width: 18px;
+  height: 18px;
+}
+
+.preview-address,
+.preview-bio {
+  margin: 0 0 12px;
+  color: var(--profile-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.preview-bio {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.preview-tags,
+.preview-languages {
+  margin-top: 12px;
+}
+
+.preview-tags span {
+  padding: 6px 9px;
+  color: var(--profile-primary);
+  background: var(--profile-primary-soft);
+  border: 1px solid var(--profile-primary-border);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.preview-languages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.preview-languages span {
+  padding: 5px 8px;
+  color: #475467;
+  background: #f2f4f7;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.preview-contact-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.preview-contact-actions a {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 8px;
+  color: var(--profile-primary);
+  background: #fff;
+  border: 1px solid var(--profile-primary-border);
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.preview-contact-actions svg {
+  width: 15px;
+  height: 15px;
+}
+
 .settings-section {
   background: white;
-  border-radius: 6px;
+  border: 1px solid #E5E7EB;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
   padding: 24px;
   margin-bottom: 20px;
   display: grid;
@@ -370,8 +1308,18 @@ function discardChanges() {
 }
 
 .section-icon {
-  font-size: 24px;
-  line-height: 1.2;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  color: var(--profile-primary, #148a74);
+  background: var(--profile-primary-soft, #e8f5f0);
+  border-radius: 12px;
+}
+
+.section-icon svg {
+  width: 21px;
+  height: 21px;
 }
 
 .section-header h2 {
@@ -389,7 +1337,7 @@ function discardChanges() {
 
 .private-badge {
   background: #e8f5f0;
-  color: #0f6e70;
+  color: #148a74;
   padding: 2px 6px;
   border-radius: 3px;
   font-size: 10px;
@@ -450,7 +1398,7 @@ function discardChanges() {
 .settings-group input:focus,
 .settings-group textarea:focus {
   outline: none;
-  border-color: #0f6e70;
+  border-color: #148a74;
   background: #f9fffe;
 }
 
@@ -471,7 +1419,7 @@ function discardChanges() {
   background: #f5f5f5;
   border-right: 1px solid #ddd;
   font-weight: 600;
-  color: #0f6e70;
+  color: #148a74;
 }
 
 .social-input input {
@@ -492,7 +1440,7 @@ function discardChanges() {
   align-items: center;
   padding: 12px;
   background: #f9f9f9;
-  border-radius: 6px;
+  border-radius: 16px;
   border: 1px solid #e0e0e0;
 }
 
@@ -532,7 +1480,7 @@ function discardChanges() {
 
 .upload-btn {
   padding: 6px 12px;
-  background: #0f6e70;
+  background: #148a74;
   color: white;
   border: none;
   border-radius: 3px;
@@ -542,7 +1490,7 @@ function discardChanges() {
 }
 
 .upload-btn:hover {
-  background: #0d5a5c;
+  background: #117864;
 }
 
 .checkmark {
@@ -550,7 +1498,7 @@ function discardChanges() {
   place-items: center;
   width: 24px;
   height: 24px;
-  background: #0f6e70;
+  background: #148a74;
   color: white;
   border-radius: 50%;
   font-size: 16px;
@@ -561,17 +1509,27 @@ function discardChanges() {
   grid-column: 1 / -1;
   margin: 8px 0 0 0;
   padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   background: #f9f9f9;
-  border-left: 2px solid #999;
+  border-left: 2px solid #148a74;
   font-size: 12px;
   color: #666;
 }
 
+.admin-note svg {
+  width: 16px;
+  height: 16px;
+  color: #148a74;
+  flex: 0 0 auto;
+}
+
 .payout-card {
   grid-column: 1 / -1;
-  background: linear-gradient(135deg, #0f6e70, #1b9699);
+  background: linear-gradient(135deg, #148a74, #117864);
   color: white;
-  border-radius: 6px;
+  border-radius: 16px;
   padding: 24px;
   display: grid;
   gap: 16px;
@@ -631,9 +1589,15 @@ function discardChanges() {
   border: 1px solid rgba(255, 255, 255, 0.3);
   color: white;
   padding: 4px 8px;
-  border-radius: 3px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 12px;
+}
+
+.copy-btn svg,
+.edit-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 .copy-btn:hover,
@@ -647,7 +1611,7 @@ function discardChanges() {
   background: #ffa500;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 12px;
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
@@ -694,7 +1658,7 @@ function discardChanges() {
 
 .policy-textarea:focus {
   outline: none;
-  border-color: #0f6e70;
+  border-color: #148a74;
   background: #f9fffe;
 }
 
@@ -704,7 +1668,7 @@ function discardChanges() {
   gap: 12px;
   padding: 12px;
   background: #fff4e6;
-  border-radius: 4px;
+  border-radius: 16px;
   border-left: 4px solid #ffa500;
   align-items: flex-start;
 }
@@ -713,7 +1677,12 @@ function discardChanges() {
   flex: 0 0 24px;
   display: grid;
   place-items: center;
-  font-size: 18px;
+}
+
+.warning-icon svg {
+  width: 20px;
+  height: 20px;
+  color: #ffa500;
 }
 
 .compliance-warning p {
@@ -739,13 +1708,21 @@ function discardChanges() {
 }
 
 .btn-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: none;
   border: none;
-  color: #0f6e70;
+  color: #148a74;
   cursor: pointer;
   font-size: 12px;
   font-weight: 500;
   padding: 4px 8px;
+}
+
+.btn-text svg {
+  width: 16px;
+  height: 16px;
 }
 
 .btn-text:hover {
@@ -781,7 +1758,7 @@ function discardChanges() {
 
 .btn-primary {
   padding: 8px 16px;
-  background: #0f6e70;
+  background: #148a74;
   color: white;
   border: none;
   border-radius: 4px;
@@ -791,10 +1768,75 @@ function discardChanges() {
 }
 
 .btn-primary:hover {
-  background: #0d5a5c;
+  background: #117864;
+}
+
+@media (max-width: 1180px) {
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .verification-preview-card {
+    position: static;
+  }
+}
+
+@media (max-width: 1320px) {
+  .media-info-grid,
+  .location-social-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .location-social-grid .profile-form-grid + .profile-form-grid {
+    padding-left: 0;
+    padding-top: 16px;
+    border-left: 0;
+    border-top: 1px solid #eef0f2;
+  }
 }
 
 @media (max-width: 768px) {
+  .settings-content {
+    padding: 18px;
+  }
+
+  .profile-section-header {
+    align-items: center;
+  }
+
+  .profile-section-header h2 {
+    font-size: 21px;
+  }
+
+  .profile-card {
+    padding: 16px;
+  }
+
+  .media-info-grid,
+  .highlight-language-grid,
+  .location-social-grid,
+  .profile-form-grid,
+  .upload-row,
+  .logo-uploader {
+    grid-template-columns: 1fr;
+  }
+
+  .location-social-grid .profile-form-grid + .profile-form-grid {
+    padding-left: 0;
+    padding-top: 16px;
+    border-left: 0;
+    border-top: 1px solid #eef0f2;
+  }
+
+  .profile-upload-btn {
+    width: 100%;
+  }
+
+  .cover-preview,
+  .cover-empty {
+    min-height: 150px;
+  }
+
   .settings-grid {
     grid-template-columns: 1fr;
   }
@@ -814,6 +1856,11 @@ function discardChanges() {
 
   .footer-right {
     flex-direction: column;
+  }
+
+  .footer-left,
+  .footer-right {
+    align-items: stretch;
   }
 }
 </style>

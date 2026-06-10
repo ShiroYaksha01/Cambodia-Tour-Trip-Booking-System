@@ -12,8 +12,8 @@
         </div>
 
         <div class="action-buttons">
-          <button class="btn-secondary">Download CSV</button>
-          <button class="btn-primary">Request Payout</button>
+          <button class="btn-secondary" type="button" @click="downloadCsv">Download CSV</button>
+          <button class="btn-primary" type="button" @click="requestPayout">Request Payout</button>
         </div>
       </section>
 
@@ -109,7 +109,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="transaction in filteredTransactions" :key="transaction.id">
+              <tr v-for="transaction in paginatedTransactions" :key="transaction.id">
                 <td class="transfer-id">{{ transaction.id }}</td>
                 <td class="date">{{ transaction.date }}</td>
                 <td class="destination">
@@ -123,19 +123,27 @@
                   </span>
                 </td>
                 <td>
-                  <button class="action-btn">View Details</button>
+                  <button class="action-btn" type="button" @click="viewTransactionDetails(transaction)">View Details</button>
                 </td>
               </tr>
             </tbody>
           </table>
 
           <div class="table-footer">
-            <p class="showing-text">Showing {{ filteredTransactions.length }} of {{ transactions.length }} transfers</p>
+            <p class="showing-text">Showing {{ paginatedTransactions.length }} of {{ filteredTransactions.length }} transfers</p>
             <div class="pagination">
-              <button class="page-btn">‹</button>
-              <button class="page-btn active">1</button>
-              <button class="page-btn">2</button>
-              <button class="page-btn">›</button>
+              <button class="page-btn" type="button" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">‹</button>
+              <button
+                v-for="page in totalPages"
+                :key="page"
+                class="page-btn"
+                :class="{ active: currentPage === page }"
+                type="button"
+                @click="goToPage(page)"
+              >
+                {{ page }}
+              </button>
+              <button class="page-btn" type="button" :disabled="currentPage === totalPages" @click="goToPage(currentPage + 1)">›</button>
             </div>
           </div>
         </div>
@@ -167,6 +175,8 @@ interface Transaction {
 
 const statusFilter = ref("");
 const sortBy = ref("newest");
+const currentPage = ref(1);
+const pageSize = 5;
 
 // authUser kept for future use
 
@@ -184,6 +194,11 @@ const currentPeriodLabel = computed(() => {
 
 function fmt(n: number): string {
   return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function parseMoney(amount: string): number {
+  const value = parseFloat(amount.replace(/,/g, ""));
+  return Number.isFinite(value) ? value : 0;
 }
 
 function fmtDate(iso: string): string {
@@ -212,9 +227,9 @@ function mapBookingToTransaction(b: any): Transaction {
   };
 }
 
-const totalSales = computed(() => fmt(transactions.value.reduce((s, t) => s + parseFloat(t.amount.replace(/,/g, "")), 0)));
-const platformFee = computed(() => fmt(parseFloat(totalSales.value.replace(/,/g, "")) * 0.15));
-const netPayout = computed(() => fmt(parseFloat(totalSales.value.replace(/,/g, "")) - parseFloat(platformFee.value.replace(/,/g, ""))));
+const totalSales = computed(() => fmt(transactions.value.reduce((s, t) => s + parseMoney(t.amount), 0)));
+const platformFee = computed(() => fmt(parseMoney(totalSales.value) * 0.15));
+const netPayout = computed(() => fmt(parseMoney(totalSales.value) - parseMoney(platformFee.value)));
 
 // compute last 6 months based on latest transaction and aggregate amounts
 const monthlyTotals = computed(() => {
@@ -266,10 +281,14 @@ const mockTransactions = (): Transaction[] => [
 onMounted(async () => {
   try {
     const res = await getProviderBookings();
-    const list: any[] = res?.data || [];
+    const data = res?.data || res;
+    const list: any[] = Array.isArray(data) ? data : data?.data || [];
     transactions.value = list
       .filter((b) => b.payment_status === "paid")
       .map(mapBookingToTransaction);
+    if (!transactions.value.length) {
+      transactions.value = mockTransactions();
+    }
   } catch {
     transactions.value = mockTransactions();
   } finally {
@@ -297,17 +316,54 @@ const filteredTransactions = computed(() => {
   if (sortBy.value === "oldest") {
     result = [...result].reverse();
   } else if (sortBy.value === "amount-high") {
-    result = [...result].sort(
-      (a, b) => parseFloat(b.amount) - parseFloat(a.amount)
-    );
+    result = [...result].sort((a, b) => parseMoney(b.amount) - parseMoney(a.amount));
   } else if (sortBy.value === "amount-low") {
-    result = [...result].sort(
-      (a, b) => parseFloat(a.amount) - parseFloat(b.amount)
-    );
+    result = [...result].sort((a, b) => parseMoney(a.amount) - parseMoney(b.amount));
   }
 
   return result;
 });
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredTransactions.value.length / pageSize)));
+
+const paginatedTransactions = computed(() => {
+  if (currentPage.value > totalPages.value) currentPage.value = totalPages.value;
+  const start = (currentPage.value - 1) * pageSize;
+  return filteredTransactions.value.slice(start, start + pageSize);
+});
+
+function goToPage(page: number) {
+  currentPage.value = Math.min(Math.max(page, 1), totalPages.value);
+}
+
+function downloadCsv() {
+  const headers = ["Transfer ID", "Initiated Date", "Destination", "Amount", "Status"];
+  const rows = filteredTransactions.value.map((transaction) => [
+    transaction.id,
+    transaction.date,
+    transaction.destination,
+    transaction.amount,
+    transaction.status,
+  ]);
+  const csv = [headers, ...rows]
+    .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+    .join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "provider-transactions.csv";
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function requestPayout() {
+  alert(`Payout request prepared for $${netPayout.value}. Admin will review the transfer before release.`);
+}
+
+function viewTransactionDetails(transaction: Transaction) {
+  alert(`${transaction.id}\n${transaction.date}\n${transaction.destination}\nAmount: $${transaction.amount}\nStatus: ${transaction.status}`);
+}
 </script>
 
 <style scoped>

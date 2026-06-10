@@ -18,7 +18,7 @@
 
             <div class="service-row" v-for="service in filteredServices" :key="service.id" @click="openServiceDetail(service)" style="cursor: pointer;">
               <div class="service-info">
-                <img :src="resolveImageUrl(service.image)" :alt="service.name" class="service-image">
+                <img :src="serviceImageUrl(service.image)" :alt="service.name" class="service-image" @error="handleImageError">
                 <div class="service-details">
                   <h3>{{ service.name }}</h3>
                   <p>{{ service.type }}</p>
@@ -35,7 +35,7 @@
         <aside class="config-panel">
           <div class="panel-header">
             <h3>Bulk Configuration</h3>
-            <button class="close-btn">✕</button>
+            <button type="button" class="close-btn" aria-label="Reset configuration" @click="discardMatrixChanges">✕</button>
           </div>
 
           <div class="config-section">
@@ -67,10 +67,10 @@
           <div class="config-section">
             <label>INVENTORY CAPACITY</label>
             <div class="capacity-control">
-              <span class="capacity-value">25</span>
+              <span class="capacity-value">{{ capacity }}</span>
               <div class="capacity-buttons">
-                <button class="btn-icon">−</button>
-                <button class="btn-icon">+</button>
+                <button type="button" class="btn-icon" aria-label="Decrease capacity" @click="adjustCapacity(-1)">−</button>
+                <button type="button" class="btn-icon" aria-label="Increase capacity" @click="adjustCapacity(1)">+</button>
               </div>
             </div>
             <p class="helper-text">{{ activeCategoryData.capacityHelper }}</p>
@@ -80,17 +80,21 @@
             <label>{{ activeCategoryData.panelLabel }}</label>
             <div class="pricing-badge">{{ activeCategoryData.panelBadge }}</div>
             <div class="pricing-rules">
-              <div class="rule-item">
-                <input type="checkbox" checked>
-                <span>{{ activeCategoryData.primaryRule.title }}</span>
-                <p class="rule-desc">{{ activeCategoryData.primaryRule.description }}</p>
-                <button class="btn-remove">✕</button>
+              <div v-if="pricingRuleEnabled" class="rule-item">
+                <input v-model="seasonalSurchargeEnabled" type="checkbox">
+                <div>
+                  <span>{{ activeCategoryData.primaryRule.title }}</span>
+                  <p class="rule-desc">{{ activeCategoryData.primaryRule.description }}</p>
+                </div>
+                <button type="button" class="btn-remove" aria-label="Remove pricing rule" @click="pricingRuleEnabled = false">✕</button>
               </div>
+              <button v-else type="button" class="btn-discard" @click="restorePricingRule">Restore Smart Rule</button>
             </div>
           </div>
 
-          <button class="btn-update">{{ activeCategoryData.updateAction }}</button>
-          <button class="btn-discard">Discard Changes</button>
+          <button type="button" class="btn-update" @click="updateMatrix">{{ activeCategoryData.updateAction }}</button>
+          <button type="button" class="btn-discard" @click="discardMatrixChanges">Discard Changes</button>
+          <p v-if="panelMessage" class="panel-message">{{ panelMessage }}</p>
         </aside>
       </div>
 
@@ -102,7 +106,7 @@
           </div>
           <div class="modal-body">
             <div class="modal-image-section">
-              <img :src="resolveImageUrl(selectedService.image)" :alt="selectedService.name" class="modal-image">
+              <img :src="serviceImageUrl(selectedService.image)" :alt="selectedService.name" class="modal-image" @error="handleImageError">
             </div>
             <div class="modal-info">
               <div class="info-group">
@@ -116,9 +120,9 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button class="btn-cancel" @click="closeServiceDetail">Close</button>
-            <button class="btn-edit" @click="startEditing" v-if="!isEditingService">Edit Service</button>
-            <button class="btn-edit" @click="saveServiceChanges" v-else>Save Changes</button>
+            <button type="button" class="btn-cancel" @click="closeServiceDetail">Close</button>
+            <button type="button" class="btn-edit" @click="startEditing" v-if="!isEditingService">Edit Service</button>
+            <button type="button" class="btn-edit" @click="saveServiceChanges" v-else>Save Changes</button>
           </div>
         </div>
       </div>
@@ -163,6 +167,10 @@ const selectedService = ref<ServiceRow | null>(null);
 const isEditingService = ref(false);
 const editingAvailability = ref<Array<{ price: number; slots: number }>>([]);
 const showDatePicker = ref(false);
+const capacity = ref(25);
+const seasonalSurchargeEnabled = ref(true);
+const pricingRuleEnabled = ref(true);
+const panelMessage = ref("");
 
 // Date Helpers
 const isoToUi = (iso: string) => {
@@ -192,7 +200,7 @@ const categoryData: Record<CategoryKey, any> = {
     title: "Inventory Matrix",
     description: "Master availability control for peak season tours.",
     days: [{ label: "MON", date: "01" }, { label: "TUE", date: "02" }, { label: "WED", date: "03" }, { label: "THU", date: "04" }],
-    services: [{ id: 1, name: "Angkor Sunrise", type: "Tour", image: "", availability: [{ price: 45, slots: 24 }] }],
+    services: [{ id: 1, name: "Angkor Sunrise Tour", type: "Tour", image: "/angkor.png", availability: [{ price: 45, slots: 24 }, { price: 45, slots: 18 }, { price: 52, slots: 12 }, { price: 58, slots: 8 }] }],
     metrics: { occupancy: "84.2%", alerts: "12", revenue: "$12.4k" },
     capacityHelper: "Sets base capacity for services.",
     panelLabel: "Pricing Engine",
@@ -262,26 +270,587 @@ const openServiceDetail = (service: ServiceRow) => {
 const closeServiceDetail = () => { selectedService.value = null; isEditingService.value = false; };
 const startEditing = () => { isEditingService.value = true; };
 const saveServiceChanges = () => { if (selectedService.value) { selectedService.value.availability = JSON.parse(JSON.stringify(editingAvailability.value)); isEditingService.value = false; } };
+
+const fallbackImage = "/angkor.png";
+
+const serviceImageUrl = (image?: string) => {
+  if (!image) return fallbackImage;
+  if (image.startsWith("/")) return image;
+  return resolveImageUrl(image) || fallbackImage;
+};
+
+const handleImageError = (event: Event) => {
+  const target = event.target as HTMLImageElement;
+  if (target.src.endsWith(fallbackImage)) return;
+  target.src = fallbackImage;
+};
+
+const adjustCapacity = (delta: number) => {
+  capacity.value = Math.max(1, capacity.value + delta);
+  panelMessage.value = "";
+};
+
+const updateMatrix = () => {
+  for (const service of categoryData[activeCategory.value].services) {
+    service.availability = service.availability.map((availability: { price: number; slots: number }) => {
+      const price = seasonalSurchargeEnabled.value && pricingRuleEnabled.value
+        ? Math.round(availability.price * 1.2)
+        : availability.price;
+      return {
+        ...availability,
+        price,
+        slots: Math.min(capacity.value, Math.max(0, availability.slots)),
+      };
+    });
+  }
+
+  panelMessage.value = "Matrix updated locally. Backend sync will apply when the API is available.";
+};
+
+const discardMatrixChanges = () => {
+  capacity.value = 25;
+  seasonalSurchargeEnabled.value = true;
+  pricingRuleEnabled.value = true;
+  resetDatePicker();
+  panelMessage.value = "Configuration reset.";
+};
+
+const restorePricingRule = () => {
+  pricingRuleEnabled.value = true;
+  seasonalSurchargeEnabled.value = true;
+  panelMessage.value = "";
+};
 </script>
 
 <style scoped>
-/* Keeping clean layout styles */
-.provider-dashboard-view { display: flex; flex-direction: column; min-height: 100vh; background: #f5f5f5; }
-.main-content { flex: 1; overflow-y: auto; }
-.content-wrapper { display: flex; padding: 30px; gap: 30px; }
-.inventory-section { flex: 1; }
-.section-header { margin-bottom: 20px; border-left: 4px solid #f0ad4e; padding-left: 15px; }
-.services-grid { background: white; border-radius: 6px; overflow: hidden; }
-.services-header { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; background: #f5f5f5; padding: 12px; }
-.header-cell { font-size: 12px; font-weight: 600; color: #666; text-align: center; }
-.service-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; border-bottom: 1px solid #f0f0f0; padding: 12px; align-items: center; }
-.service-image { width: 50px; height: 50px; border-radius: 4px; object-fit: cover; }
-.config-panel { width: 280px; background: white; border-radius: 6px; padding: 20px; }
-.date-picker-popover { margin-top: 10px; padding: 12px; border: 1px solid #e7ebea; background: #fff; box-shadow: 0 12px 24px rgba(0,0,0,0.1); border-radius: 8px; }
-.field-group input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-top: 5px; }
-.picker-actions { display: flex; gap: 10px; margin-top: 10px; justify-content: flex-end; }
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal-content { background: white; border-radius: 12px; width: 90%; max-width: 500px; padding: 24px; }
-.btn-edit { background: #1b7f6a; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
-.btn-cancel { background: white; border: 1px solid #ddd; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+.provider-dashboard-view {
+  min-height: 100%;
+  color: #111827;
+}
+
+.main-content {
+  width: 100%;
+}
+
+.content-wrapper {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 28px;
+  align-items: start;
+}
+
+.inventory-section {
+  min-width: 0;
+}
+
+.section-header {
+  margin-bottom: 22px;
+  padding-left: 20px;
+  border-left: 4px solid #f5a623;
+}
+
+.section-header h2 {
+  margin: 0;
+  color: #111827;
+  font-size: clamp(1.55rem, 2.2vw, 2rem);
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.1;
+}
+
+.description {
+  margin: 10px 0 0;
+  color: #4b5563;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.services-grid,
+.config-panel {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 14px 34px rgba(17, 24, 39, 0.05);
+}
+
+.services-grid {
+  overflow-x: auto;
+}
+
+.services-header,
+.service-row {
+  display: grid;
+  grid-template-columns: minmax(260px, 2fr) repeat(4, minmax(110px, 1fr));
+  min-width: 760px;
+}
+
+.services-header {
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.header-cell {
+  padding: 16px;
+  color: #6b7280;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.55;
+}
+
+.header-cell:first-child {
+  text-align: left;
+}
+
+.service-row {
+  align-items: stretch;
+  min-height: 96px;
+  border-bottom: 1px solid #eef2f3;
+  transition: background 180ms ease;
+}
+
+.service-row:last-child {
+  border-bottom: 0;
+}
+
+.service-row:hover {
+  background: #fbfdfc;
+}
+
+.service-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 18px 16px;
+}
+
+.service-image {
+  width: 60px;
+  height: 60px;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #f3f4f6;
+}
+
+.service-details {
+  min-width: 0;
+}
+
+.service-details h3 {
+  margin: 0;
+  color: #111827;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.service-details p {
+  margin: 6px 0 0;
+  color: #6b7280;
+  font-size: 0.86rem;
+}
+
+.availability-cell {
+  display: grid;
+  place-content: center;
+  gap: 6px;
+  min-height: 96px;
+  padding: 16px 10px;
+  text-align: center;
+  border-left: 1px solid #f1f5f5;
+}
+
+.price {
+  color: #111827;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.slots {
+  width: fit-content;
+  margin: 0 auto;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(20, 138, 116, 0.1);
+  color: #148a74;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.config-panel {
+  position: sticky;
+  top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 24px;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panel-header h3 {
+  margin: 0;
+  color: #111827;
+  font-size: 1.08rem;
+  font-weight: 800;
+}
+
+.close-btn,
+.btn-remove,
+.btn-icon {
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #4b5563;
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+}
+
+.close-btn,
+.btn-remove {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.close-btn:hover,
+.btn-remove:hover,
+.btn-icon:hover {
+  border-color: rgba(20, 138, 116, 0.24);
+  background: rgba(20, 138, 116, 0.08);
+  color: #148a74;
+}
+
+.config-section {
+  display: grid;
+  gap: 12px;
+}
+
+.config-section > label,
+.field-group label {
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.date-display {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f9fafb;
+  color: #111827;
+  cursor: pointer;
+}
+
+.date-display-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  text-align: left;
+}
+
+.calendar-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(20, 138, 116, 0.1);
+}
+
+.date-range,
+.date-label {
+  margin: 0;
+}
+
+.date-range {
+  color: #111827;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.date-label {
+  margin-top: 4px;
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
+.date-picker-popover {
+  padding: 14px;
+  border: 1px solid #e7ebea;
+  background: #fff;
+  box-shadow: 0 18px 42px rgba(17, 24, 39, 0.12);
+  border-radius: 12px;
+}
+
+.field-group {
+  display: grid;
+  gap: 6px;
+}
+
+.field-group + .field-group {
+  margin-top: 10px;
+}
+
+.field-group input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  color: #111827;
+  background: #f9fafb;
+}
+
+.field-group input:focus {
+  outline: none;
+  border-color: rgba(20, 138, 116, 0.45);
+  box-shadow: 0 0 0 4px rgba(20, 138, 116, 0.08);
+}
+
+.picker-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  justify-content: flex-end;
+}
+
+.capacity-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f9fafb;
+}
+
+.capacity-value {
+  color: #111827;
+  font-size: 1.6rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.capacity-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.helper-text,
+.rule-desc {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.pricing-badge {
+  width: fit-content;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(245, 166, 35, 0.14);
+  color: #b67912;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+
+.pricing-rules {
+  display: grid;
+  gap: 10px;
+}
+
+.rule-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  padding: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f9fafb;
+}
+
+.rule-item input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: #148a74;
+}
+
+.rule-item span {
+  color: #111827;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.panel-message {
+  margin: -4px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(20, 138, 116, 0.1);
+  color: #117864;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.btn-update,
+.btn-discard,
+.picker-apply,
+.picker-cancel,
+.btn-edit,
+.btn-cancel {
+  min-height: 42px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.btn-update,
+.picker-apply,
+.btn-edit {
+  border: 0;
+  background: #148a74;
+  color: #ffffff;
+  box-shadow: 0 14px 30px rgba(20, 138, 116, 0.18);
+}
+
+.btn-update:hover,
+.picker-apply:hover,
+.btn-edit:hover {
+  background: #117864;
+}
+
+.btn-discard,
+.picker-cancel,
+.btn-cancel {
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #4b5563;
+}
+
+.btn-discard:hover,
+.picker-cancel:hover,
+.btn-cancel:hover {
+  background: #f3f4f6;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(17, 24, 39, 0.5);
+}
+
+.modal-content {
+  width: min(100%, 560px);
+  border-radius: 16px;
+  background: white;
+  padding: 24px;
+  box-shadow: 0 24px 80px rgba(17, 24, 39, 0.25);
+}
+
+.modal-header,
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.modal-close {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #f9fafb;
+  cursor: pointer;
+}
+
+.modal-body {
+  display: grid;
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.modal-image {
+  width: 100%;
+  height: 220px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #f3f4f6;
+}
+
+.info-group label {
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.info-group p {
+  margin: 6px 0 0;
+  color: #111827;
+  font-weight: 700;
+}
+
+@media (max-width: 1180px) {
+  .content-wrapper {
+    grid-template-columns: 1fr;
+  }
+
+  .config-panel {
+    position: static;
+  }
+}
+
+@media (max-width: 720px) {
+  .section-header {
+    padding-left: 14px;
+  }
+
+  .services-header,
+  .service-row {
+    min-width: 680px;
+  }
+}
 </style>

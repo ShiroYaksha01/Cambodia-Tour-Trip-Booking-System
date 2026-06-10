@@ -51,7 +51,7 @@
       <section class="guest-list-section">
         <div class="guest-list-header">
           <h2>Today's Guest List</h2>
-          <button class="download-btn">⬇ Download Daily Manifest</button>
+          <button class="download-btn" type="button" @click="downloadDailyManifest">⬇ Download Daily Manifest</button>
         </div>
 
         <div v-if="isLoading" class="flex justify-center py-20">
@@ -220,6 +220,27 @@ function addDigit(digit: string) {
 function clearCode() {
   bookingCode.value = "";
   verificationMessage.value = null;
+}
+
+function downloadDailyManifest() {
+  const headers = ["Guest", "Package", "Booking Code", "Time", "Status"];
+  const rows = filteredGuests.value.map((guest) => [
+    guest.name,
+    guest.package,
+    guest.bookingCode,
+    guest.time,
+    guest.status,
+  ]);
+  const csv = [headers, ...rows]
+    .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+    .join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "daily-manifest.csv";
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 async function verifyCode() {
