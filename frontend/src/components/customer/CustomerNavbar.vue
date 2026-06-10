@@ -3,13 +3,12 @@
     <div class="px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-16">
         <!-- Logo -->
-        <router-link :to="{ name: 'customer-homepage' }" class="flex items-center gap-2 group">
-          <div class="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white font-bold transition-transform group-hover:scale-110">
-            A
-          </div>
-          <span class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
-            Anajak<span class="text-emerald-600 dark:text-emerald-500">Tour</span>
-          </span>
+        <router-link :to="{ name: 'customer-homepage' }" class="flex items-center group" aria-label="Anajak Tour home">
+          <img
+            src="/logo-wordmark.png"
+            alt="Anajak Tour"
+            class="h-10 w-auto max-w-[178px] sm:max-w-[220px] transition-transform group-hover:scale-[1.02]"
+          />
         </router-link>
 
         <!-- Navigation Links -->
