@@ -16,15 +16,15 @@
             </div>
           </div>
 
-          <div class="services-grid">
-            <div class="services-header">
+          <div class="services-grid" :style="gridStyle">
+            <div class="services-header" :style="rowGridStyle">
               <div class="header-cell">SERVICE TYPE</div>
               <div v-for="day in activeCategoryData.days" :key="day.label" class="header-cell">
-                {{ day.label }}<br>{{ day.date }}
+                {{ day.label }} {{ day.date }}
               </div>
             </div>
 
-            <div class="service-row" v-for="service in filteredServices" :key="service.id" @click="openServiceDetail(service)" style="cursor: pointer;">
+            <div class="service-row" :style="rowGridStyle" v-for="service in filteredServices" :key="service.id" @click="openServiceDetail(service)" style="cursor: pointer;">
               <div class="service-info">
                 <img :src="serviceImageUrl(service.image)" :alt="service.name" class="service-image" @error="handleImageError">
                 <div class="service-details">
@@ -32,9 +32,11 @@
                   <p>{{ service.type }}</p>
                 </div>
               </div>
-              <div class="availability-cell" v-for="(avail, idx) in service.availability" :key="idx">
-                <div class="price">${{ avail.price }}</div>
-                <div class="slots">{{ avail.slots }} Left</div>
+              <div class="availability-cell" v-for="(avail, idx) in service.availability" :key="idx" :class="{ empty: avail.isEmpty }">
+                <template v-if="!avail.isEmpty">
+                  <div class="price">${{ avail.price }}</div>
+                  <div class="slots">{{ avail.slots }} Left</div>
+                </template>
               </div>
             </div>
           </div>
@@ -215,31 +217,23 @@ onMounted(async () => {
 
     for (const svc of list) {
       const cat = mapServiceType(svc.serviceType || 'tour');
-      const slots = (svc.slots || []).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      const tops = slots.slice(0, 5);
+      const slotMap = new Map<string, any>();
+      const rawSlots: any[] = (svc.slots || []).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-      tops.forEach((s: any) => {
+      rawSlots.forEach((s: any) => {
         const d = new Date(s.date);
-        if (!allDates[cat].some(ex => ex.getTime() === d.getTime())) {
+        const key = d.toDateString();
+        if (!slotMap.has(key)) slotMap.set(key, s);
+        if (!allDates[cat].some(ex => ex.toDateString() === key)) {
           allDates[cat].push(d);
         }
-        if (!allDates['all'].some(ex => ex.getTime() === d.getTime())) {
+        if (!allDates['all'].some(ex => ex.toDateString() === key)) {
           allDates['all'].push(d);
         }
       });
 
-      const row = {
-        id: svc.id,
-        name: svc.title || 'Untitled',
-        type: svc.serviceType || 'tour',
-        image: svc.coverImage || '',
-        availability: tops.map((s: any) => ({
-          price: Number(s.price) || 0,
-          slots: s.availableSlots ?? 0,
-        })),
-      };
-      grouped[cat].push(row);
-      grouped['all'].push(row);
+      grouped[cat].push({ svc, slotMap, cat });
+      grouped['all'].push({ svc, slotMap, cat });
     }
 
     for (const cat of ['all', 'tours', 'stays', 'transport'] as CategoryKey[]) {
@@ -247,12 +241,33 @@ onMounted(async () => {
       const days = allDates[cat].map(d => ({
         label: DAY_NAMES[d.getDay()],
         date: String(d.getDate()).padStart(2, '0'),
+        raw: d,
       }));
+
+      const services = (grouped[cat] || []).map((entry: any) => {
+        const svc = entry.svc;
+        const slotMap = entry.slotMap;
+        return {
+          id: svc.id,
+          name: svc.title || 'Untitled',
+          type: svc.serviceType || 'tour',
+          image: svc.coverImage || '',
+          availability: days.map((day: any) => {
+            const key = day.raw.toDateString();
+            const s = slotMap.get(key);
+            return {
+              price: s ? Number(s.price) || 0 : null,
+              slots: s ? (s.availableSlots ?? 0) : null,
+              isEmpty: !s,
+            };
+          }),
+        };
+      });
 
       categoryData.value[cat] = {
         ...categoryData.value[cat],
-        days: days.length > 0 ? days : [{ label: "MON", date: "01" }, { label: "TUE", date: "02" }, { label: "WED", date: "03" }, { label: "THU", date: "04" }],
-        services: grouped[cat],
+        days,
+        services,
       };
     }
   } catch (err) {
@@ -267,6 +282,16 @@ const activeCategoryData = computed(() => {
     metrics: { ...data.metrics, occupancy: stats.value.avgOccupancy, alerts: stats.value.lowStockAlerts, revenue: stats.value.revpar }
   };
 });
+
+const dayCount = computed(() => activeCategoryData.value.days?.length || 4);
+
+const gridStyle = computed(() => ({
+  gridTemplateColumns: `minmax(260px, 2fr) repeat(${dayCount.value}, minmax(110px, 1fr))`,
+}));
+
+const rowGridStyle = computed(() => ({
+  gridTemplateColumns: `minmax(260px, 2fr) repeat(${dayCount.value}, minmax(110px, 1fr))`,
+}));
 
 const filteredServices = computed(() => {
   const services = activeCategoryData.value.services;
@@ -460,7 +485,6 @@ const restorePricingRule = () => {
 .services-header,
 .service-row {
   display: grid;
-  grid-template-columns: minmax(260px, 2fr) repeat(4, minmax(110px, 1fr));
   min-width: 760px;
 }
 
@@ -542,6 +566,11 @@ const restorePricingRule = () => {
   padding: 16px 10px;
   text-align: center;
   border-left: 1px solid #f1f5f5;
+}
+
+.availability-cell.empty {
+  background: #fafbfc;
+  border-left-color: #eef2f3;
 }
 
 .price {

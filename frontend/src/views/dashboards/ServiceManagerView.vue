@@ -207,9 +207,7 @@ const selectedCategoryDescription = computed(() => {
 
 async function loadServices() {
   try {
-    const res = await fetchMyServices();
-    // API might return the list directly or wrapped in a data property
-    services.value = Array.isArray(res) ? res : res.data || [];
+    services.value = await fetchMyServices();
   } catch (err) {
     console.error("Failed to fetch services:", err);
     services.value = [];
