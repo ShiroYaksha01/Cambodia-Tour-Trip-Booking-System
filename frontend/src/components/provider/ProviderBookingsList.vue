@@ -52,7 +52,7 @@
               <span :class="statusClass(booking)" class="status-pill">{{ statusText(booking) }}</span>
             </td>
             <td>
-              <button class="action-button" type="button">View Details</button>
+              <button class="action-button" type="button" @click="viewDetails(booking)">View Details</button>
             </td>
           </tr>
         </tbody>
@@ -167,6 +167,10 @@ function formatDate(value: string) {
   const parsed = new Date(value)
   if (Number.isNaN(parsed.getTime())) return value
   return new Intl.DateTimeFormat('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).format(parsed)
+}
+
+function viewDetails(booking: BookingRecord) {
+  alert(`${bookingCode(booking)}\n${serviceName(booking)}\nGuest: ${guestLabel(booking)}\nAmount: ${formatMoney(bookingAmount(booking))}\nStatus: ${statusText(booking)}`)
 }
 </script>
 

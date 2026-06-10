@@ -10,33 +10,33 @@
       </div>
 
       <nav class="sidebar-nav">
-        <RouterLink class="nav-item" :to="{ name: 'provider-dashboard' }" exact-active-class="active">
+        <RouterLink class="nav-item" :to="{ name: 'provider-inventory' }" exact-active-class="active">
           <span>🗓️</span>
           Inventory
         </RouterLink>
-        <RouterLink class="nav-item" :to="{ name: 'provider-service' }" exact-active-class="active">
+        <RouterLink class="nav-item" :to="{ name: 'provider-manifest' }" exact-active-class="active">
           <span>👥</span>
           Manifest
         </RouterLink>
-        <RouterLink class="nav-item" :to="{ name: 'provider-dashboard' }" exact-active-class="active">
+        <RouterLink class="nav-item" :to="{ name: 'provider-ledger' }" exact-active-class="active">
           <span>💳</span>
           Finance
         </RouterLink>
-        <a href="#" class="nav-item" @click.prevent>
+        <a href="#" class="nav-item" @click.prevent="showSupport">
           <span>💬</span>
           Messages
         </a>
-        <a href="#" class="nav-item" @click.prevent>
+        <RouterLink class="nav-item" :to="{ name: 'provider-settings' }" exact-active-class="active">
           <span>⚙️</span>
           Settings
-        </a>
+        </RouterLink>
       </nav>
 
-      <button class="new-booking-btn">New Booking</button>
+      <button class="new-booking-btn" @click="router.push({ name: 'provider-service' })">New Booking</button>
 
       <div class="sidebar-footer">
-        <button class="footer-link">Support</button>
-        <button class="footer-link">Logout</button>
+        <button class="footer-link" @click="showSupport">Support</button>
+        <button class="footer-link" @click="logout">Logout</button>
       </div>
     </aside>
 
@@ -84,8 +84,8 @@
                 <input v-model="uiScheduleDate" type="text" class="date-picker-input" placeholder="DD/MM/YYYY" @blur="goToDate" />
               </div>
               <div class="view-toggle">
-                <button>Month</button>
-                <button class="active">Fortnight</button>
+                <button :class="{ active: viewMode === 'month' }" @click="viewMode = 'month'">Month</button>
+                <button :class="{ active: viewMode === 'fortnight' }" @click="viewMode = 'fortnight'">Fortnight</button>
               </div>
             </div>
 
@@ -163,7 +163,7 @@
               <div><span class="dot available"></span> Available</div>
               <div><span class="dot low"></span> Low Stock (&lt;10%)</div>
               <div><span class="dot peak"></span> Peak Demand</div>
-              <a href="#">Export Matrix</a>
+              <a href="#" @click.prevent="exportMatrix">Export Matrix</a>
             </div>
           </div>
         </div>
@@ -284,11 +284,13 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import {
   getProviderInventory,
   updateInventorySlot,
 } from "../../services/api";
 import { resolveImageUrl } from "../../utils/api";
+import { clearAuthData } from "../../utils/auth";
 
 const props = withDefaults(
   defineProps<{
@@ -298,6 +300,8 @@ const props = withDefaults(
     searchQuery: "",
   },
 );
+
+const router = useRouter();
 
 type InventoryDay = {
   id: string | null;
@@ -349,6 +353,7 @@ const controllerEndDate = ref("16/07/2026");
 const controllerMaxPax = ref(15);
 const recentChanges = ref<{ type: string; text: string }[]>([]);
 const hasChanges = ref(false);
+const viewMode = ref<"month" | "fortnight">("fortnight");
 
 const avgOccupancy = ref(76);
 const revpar = ref(128);
@@ -548,6 +553,39 @@ function saveAll() {
     text: `Inventory saved — ${new Date().toLocaleTimeString()}`,
   });
   hasChanges.value = false;
+}
+
+function exportMatrix() {
+  const rows = [
+    ["Service", "Subtitle", "Date", "Slots", "Price", "Status"],
+    ...inventoryItems.value.flatMap((item) =>
+      item.days.map((day) => [
+        item.name,
+        item.subtitle,
+        day.date,
+        String(day.slots),
+        String(day.price),
+        day.status,
+      ]),
+    ),
+  ];
+  const csv = rows.map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "provider-inventory-matrix.csv";
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function showSupport() {
+  alert("Support: hello@anajakktour.kh");
+}
+
+function logout() {
+  clearAuthData();
+  window.location.href = "/customer/homepage";
 }
 
 function applyPricing() {

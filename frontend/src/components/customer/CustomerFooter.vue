@@ -7,8 +7,8 @@
 
         <!-- Brand column -->
         <div class="lg:col-span-1">
-          <RouterLink :to="{ name: 'customer-homepage' }" class="flex items-center gap-2 mb-4 hover:opacity-80 transition-opacity">
-            <span class="bg-gold text-white rounded-lg px-2 py-1 text-base">🏛</span>
+          <RouterLink :to="{ name: 'customer-homepage' }" class="flex items-center gap-3 mb-4 hover:opacity-80 transition-opacity" aria-label="Anajak Tour home">
+            <img src="/logo-mark.png" alt="" class="h-10 w-12 object-contain" aria-hidden="true" />
             <span class="font-serif font-bold text-lg">Anajak Tour</span>
           </RouterLink>
           <p class="text-gray-400 text-sm leading-relaxed mb-5">

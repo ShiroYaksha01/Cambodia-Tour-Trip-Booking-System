@@ -75,7 +75,7 @@
               <div class="header-cell">ACTIONS</div>
             </div>
 
-            <article v-for="(item, index) in filteredServiceItems" :key="item.id || index" class="service-row service-manager-row">
+            <article v-for="(item, index) in paginatedServiceItems" :key="item.id || index" class="service-row service-manager-row">
               <div class="service-info">
                 <img :src="resolveImageUrl(item.coverImage) || 'https://via.placeholder.com/120'" :alt="item.title" class="service-image" />
                 <div class="service-details">
@@ -110,19 +110,19 @@
             </article>
 
             <div class="table-foot service-manager-foot">
-              <p>Showing {{ filteredServiceItems.length }} of {{ services.length }} services</p>
+              <p>Showing {{ paginatedServiceItems.length }} of {{ filteredServiceItems.length }} services</p>
               <div>
-                <button class="page-btn">Previous</button>
-                <button class="page-btn">Next</button>
+                <button class="page-btn" :disabled="currentPage === 1" @click="currentPage--">Previous</button>
+                <button class="page-btn" :disabled="currentPage >= totalPages" @click="currentPage++">Next</button>
               </div>
             </div>
           </div>
         </section>
 
-        <aside class="config-panel">
+        <aside v-if="showFocusPanel" class="config-panel">
           <div class="panel-header">
             <h3>Service Focus</h3>
-            <button class="close-btn">✕</button>
+            <button class="close-btn" type="button" @click="showFocusPanel = false">✕</button>
           </div>
 
           <div class="config-section">
@@ -144,11 +144,12 @@
             <div class="pricing-rules">
               <div class="rule-item">
                 <span>Bulk Update</span>
-                <p class="rule-desc">Modify multiple services at once (Coming soon)</p>
+                <p class="rule-desc">Use category filters, then update services one by one from the actions menu.</p>
               </div>
             </div>
           </div>
 
+          <button class="btn-update secondary" type="button" @click="showBulkUpdateInfo">Bulk Update Info</button>
           <button class="btn-update" @click="openCreateModal">Create New Offering</button>
         </aside>
       </div>
@@ -178,6 +179,9 @@ const selectedCategory = ref("all");
 const showModal = ref(false);
 const selectedService = ref<any>(null);
 const actionMenuIndex = ref<number | null>(null);
+const currentPage = ref(1);
+const pageSize = 6;
+const showFocusPanel = ref(true);
 
 const categoryOptions = [
   { label: "All Services", value: "all" },
@@ -229,6 +233,14 @@ const filteredServiceItems = computed(() => {
   });
 });
 
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredServiceItems.value.length / pageSize)));
+
+const paginatedServiceItems = computed(() => {
+  if (currentPage.value > totalPages.value) currentPage.value = totalPages.value;
+  const start = (currentPage.value - 1) * pageSize;
+  return filteredServiceItems.value.slice(start, start + pageSize);
+});
+
 function openCreateModal() {
   selectedService.value = null;
   showModal.value = true;
@@ -241,6 +253,10 @@ function closeModal() {
 
 function toggleActionMenu(i: number) {
   actionMenuIndex.value = actionMenuIndex.value === i ? null : i;
+}
+
+function showBulkUpdateInfo() {
+  alert("Bulk update is handled through the filtered service list for now. Select a category, open a service action menu, then update each matching service.");
 }
 
 function startEditService(item: any) {
@@ -760,6 +776,12 @@ async function handleSaveService(formData: any) {
   font-size: 14px;
   font-weight: 600;
   margin-top: 20px;
+}
+
+.btn-update.secondary {
+  background: #eef3f2;
+  color: #25504a;
+  margin-top: 12px;
 }
 
 @media (max-width: 1180px) {
