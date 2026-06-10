@@ -1,237 +1,148 @@
-<template>
-  <main class="simple-page">
-    <nav class="navbar">
-      <RouterLink to="/" class="navbar-brand">Anajak Tour</RouterLink>
-      <ul class="nav-menu">
-        <li><a href="#home">Home</a></li>
-        <li><a href="#tours">Tours</a></li>
-        <li><a href="#about">About</a></li>
-      </ul>
-    </nav>
-
-    <section class="hero">
-      <div class="hero-content">
-        <h1>Choose Your Dashboard</h1>
-        <p>Select your role to access the Cambodia tour booking system</p>
-      </div>
-    </section>
-
-    <section class="roles-section">
-      <div class="roles-container">
-        <button class="role-card" @click="selectRole('admin')">
-          <div class="icon">👨‍💼</div>
-          <h2>Admin</h2>
-          <p>Manage finances and system oversight</p>
-        </button>
-
-        <button class="role-card" @click="selectRole('provider')">
-          <div class="icon">🏢</div>
-          <h2>Provider</h2>
-          <p>Control inventory and pricing</p>
-        </button>
-
-        <button class="role-card" @click="selectRole('customer')">
-          <div class="icon">🧳</div>
-          <h2>Customer</h2>
-          <p>Search and book trips</p>
-        </button>
-      </div>
-    </section>
-
-    <footer class="footer">
-      <p>&copy; 2024 Anajak Tour. All rights reserved.</p>
-      <RouterLink to="/login" class="footer-link">Back to Login</RouterLink>
-    </footer>
-  </main>
-</template>
-
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
-import { setCurrentUserRole } from '../../utils/auth'
+import type { Component } from "vue";
+import {
+  BriefcaseIcon,
+  BuildingStorefrontIcon,
+  ShieldCheckIcon,
+} from "@heroicons/vue/24/outline";
+import { useRouter } from "vue-router";
+import AuthCard from "../../components/auth/AuthCard.vue";
+import AuthLayout from "../../components/auth/AuthLayout.vue";
+import { setCurrentUserRole } from "../../utils/auth";
 
-const router = useRouter()
+type RoleOption = {
+  role: "admin" | "provider" | "customer";
+  title: string;
+  description: string;
+  icon: Component;
+};
 
-function selectRole(role: 'admin' | 'provider' | 'customer') {
-  // Save role to localStorage
-  setCurrentUserRole(role)
-  console.log('Role set to:', role, 'Stored as:', localStorage.getItem('auth_role'))
+const router = useRouter();
 
-  // Small delay to ensure localStorage is written
+const roleOptions: RoleOption[] = [
+  {
+    role: "customer",
+    title: "Customer",
+    description: "Search Cambodia trips, manage bookings, and continue checkout.",
+    icon: BriefcaseIcon,
+  },
+  {
+    role: "provider",
+    title: "Provider",
+    description: "Manage tourism services, inventory, pricing, and reservations.",
+    icon: BuildingStorefrontIcon,
+  },
+  {
+    role: "admin",
+    title: "Admin",
+    description: "Open system oversight, users, providers, bookings, and analytics.",
+    icon: ShieldCheckIcon,
+  },
+];
+
+function selectRole(role: "admin" | "provider" | "customer") {
+  setCurrentUserRole(role);
+
   setTimeout(() => {
-    if (role === 'admin') {
-      router.push('/admin/dashboard')
-    } else if (role === 'provider') {
-      router.push('/provider/dashboard')
+    if (role === "admin") {
+      router.push("/admin/dashboard");
+    } else if (role === "provider") {
+      router.push("/provider/dashboard");
     } else {
-      router.push('/customer/homepage')
+      router.push("/customer/homepage");
     }
-  }, 100)
+  }, 100);
 }
 </script>
 
+<template>
+  <AuthLayout>
+    <AuthCard
+      title="Choose Your Dashboard"
+      subtitle="Your account role controls the workspace and tools you see after sign in."
+    >
+      <div class="role-state-list">
+        <button
+          v-for="option in roleOptions"
+          :key="option.role"
+          type="button"
+          class="role-state-card"
+          @click="selectRole(option.role)"
+        >
+          <component :is="option.icon" class="role-state-icon" aria-hidden="true" />
+          <span>
+            <strong>{{ option.title }}</strong>
+            <small>{{ option.description }}</small>
+          </span>
+        </button>
+      </div>
+
+      <template #footer>
+        <RouterLink to="/login">Back to login</RouterLink>
+      </template>
+    </AuthCard>
+  </AuthLayout>
+</template>
+
 <style scoped>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-.simple-page {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: #fff;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  color: #333;
-}
-
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 40px;
-  background: #fff;
-  border-bottom: 1px solid #eee;
-}
-
-.navbar-brand {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #333;
-  text-decoration: none;
-}
-
-.nav-menu {
-  display: flex;
-  list-style: none;
-  gap: 30px;
-}
-
-.nav-menu a {
-  color: #666;
-  text-decoration: none;
-  font-size: 0.95rem;
-  transition: color 0.2s;
-}
-
-.nav-menu a:hover {
-  color: #333;
-}
-
-.hero {
-  padding: 60px 40px;
-  text-align: center;
-  background: #f9f9f9;
-  border-bottom: 1px solid #eee;
-}
-
-.hero-content h1 {
-  font-size: 2.5rem;
-  margin-bottom: 10px;
-  color: #333;
-}
-
-.hero-content p {
-  font-size: 1.1rem;
-  color: #666;
-}
-
-.roles-section {
-  padding: 60px 40px;
-  flex: 1;
-}
-
-.roles-container {
-  max-width: 1000px;
-  margin: 0 auto;
+.role-state-list {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 30px;
+  gap: 13px;
 }
 
-.role-card {
-  padding: 40px 30px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background: #fff;
+.role-state-card {
+  min-height: 92px;
+  border: 1px solid var(--border, #E5E7E7);
+  border-radius: 12px;
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--text-dark, #182525);
+  text-align: left;
   cursor: pointer;
   transition:
-    transform 0.2s,
-    box-shadow 0.2s,
-    border-color 0.2s;
-  text-align: center;
-  font-family: inherit;
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
 }
 
-.role-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  border-color: #999;
+.role-state-card:hover,
+.role-state-card:focus-visible {
+  transform: translateY(-1px);
+  border-color: var(--primary, #00796B);
+  background: var(--surface, #FFFFFF);
+  box-shadow: 0 14px 30px rgba(0, 121, 107, 0.15);
+  outline: 0;
 }
 
-.role-card .icon {
-  font-size: 3rem;
-  margin-bottom: 15px;
+.role-state-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  padding: 10px;
+  background: rgba(245, 166, 35, 0.14);
+  color: var(--accent-gold, #F5A623);
 }
 
-.role-card h2 {
-  font-size: 1.3rem;
-  margin-bottom: 10px;
-  color: #333;
+.role-state-card span,
+.role-state-card strong,
+.role-state-card small {
+  display: block;
 }
 
-.role-card p {
-  font-size: 0.95rem;
-  color: #666;
-  line-height: 1.5;
+.role-state-card strong {
+  font-size: 1rem;
+  color: var(--text-dark, #182525);
 }
 
-.footer {
-  padding: 30px 40px;
-  text-align: center;
-  border-top: 1px solid #eee;
-  background: #f9f9f9;
-  color: #666;
-  font-size: 0.9rem;
-}
-
-.footer-link {
-  color: #333;
-  text-decoration: none;
-  font-weight: 500;
-  margin-left: 15px;
-}
-
-.footer-link:hover {
-  text-decoration: underline;
-}
-
-@media (max-width: 768px) {
-  .navbar {
-    flex-direction: column;
-    gap: 15px;
-    padding: 15px 20px;
-  }
-
-  .nav-menu {
-    gap: 15px;
-  }
-
-  .hero {
-    padding: 40px 20px;
-  }
-
-  .hero-content h1 {
-    font-size: 1.8rem;
-  }
-
-  .roles-section {
-    padding: 40px 20px;
-  }
-
-  .roles-container {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
+.role-state-card small {
+  margin-top: 5px;
+  color: var(--text-muted, #6B7676);
+  font-size: 0.86rem;
+  line-height: 1.45;
 }
 </style>
