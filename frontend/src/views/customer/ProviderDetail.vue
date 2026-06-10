@@ -77,8 +77,8 @@ const bookService = (serviceId: string) => {
     </template>
 
     <template v-else-if="error">
-      <div class="max-w-7xl mx-auto px-6 py-20 text-center">
-        <h2 class="text-2xl font-bold text-gray-900">Oops!</h2>
+      <div class="max-w-7xl mx-auto px-4 md:px-6 py-12 md:py-20 text-center">
+        <h2 class="text-xl md:text-2xl font-bold text-gray-900">Oops!</h2>
         <p class="mt-2 text-gray-600">{{ error }}</p>
         <button @click="router.back()" class="mt-6 rounded-xl bg-emerald-600 px-6 py-2 text-white">Go Back</button>
       </div>
@@ -86,7 +86,7 @@ const bookService = (serviceId: string) => {
 
     <template v-else-if="provider">
       <!-- Cover -->
-      <section class="relative h-[360px] overflow-hidden">
+      <section class="relative h-[280px] md:h-[360px] overflow-hidden">
         <img
           :src="resolveImageUrl(provider.coverImage) || 'https://images.unsplash.com/photo-1548013146-72479768bada?q=80&w=1600&auto=format&fit=crop'"
           alt="Provider Cover"
@@ -96,30 +96,30 @@ const bookService = (serviceId: string) => {
         <div class="absolute inset-0 bg-black/50"></div>
 
         <div class="absolute inset-x-0 bottom-0">
-          <div class="max-w-7xl mx-auto px-6 pb-8">
+          <div class="max-w-7xl mx-auto px-4 md:px-6 pb-6 md:pb-8">
             <button
               @click="router.back()"
-              class="mb-6 rounded-xl bg-white/20 px-4 py-2 text-sm font-semibold text-white backdrop-blur hover:bg-white/30"
+              class="mb-4 md:mb-6 rounded-xl bg-white/20 px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-semibold text-white backdrop-blur hover:bg-white/30"
             >
               ← Back
             </button>
 
-            <div class="flex flex-col gap-5 md:flex-row md:items-end">
+            <div class="flex flex-col gap-3 md:gap-5 md:flex-row md:items-end">
               <img
                 :src="resolveImageUrl(provider.logo) || 'https://images.unsplash.com/photo-1527980965255-d3b416303d12?q=80&w=300&auto=format&fit=crop'"
                 alt="Provider Logo"
-                class="h-24 w-24 rounded-full border-4 border-white object-cover shadow-lg"
+                class="h-20 w-20 md:h-24 md:w-24 rounded-full border-4 border-white object-cover shadow-lg"
               />
 
               <div class="text-white">
-                <div class="mb-2 flex flex-wrap items-center gap-3">
-                  <h1 class="text-3xl md:text-4xl font-bold">
+                <div class="mb-2 flex flex-wrap items-center gap-2 md:gap-3">
+                  <h1 class="text-2xl md:text-4xl font-bold">
                     {{ provider.name }}
                   </h1>
 
                   <span
                     v-if="provider.isVerified"
-                    class="rounded-full bg-emerald-500 px-3 py-1 text-sm font-semibold"
+                    class="rounded-full bg-emerald-500 px-2 md:px-3 py-0.5 md:py-1 text-xs md:text-sm font-semibold"
                   >
                     Verified Provider
                   </span>
@@ -141,15 +141,15 @@ const bookService = (serviceId: string) => {
 
       <!-- Main Content -->
       <main
-        class="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-3 gap-8"
+        class="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-10 grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8"
       >
         <!-- Left -->
         <div class="lg:col-span-2 space-y-8">
           <!-- About -->
           <section
-            class="rounded-3xl bg-white p-7 shadow-sm border border-gray-100"
+            class="rounded-2xl md:rounded-3xl bg-white p-5 md:p-7 shadow-sm border border-gray-100"
           >
-            <h2 class="text-2xl font-bold text-gray-900">About Provider</h2>
+            <h2 class="text-xl md:text-2xl font-bold text-gray-900">About Provider</h2>
 
             <p class="mt-4 leading-relaxed text-gray-600">
               {{ provider.description || 'No description provided by this provider yet.' }}
@@ -158,17 +158,17 @@ const bookService = (serviceId: string) => {
 
           <!-- Services -->
           <section
-            class="rounded-3xl bg-white p-7 shadow-sm border border-gray-100"
+            class="rounded-2xl md:rounded-3xl bg-white p-5 md:p-7 shadow-sm border border-gray-100"
           >
-            <div class="mb-6 flex items-center justify-between">
+            <div class="mb-4 md:mb-6 flex items-center justify-between">
               <div>
                 <p
-                  class="text-sm font-semibold uppercase tracking-wide text-emerald-600"
+                  class="text-xs md:text-sm font-semibold uppercase tracking-wide text-emerald-600"
                 >
                   Services
                 </p>
 
-                <h2 class="mt-1 text-2xl font-bold text-gray-900">
+                <h2 class="mt-1 text-xl md:text-2xl font-bold text-gray-900">
                   Services Offered
                 </h2>
               </div>
@@ -178,12 +178,12 @@ const bookService = (serviceId: string) => {
               <div
                 v-for="service in services"
                 :key="service.id"
-                class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
-              >
+          class="overflow-hidden rounded-xl md:rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+               >
                 <img
                   :src="resolveImageUrl(service.coverImage) || 'https://images.unsplash.com/photo-1599283787923-51b965a58b05?q=80&w=900&auto=format&fit=crop'"
                   :alt="service.title"
-                  class="h-44 w-full object-cover"
+                  class="h-40 md:h-44 w-full object-cover"
                 />
 
                 <div class="p-5">
@@ -222,10 +222,10 @@ const bookService = (serviceId: string) => {
 
           <!-- Reviews -->
           <section
-            class="rounded-3xl bg-white p-7 shadow-sm border border-gray-100"
+            class="rounded-2xl md:rounded-3xl bg-white p-5 md:p-7 shadow-sm border border-gray-100"
           >
-            <div class="mb-6 flex items-center justify-between">
-              <h2 class="text-2xl font-bold text-gray-900">Customer Reviews</h2>
+            <div class="mb-4 md:mb-6 flex items-center justify-between">
+              <h2 class="text-xl md:text-2xl font-bold text-gray-900">Customer Reviews</h2>
 
               <p class="font-semibold text-gray-700">
                 ⭐ 4.8/5
@@ -268,9 +268,9 @@ const bookService = (serviceId: string) => {
         <aside class="space-y-6">
           <!-- Provider Info -->
           <section
-            class="rounded-3xl bg-white p-7 shadow-sm border border-gray-100"
+            class="rounded-2xl md:rounded-3xl bg-white p-5 md:p-7 shadow-sm border border-gray-100"
           >
-            <h2 class="text-xl font-bold text-gray-900">Provider Information</h2>
+            <h2 class="text-lg md:text-xl font-bold text-gray-900">Provider Information</h2>
 
             <div class="mt-5 space-y-4 text-sm text-gray-700">
               <p>
@@ -307,9 +307,9 @@ const bookService = (serviceId: string) => {
 
           <!-- Trust -->
           <section
-            class="rounded-3xl bg-white p-7 shadow-sm border border-gray-100"
+            class="rounded-2xl md:rounded-3xl bg-white p-5 md:p-7 shadow-sm border border-gray-100"
           >
-            <h2 class="text-xl font-bold text-gray-900">
+            <h2 class="text-lg md:text-xl font-bold text-gray-900">
               Why Book With This Provider?
             </h2>
 
@@ -323,8 +323,8 @@ const bookService = (serviceId: string) => {
           </section>
 
           <!-- Contact -->
-          <section class="rounded-3xl bg-emerald-600 p-7 text-white shadow-sm">
-            <h2 class="text-xl font-bold">Need More Information?</h2>
+          <section class="rounded-2xl md:rounded-3xl bg-emerald-600 p-5 md:p-7 text-white shadow-sm">
+            <h2 class="text-lg md:text-xl font-bold">Need More Information?</h2>
 
             <p class="mt-3 text-sm text-white/90 leading-relaxed">
               Contact this provider for more details about their services,
@@ -344,3 +344,17 @@ const bookService = (serviceId: string) => {
     <CustomerFooter />
   </div>
 </template>
+
+<style scoped>
+@media (max-width: 480px) {
+  .p-5 {
+    padding: 1rem;
+  }
+
+  .space-y-8 > :not([hidden]) ~ :not([hidden]) {
+    --tw-space-y-reverse: 0;
+    margin-top: calc(1.25rem * calc(1 - var(--tw-space-y-reverse)));
+    margin-bottom: calc(1.25rem * var(--tw-space-y-reverse));
+  }
+}
+</style>

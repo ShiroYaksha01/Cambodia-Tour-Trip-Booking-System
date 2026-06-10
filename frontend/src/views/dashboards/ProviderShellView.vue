@@ -1,11 +1,22 @@
 <template>
   <div class="provider-shell">
+    <Teleport to="body">
+      <Transition name="slide">
+        <div v-if="mobileSidebarOpen" class="mobile-sidebar-overlay" @click="mobileSidebarOpen = false">
+          <aside class="mobile-sidebar" @click.stop>
+            <DashboardSidebar role="provider" />
+          </aside>
+        </div>
+      </Transition>
+    </Teleport>
+
     <DashboardSidebar role="provider" class="sidebar-fixed" />
 
     <main class="shell-content">
       <ProviderHeader
         v-model:searchQuery="searchQuery"
         :title="(route.meta.title as string) || ''"
+        @toggle-sidebar="mobileSidebarOpen = !mobileSidebarOpen"
       />
 
       <div class="page-content">
@@ -29,6 +40,7 @@ import ProviderHeader from "@/components/ProviderHeader.vue";
 
 const route = useRoute();
 const searchQuery = ref("");
+const mobileSidebarOpen = ref(false);
 </script>
 
 <style scoped>
@@ -59,6 +71,41 @@ const searchQuery = ref("");
   flex: 1;
   padding: 30px 34px 36px;
   overflow-y: auto;
+}
+
+.mobile-sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(17, 24, 39, 0.5);
+  display: none;
+}
+
+.mobile-sidebar {
+  width: 280px;
+  height: 100%;
+  overflow-y: auto;
+  background: #ffffff;
+}
+
+.slide-enter-active,
+.slide-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.slide-enter-active .mobile-sidebar,
+.slide-leave-active .mobile-sidebar {
+  transition: transform 0.25s ease;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+  opacity: 0;
+}
+
+.slide-enter-from .mobile-sidebar,
+.slide-leave-to .mobile-sidebar {
+  transform: translateX(-100%);
 }
 
 :deep(.sidebar-shell) {
@@ -169,6 +216,10 @@ const searchQuery = ref("");
 
   .page-content {
     padding: 22px 18px 28px;
+  }
+
+  .mobile-sidebar-overlay {
+    display: block;
   }
 }
 </style>

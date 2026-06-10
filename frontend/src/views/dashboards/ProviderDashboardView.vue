@@ -425,8 +425,8 @@ const restorePricingRule = () => {
 .section-header h2 {
   margin: 0;
   color: #111827;
-  font-size: clamp(1.55rem, 2.2vw, 2rem);
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 400;
   letter-spacing: 0;
   line-height: 1.1;
 }
@@ -434,7 +434,7 @@ const restorePricingRule = () => {
 .description {
   margin: 10px 0 0;
   color: #4b5563;
-  font-size: 1rem;
+  font-size: 0.875rem;
   line-height: 1.5;
 }
 
@@ -454,8 +454,8 @@ const restorePricingRule = () => {
   border-radius: 8px;
   background: transparent;
   color: #6b7280;
-  font-size: 0.88rem;
-  font-weight: 700;
+  font-size: 0.875rem;
+  font-weight: 400;
   cursor: pointer;
   transition: all 180ms ease;
 }
@@ -497,8 +497,8 @@ const restorePricingRule = () => {
   padding: 16px;
   color: #6b7280;
   text-align: center;
-  font-size: 0.75rem;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 400;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   line-height: 1.55;
@@ -547,15 +547,15 @@ const restorePricingRule = () => {
 .service-details h3 {
   margin: 0;
   color: #111827;
-  font-size: 1rem;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 400;
   line-height: 1.25;
 }
 
 .service-details p {
   margin: 6px 0 0;
   color: #6b7280;
-  font-size: 0.86rem;
+  font-size: 0.875rem;
 }
 
 .availability-cell {
@@ -575,8 +575,8 @@ const restorePricingRule = () => {
 
 .price {
   color: #111827;
-  font-size: 1.05rem;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 400;
 }
 
 .slots {
@@ -586,8 +586,8 @@ const restorePricingRule = () => {
   border-radius: 999px;
   background: rgba(20, 138, 116, 0.1);
   color: #148a74;
-  font-size: 0.75rem;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 400;
 }
 
 .config-panel {
@@ -609,8 +609,8 @@ const restorePricingRule = () => {
 .panel-header h3 {
   margin: 0;
   color: #111827;
-  font-size: 1.08rem;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 400;
 }
 
 .close-btn,
@@ -631,8 +631,8 @@ const restorePricingRule = () => {
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  font-size: 0.9rem;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 400;
 }
 
 .close-btn:hover,
@@ -651,8 +651,8 @@ const restorePricingRule = () => {
 .config-section > label,
 .field-group label {
   color: #6b7280;
-  font-size: 0.75rem;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 400;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -690,14 +690,14 @@ const restorePricingRule = () => {
 
 .date-range {
   color: #111827;
-  font-size: 0.95rem;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 400;
 }
 
 .date-label {
   margin-top: 4px;
   color: #6b7280;
-  font-size: 0.8rem;
+  font-size: 0.875rem;
 }
 
 .date-picker-popover {
@@ -752,8 +752,8 @@ const restorePricingRule = () => {
 
 .capacity-value {
   color: #111827;
-  font-size: 1.6rem;
-  font-weight: 900;
+  font-size: 0.875rem;
+  font-weight: 400;
   line-height: 1;
 }
 
@@ -766,15 +766,15 @@ const restorePricingRule = () => {
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  font-size: 1.1rem;
-  font-weight: 900;
+  font-size: 0.875rem;
+  font-weight: 400;
 }
 
 .helper-text,
 .rule-desc {
   margin: 0;
   color: #6b7280;
-  font-size: 0.88rem;
+  font-size: 0.875rem;
   line-height: 1.5;
 }
 
@@ -784,8 +784,8 @@ const restorePricingRule = () => {
   border-radius: 999px;
   background: rgba(245, 166, 35, 0.14);
   color: #b67912;
-  font-size: 0.72rem;
-  font-weight: 900;
+  font-size: 0.875rem;
+  font-weight: 400;
   letter-spacing: 0.06em;
 }
 
@@ -814,7 +814,7 @@ const restorePricingRule = () => {
 
 .rule-item span {
   color: #111827;
-  font-weight: 800;
+  font-weight: 400;
   line-height: 1.3;
 }
 
@@ -824,8 +824,8 @@ const restorePricingRule = () => {
   border-radius: 10px;
   background: rgba(20, 138, 116, 0.1);
   color: #117864;
-  font-size: 0.82rem;
-  font-weight: 700;
+  font-size: 0.875rem;
+  font-weight: 400;
   line-height: 1.45;
 }
 
@@ -839,7 +839,7 @@ const restorePricingRule = () => {
   padding: 10px 16px;
   border-radius: 10px;
   font: inherit;
-  font-weight: 800;
+  font-weight: 400;
   cursor: pointer;
 }
 
@@ -902,8 +902,8 @@ const restorePricingRule = () => {
 .modal-header h2 {
   margin: 0;
   color: #111827;
-  font-size: 1.4rem;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 400;
 }
 
 .modal-close {
@@ -931,15 +931,15 @@ const restorePricingRule = () => {
 
 .info-group label {
   color: #6b7280;
-  font-size: 0.75rem;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 400;
   text-transform: uppercase;
 }
 
 .info-group p {
   margin: 6px 0 0;
   color: #111827;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 @media (max-width: 1180px) {
@@ -954,12 +954,197 @@ const restorePricingRule = () => {
 
 @media (max-width: 720px) {
   .section-header {
-    padding-left: 14px;
+    padding-left: 12px;
+  }
+
+  .section-header h2 {
+    font-size: 0.875rem;
+  }
+
+  .description {
+    font-size: 0.875rem;
+  }
+
+  .category-tabs {
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tab-btn {
+    white-space: nowrap;
+    padding: 6px 14px;
+    font-size: 0.875rem;
   }
 
   .services-header,
   .service-row {
-    min-width: 680px;
+    min-width: 600px;
+  }
+
+  .header-cell {
+    padding: 10px 8px;
+    font-size: 0.875rem;
+  }
+
+  .service-info {
+    padding: 12px 10px;
+    gap: 10px;
+  }
+
+  .service-image {
+    width: 44px;
+    height: 44px;
+  }
+
+  .service-details h3 {
+    font-size: 0.875rem;
+  }
+
+  .service-details p {
+    font-size: 0.875rem;
+  }
+
+  .availability-cell {
+    min-height: 72px;
+    padding: 10px 6px;
+  }
+
+  .price {
+    font-size: 0.875rem;
+  }
+
+  .slots {
+    font-size: 0.875rem;
+    padding: 2px 8px;
+  }
+
+  .config-panel {
+    padding: 16px;
+  }
+
+  .modal-overlay {
+    padding: 12px;
+  }
+
+  .modal-content {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .modal-header h2 {
+    font-size: 0.875rem;
+  }
+
+  .modal-image {
+    height: 160px;
+  }
+
+  .info-group p {
+    font-size: 0.875rem;
+  }
+
+  .btn-update,
+  .btn-discard,
+  .btn-edit,
+  .btn-cancel {
+    min-height: 38px;
+    padding: 8px 14px;
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .content-wrapper {
+    gap: 16px;
+  }
+
+  .services-header,
+  .service-row {
+    min-width: 460px;
+  }
+
+  .header-cell {
+    padding: 8px 4px;
+    font-size: 0.875rem;
+  }
+
+  .service-info {
+    padding: 10px 8px;
+    gap: 8px;
+  }
+
+  .service-image {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  }
+
+  .service-details h3 {
+    font-size: 0.875rem;
+  }
+
+  .availability-cell {
+    min-height: 64px;
+    padding: 8px 4px;
+  }
+
+  .price {
+    font-size: 0.875rem;
+  }
+
+  .config-panel {
+    padding: 12px;
+    gap: 16px;
+  }
+
+  .panel-header h3 {
+    font-size: 0.875rem;
+  }
+
+  .date-display-button {
+    padding: 10px;
+  }
+
+  .capacity-value {
+    font-size: 0.875rem;
+  }
+
+  .modal-overlay {
+    padding: 8px;
+    align-items: flex-end;
+  }
+
+  .modal-content {
+    width: 100%;
+    border-radius: 12px 12px 0 0;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+
+  .modal-image {
+    height: 140px;
+  }
+
+  .modal-footer {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .modal-footer button {
+    width: 100%;
+  }
+
+  .rule-item {
+    grid-template-columns: auto 1fr;
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .rule-item .btn-remove {
+    grid-column: 1 / -1;
+    justify-self: end;
   }
 }
 </style>

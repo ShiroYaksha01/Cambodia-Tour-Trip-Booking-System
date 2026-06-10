@@ -328,9 +328,9 @@ function undoVerification() {
 
 .check-in-section h2 {
   margin: 0 0 20px 0;
-  font-size: 18px;
+  font-size: 14px;
   color: #1a1a1a;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .booking-code-section {
@@ -340,8 +340,8 @@ function undoVerification() {
 }
 
 .section-label {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 400;
   color: #999;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -359,8 +359,8 @@ function undoVerification() {
   background: #f9f9f9;
   border-radius: 8px;
   border: 2px solid #eee;
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 400;
   color: #1a1a1a;
   width: 54px;
   height: 64px;
@@ -393,7 +393,7 @@ function undoVerification() {
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 400;
   transition: all 0.2s;
   width: 38px;
   height: 48px;
@@ -433,14 +433,14 @@ function undoVerification() {
   background: #ebf8ff;
   border-radius: 8px;
   padding: 12px;
-  font-size: 12px;
+  font-size: 14px;
   color: #2b6cb0;
   line-height: 1.5;
 }
 
 .info-icon {
-  font-weight: 800;
-  font-size: 16px;
+  font-weight: 400;
+  font-size: 14px;
 }
 
 .info-box p {
@@ -466,19 +466,19 @@ function undoVerification() {
 }
 
 .result-icon {
-  font-size: 24px;
+  font-size: 14px;
 }
 
 .result-title {
   margin: 0;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 400;
   color: #1a1a1a;
 }
 
 .result-desc {
   margin: 2px 0 0 0;
-  font-size: 12px;
+  font-size: 14px;
   color: #666;
 }
 
@@ -500,8 +500,8 @@ function undoVerification() {
 
 .guest-list-header h2 {
   margin: 0;
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 400;
   color: #1a1a1a;
 }
 
@@ -511,8 +511,8 @@ function undoVerification() {
   border: 1px solid #ddd;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 400;
   color: #1a1a1a;
 }
 
@@ -559,20 +559,20 @@ function undoVerification() {
 .guest-name {
   margin: 0;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 400;
   color: #1a1a1a;
 }
 
 .guest-package {
   margin: 2px 0 0 0;
-  font-size: 12px;
+  font-size: 14px;
   color: #0f6e70;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .guest-booking {
   margin: 2px 0 0 0;
-  font-size: 11px;
+  font-size: 14px;
   color: #999;
 }
 
@@ -584,16 +584,16 @@ function undoVerification() {
 }
 
 .time {
-  font-size: 12px;
+  font-size: 14px;
   color: #1a1a1a;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .status {
   padding: 2px 8px;
   border-radius: 6px;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 400;
   text-transform: uppercase;
 }
 
@@ -609,8 +609,8 @@ function undoVerification() {
   background: #38a169;
   color: white;
   border-radius: 50%;
-  font-size: 12px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 @media (max-width: 1024px) {

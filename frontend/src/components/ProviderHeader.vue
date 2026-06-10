@@ -1,6 +1,13 @@
 <template>
   <header class="provider-header">
     <div class="header-left">
+      <button class="menu-trigger" type="button" aria-label="Toggle menu" @click="$emit('toggle-sidebar')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
       <h1>{{ title }}</h1>
       <div v-if="showControls" class="header-controls">
         <div class="search-container">
@@ -57,6 +64,7 @@ withDefaults(defineProps<Props>(), {
 
 defineEmits<{
   "update:searchQuery": [value: string];
+  "toggle-sidebar": [];
 }>();
 
 const authUser = computed(() => {
@@ -102,8 +110,8 @@ const providerInitials = computed(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  min-height: 92px;
-  padding: 16px 34px;
+  min-height: 68px;
+  padding: 12px 34px;
   background: rgba(255, 255, 255, 0.95);
   border-bottom: 1px solid #e5e7eb;
   box-sizing: border-box;
@@ -114,7 +122,7 @@ const providerInitials = computed(() => {
 .header-left {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 18px;
   flex: 1;
   min-width: 0;
 }
@@ -123,8 +131,8 @@ const providerInitials = computed(() => {
   margin: 0;
   min-width: max-content;
   color: #111827;
-  font-size: clamp(1.35rem, 2vw, 1.9rem);
-  font-weight: 800;
+  font-size: 1.25rem;
+  font-weight: 600;
   letter-spacing: 0;
   line-height: 1;
 }
@@ -139,12 +147,12 @@ const providerInitials = computed(() => {
 .search-container {
   position: relative;
   flex: 1;
-  max-width: 520px;
+  max-width: 360px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  height: 40px;
-  padding: 0 14px;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px;
   background: #f3f4f6;
   border: 1px solid transparent;
   border-radius: 999px;
@@ -160,7 +168,7 @@ const providerInitials = computed(() => {
   outline: none;
   color: #111827;
   background: transparent;
-  font-size: 0.88rem;
+  font-size: 0.9375rem;
 }
 
 .search-container:focus-within {
@@ -170,8 +178,8 @@ const providerInitials = computed(() => {
 }
 
 .search-icon {
-  width: 17px;
-  height: 17px;
+  width: 15px;
+  height: 15px;
   color: #9ca3af;
   flex: 0 0 auto;
 }
@@ -179,7 +187,7 @@ const providerInitials = computed(() => {
 .header-icons {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .date-range-btn,
@@ -196,29 +204,29 @@ const providerInitials = computed(() => {
 .date-range-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 0 13px;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 11px;
   border-radius: 999px;
   color: #4b5563;
   font: inherit;
-  font-size: 0.78rem;
-  font-weight: 700;
+  font-size: 0.9375rem;
+  font-weight: 400;
   cursor: default;
 }
 
 .date-range-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   color: #148a74;
 }
 
 .provider-profile {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 44px;
-  padding: 5px 12px 5px 6px;
+  gap: 8px;
+  min-height: 36px;
+  padding: 3px 10px 3px 4px;
   border-radius: 999px;
   cursor: pointer;
 }
@@ -235,14 +243,14 @@ const providerInitials = computed(() => {
 }
 
 .avatar {
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 16px;
+  font-weight: 400;
+  font-size: 14px;
   flex-shrink: 0;
 }
 
@@ -268,20 +276,20 @@ const providerInitials = computed(() => {
 }
 
 .provider-profile__text strong {
-  font-size: 14px;
+  font-size: 1rem;
   color: #111827;
   line-height: 1.2;
 }
 
 .provider-profile__text span {
-  font-size: 12px;
+  font-size: 0.875rem;
   color: #6b7280;
   line-height: 1.2;
 }
 
 .chevron-icon {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   color: #9ca3af;
 }
 
@@ -291,7 +299,7 @@ const providerInitials = computed(() => {
   border: none;
   background: #f5f5f5;
   border-radius: 8px;
-  font-size: 18px;
+  font-size: 14px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -307,32 +315,57 @@ const providerInitials = computed(() => {
   background: #e0e0e0;
 }
 
+.menu-trigger {
+  display: none;
+  background: none;
+  border: none;
+  color: #4b5563;
+  cursor: pointer;
+  padding: 6px;
+  margin: -6px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.menu-trigger:hover {
+  background: #f3f4f6;
+}
+
+@media (max-width: 900px) {
+  .menu-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
 @media (max-width: 768px) {
   .provider-header {
-    flex-direction: column;
-    padding: 15px 20px;
-    gap: 15px;
+    padding: 10px 16px;
+    gap: 10px;
+    min-height: auto;
   }
 
   .header-left {
-    width: 100%;
-    align-items: flex-start;
-    gap: 14px;
+    flex: 1;
+    min-width: 0;
+    gap: 8px;
+    flex-wrap: wrap;
   }
 
   .header-left h1 {
-    font-size: 24px;
+    font-size: 1.125rem;
+    min-width: 0;
   }
 
   .header-controls {
-    flex-wrap: wrap;
-    width: 100%;
+    flex: 1 1 100%;
+    order: 3;
   }
 
   .search-container {
     max-width: 100%;
-    flex: 1;
-    min-width: 200px;
+    height: 34px;
   }
 
   .provider-profile__text {
@@ -341,6 +374,17 @@ const providerInitials = computed(() => {
 
   .date-range-btn {
     display: none;
+  }
+
+  .provider-profile {
+    min-height: 34px;
+    padding: 2px 8px 2px 3px;
+  }
+
+  .avatar {
+    width: 26px;
+    height: 26px;
+    font-size: 14px;
   }
 }
 </style>
