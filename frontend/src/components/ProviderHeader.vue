@@ -4,6 +4,7 @@
       <h1>{{ title }}</h1>
       <div v-if="showControls" class="header-controls">
         <div class="search-container">
+          <MagnifyingGlassIcon class="search-icon" aria-hidden="true" />
           <input
             :value="searchQuery"
             @input="$emit('update:searchQuery', ($event.target as HTMLInputElement).value)"
@@ -11,11 +12,14 @@
             :placeholder="searchPlaceholder"
             class="search-input"
           />
-          <span class="search-icon">🔍</span>
         </div>
       </div>
     </div>
     <div class="header-icons">
+      <button class="date-range-btn" type="button">
+        <CalendarDaysIcon aria-hidden="true" />
+        <span>{{ currentDateLabel }}</span>
+      </button>
       <RouterLink :to="{ name: 'provider-settings' }" class="provider-profile provider-profile-link" aria-label="Open profile settings">
         <div v-if="providerProfileImage" class="avatar avatar--image">
           <img :src="providerProfileImage" :alt="providerName" />
@@ -27,6 +31,7 @@
           <strong>{{ providerName }}</strong>
           <span>{{ providerRoleLabel }}</span>
         </div>
+        <ChevronDownIcon class="chevron-icon" aria-hidden="true" />
       </RouterLink>
     </div>
   </header>
@@ -34,6 +39,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { CalendarDaysIcon, ChevronDownIcon, MagnifyingGlassIcon } from "@heroicons/vue/24/outline";
 import { resolveImageUrl } from "../utils/api";
 
 interface Props {
@@ -45,7 +51,7 @@ interface Props {
 
 withDefaults(defineProps<Props>(), {
   searchQuery: "",
-  searchPlaceholder: "Search...",
+  searchPlaceholder: "Search services, bookings, inventory...",
   showControls: true,
 });
 
@@ -55,7 +61,7 @@ defineEmits<{
 
 const authUser = computed(() => {
   try {
-    const rawUser = localStorage.getItem("auth_user");
+    const rawUser = localStorage.getItem("auth_user") || localStorage.getItem("user");
     return rawUser ? JSON.parse(rawUser) : null;
   } catch {
     return null;
@@ -64,6 +70,11 @@ const authUser = computed(() => {
 
 const providerName = computed(() => authUser.value?.username || "Provider");
 const providerProfileImage = computed(() => resolveImageUrl(authUser.value?.profilePicture));
+const currentDateLabel = new Date().toLocaleDateString("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
 const providerRoleLabel = computed(() => {
   const role = authUser.value?.role || "";
   const roleLabels: Record<string, string> = {
@@ -91,80 +102,125 @@ const providerInitials = computed(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 30px;
-  background: #ffffff;
-  border-bottom: 1px solid #e0e0e0;
+  min-height: 92px;
+  padding: 16px 34px;
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid #e5e7eb;
+  box-sizing: border-box;
+  backdrop-filter: blur(18px);
   gap: 20px;
 }
 
 .header-left {
   display: flex;
-  flex-direction: column;
-  gap: 15px;
+  align-items: center;
+  gap: 24px;
   flex: 1;
+  min-width: 0;
 }
 
 .header-left h1 {
   margin: 0;
-  font-size: 28px;
-  font-weight: 600;
-  color: #1a1a1a;
+  min-width: max-content;
+  color: #111827;
+  font-size: clamp(1.35rem, 2vw, 1.9rem);
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1;
 }
 
 .header-controls {
   display: flex;
-  gap: 15px;
   align-items: center;
+  flex: 1;
+  min-width: 0;
 }
 
 .search-container {
   position: relative;
   flex: 1;
-  max-width: 400px;
+  max-width: 520px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 14px;
+  background: #f3f4f6;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
 }
 
 .search-input {
   width: 100%;
-  padding: 10px 40px 10px 15px;
-  border: 1px solid #d0d0d0;
-  border-radius: 8px;
-  font-size: 14px;
-  background: #f9f9f9;
-  transition: all 0.3s ease;
+  border: 0;
+  outline: none;
+  color: #111827;
+  background: transparent;
+  font-size: 0.88rem;
 }
 
-.search-input:focus {
-  outline: none;
-  border-color: #0f6e70;
+.search-container:focus-within {
   background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(15, 110, 112, 0.1);
+  border-color: rgba(20, 138, 116, 0.42);
+  box-shadow: 0 0 0 4px rgba(20, 138, 116, 0.08);
 }
 
 .search-icon {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 16px;
-  color: #999;
-  pointer-events: none;
+  width: 17px;
+  height: 17px;
+  color: #9ca3af;
+  flex: 0 0 auto;
 }
 
 .header-icons {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
+}
+
+.date-range-btn,
+.provider-profile {
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.date-range-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 13px;
+  border-radius: 999px;
+  color: #4b5563;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: default;
+}
+
+.date-range-btn svg {
+  width: 18px;
+  height: 18px;
+  color: #148a74;
 }
 
 .provider-profile {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 15px;
-  background: #f5f5f5;
-  border-radius: 12px;
+  min-height: 44px;
+  padding: 5px 12px 5px 6px;
+  border-radius: 999px;
   cursor: pointer;
-  transition: background 0.3s ease;
 }
 
 .provider-profile-link {
@@ -172,13 +228,15 @@ const providerInitials = computed(() => {
   text-decoration: none;
 }
 
+.date-range-btn:hover,
 .provider-profile:hover {
-  background: #efefef;
+  border-color: rgba(20, 138, 116, 0.28);
+  box-shadow: 0 10px 26px rgba(17, 24, 39, 0.08);
 }
 
 .avatar {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -199,7 +257,7 @@ const providerInitials = computed(() => {
 }
 
 .avatar--initials {
-  background: linear-gradient(135deg, #0f6e70 0%, #158a8c 100%);
+  background: #148a74;
   color: white;
 }
 
@@ -211,16 +269,21 @@ const providerInitials = computed(() => {
 
 .provider-profile__text strong {
   font-size: 14px;
-  color: #1a1a1a;
+  color: #111827;
   line-height: 1.2;
 }
 
 .provider-profile__text span {
   font-size: 12px;
-  color: #999;
+  color: #6b7280;
   line-height: 1.2;
 }
 
+.chevron-icon {
+  width: 16px;
+  height: 16px;
+  color: #9ca3af;
+}
 
 .icon-btn {
   width: 40px;
@@ -253,6 +316,8 @@ const providerInitials = computed(() => {
 
   .header-left {
     width: 100%;
+    align-items: flex-start;
+    gap: 14px;
   }
 
   .header-left h1 {
@@ -261,6 +326,7 @@ const providerInitials = computed(() => {
 
   .header-controls {
     flex-wrap: wrap;
+    width: 100%;
   }
 
   .search-container {
@@ -270,6 +336,10 @@ const providerInitials = computed(() => {
   }
 
   .provider-profile__text {
+    display: none;
+  }
+
+  .date-range-btn {
     display: none;
   }
 }

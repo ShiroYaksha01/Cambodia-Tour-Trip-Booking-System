@@ -3,8 +3,10 @@
     <section class="auth-shell">
       <aside class="brand-panel" aria-label="Anajak Tour introduction">
         <div class="brand-content">
-          <RouterLink to="/" class="brand-mark">
-            <span class="brand-emblem">AT</span>
+          <RouterLink to="/" class="brand-mark" aria-label="Anajak Tour home">
+            <span class="brand-emblem">
+              <img src="/logo-mark.png" alt="" aria-hidden="true" />
+            </span>
             <span class="brand-text">Anajak Tour</span>
           </RouterLink>
 
@@ -118,16 +120,19 @@
 .brand-emblem {
   width: 44px;
   height: 44px;
-  border: 1px solid rgba(245, 166, 35, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: 8px;
   display: grid;
   place-items: center;
-  background: linear-gradient(145deg, var(--accent-gold), #ffd47b);
-  color: var(--dark-bg);
-  font-weight: 900;
-  font-size: 0.88rem;
-  letter-spacing: 0;
+  background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+}
+
+.brand-emblem img {
+  width: 36px;
+  height: 34px;
+  object-fit: contain;
 }
 
 .brand-text {

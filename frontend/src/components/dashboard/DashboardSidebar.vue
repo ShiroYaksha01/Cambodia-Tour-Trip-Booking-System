@@ -4,43 +4,47 @@
       v-if="role === 'provider'"
       class="sidebar-inner sidebar-inner--provider"
     >
-      <div class="provider-brand">
-        <div class="provider-brand__mark" aria-hidden="true">⬤</div>
-        <div>
-          <strong>Angkor Treasures</strong>
-          <small>VERIFIED PROVIDER</small>
-        </div>
+      <div class="brand-block">
+        <img class="brand-logo" src="/logo-wordmark.png" alt="Anajak Tour" />
       </div>
 
-      <nav class="provider-nav" aria-label="Provider navigation">
+      <nav class="nav-list" aria-label="Provider navigation">
         <router-link
           v-for="item in providerNavItems"
           :key="item.label"
           :to="item.href"
-          class="provider-nav__item"
+          class="nav-item"
+          :class="{ 'nav-item--active': isActiveItem(item) }"
         >
-          <span class="provider-nav__icon" aria-hidden="true">
+          <span class="nav-item__icon" aria-hidden="true">
             <component :is="item.icon" />
           </span>
-          <span>{{ item.label }}</span>
+          <span>
+            <strong>{{ item.label }}</strong>
+            <small>{{ item.description }}</small>
+          </span>
         </router-link>
       </nav>
 
-      <button class="provider-cta" type="button">New Booking</button>
+      <section class="sidebar-card">
+        <div class="system-status">
+          <span class="system-status__dot"></span>
+          <div>
+            <p>Provider status</p>
+            <strong>Verified</strong>
+          </div>
+        </div>
+      </section>
 
-      <footer class="provider-footer">
-        <a href="#" aria-label="Support">Support</a>
+      <footer class="sidebar-actions provider-footer">
         <LogoutButton />
+        <a href="#" aria-label="Support">Support</a>
       </footer>
     </div>
 
     <div v-else class="sidebar-inner">
       <div class="brand-block">
-        <div class="brand-mark" aria-hidden="true">A</div>
-        <div>
-          <strong>Tour Booking System</strong>
-          <small>System Supervisor</small>
-        </div>
+        <img class="brand-logo" src="/logo-wordmark.png" alt="Anajak Tour" />
       </div>
 
       <nav class="nav-list" aria-label="Dashboard navigation">
@@ -167,33 +171,39 @@ const navMap: Record<DashboardRole, NavItem[]> = {
   ],
   provider: [
     {
+      label: "Dashboard",
+      description: "Operations overview",
+      href: "/provider",
+      icon: "HomeIcon",
+    },
+    {
+      label: "Services",
+      description: "Manage offerings",
+      href: "/provider/service",
+      icon: "BuildingStorefrontIcon",
+    },
+    {
       label: "Inventory",
-      description: "Stock and availability",
-      href: "/provider/dashboard",
+      description: "Stock and pricing",
+      href: "/provider/inventory",
       icon: "CubeIcon",
     },
     {
-      label: "Bookings",
-      description: "Reservation ledger",
-      href: "/provider/bookings",
-      icon: "BookOpenIcon",
+      label: "Manifest",
+      description: "Guest movement",
+      href: "/provider/manifest",
+      icon: "UserGroupIcon",
     },
     {
-      label: "Finance",
-      description: "Pricing and markup",
-      href: "#pricing",
-      icon: "ChartBarSquareIcon",
-    },
-    {
-      label: "Messages",
-      description: "Inbox and requests",
-      href: "#controller",
-      icon: "EnvelopeIcon",
+      label: "Ledger",
+      description: "Revenue tracking",
+      href: "/provider/ledger",
+      icon: "BanknotesIcon",
     },
     {
       label: "Settings",
       description: "Provider preferences",
-      href: "#changes",
+      href: "/provider/settings",
       icon: "Cog6ToothIcon",
     },
   ],
@@ -253,7 +263,7 @@ export default defineComponent({
 }
 
 .sidebar-shell--provider {
-  background: linear-gradient(180deg, #f8faf9 0%, #f4f7f6 100%);
+  background: #ffffff;
 }
 
 .sidebar-inner {
@@ -265,137 +275,30 @@ export default defineComponent({
 }
 
 .sidebar-inner--provider {
-  padding: 18px 16px 16px;
+  padding: 22px 14px 16px;
 }
 
-.provider-brand {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  padding: 8px 4px 10px;
-}
-
-.provider-brand__mark {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  background: #1e8a86;
-  color: #fff;
-  font-size: 0.78rem;
-}
-
-.provider-brand strong {
-  display: block;
-  color: #173f42;
-  font-size: 0.94rem;
-}
-
-.provider-brand small {
-  display: block;
-  margin-top: 2px;
-  color: #6f7f7d;
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-}
-
-.provider-nav {
-  display: grid;
-  gap: 6px;
-  margin-top: 2px;
-}
-
-.provider-nav__item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 38px;
-  padding: 9px 10px;
-  border-radius: 8px;
-  color: #264044;
-  text-decoration: none;
-  transition:
-    background 180ms ease,
-    transform 180ms ease;
-}
-
-.provider-nav__item:hover {
-  background: rgba(30, 138, 134, 0.08);
-  transform: translateX(2px);
-}
-
-.provider-nav__icon {
-  width: 18px;
-  height: 18px;
-  display: grid;
-  place-items: center;
-  color: #67807d;
-}
-
-.provider-nav__icon svg,
 .nav-item__icon svg {
   width: 18px;
   height: 18px;
   stroke-width: 2;
 }
 
-.provider-cta {
-  margin-top: auto;
-  min-height: 40px;
-  border: 0;
-  border-radius: 6px;
-  background: linear-gradient(180deg, #0f6e70, #0a5c5d);
-  color: #fff;
-  font: inherit;
-  font-weight: 700;
-  box-shadow: 0 14px 28px rgba(15, 110, 112, 0.18);
-}
-
 .provider-footer {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding-top: 8px;
-}
-
-.provider-footer a {
-  color: #7a8987;
-  text-decoration: none;
-  font-size: 0.8rem;
+  margin-top: 0;
 }
 
 .brand-block {
   display: flex;
-  gap: 12px;
-  align-items: start;
-  padding: 0 6px 6px;
+  align-items: center;
+  padding: 0 4px 18px;
 }
 
-.brand-block strong {
-  display: block;
-  font-size: 0.94rem;
-  color: #173f42;
-  line-height: 1.15;
-}
-
-.brand-block small {
-  display: block;
-  margin-top: 2px;
-  color: #7a8a8b;
-  font-size: 0.72rem;
-}
-
-.brand-mark {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  font-weight: 800;
-  font-size: 0.92rem;
-  color: #f7fbf7;
-  background: #0f6e70;
+.brand-logo {
+  width: min(100%, 224px);
+  height: 46px;
+  object-fit: contain;
+  object-position: left center;
 }
 
 .eyebrow,
