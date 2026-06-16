@@ -2,7 +2,7 @@
 
 import { Injectable, BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import * as nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
@@ -13,7 +13,7 @@ import { EmailVerification } from './entities/email-verification.entity';
 
 @Injectable()
 export class AuthService {
-  private transporter: nodemailer.Transporter;
+  private resend: Resend;
 
   constructor(
     private usersService: UsersService,
@@ -24,23 +24,12 @@ export class AuthService {
     private emailVerificationRepository: Repository<EmailVerification>,
     private configService: ConfigService,
   ) {
-    const user = this.configService.get<string>('EMAIL_USER');
-    const pass = this.configService.get<string>('EMAIL_PASS');
-    console.log('--- Email Config Check ---');
-    console.log('EMAIL_USER:', user);
-    console.log('EMAIL_PASS (length):', pass?.length);
+    const resendApiKey = this.configService.get<string>('RESEND_API_KEY');
+    console.log('--- Resend Config Check ---');
+    console.log('RESEND_API_KEY (length):', resendApiKey?.length);
     console.log('--------------------------');
 
-    this.transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-      requireTLS: true,
-      auth: {
-        user: user,
-        pass: pass,
-      },
-    });
+    this.resend = new Resend(resendApiKey || 'dummy_key_to_prevent_crash');
   }
 
   async register(
@@ -51,6 +40,7 @@ export class AuthService {
     profilePicture?: string,
     role?: string,
   ) {
+    console.log(`--- Registering user: ${email} ---`);
     const exist = await this.usersService.findByEmail(email);
     if (exist) throw new BadRequestException('Email already exists');
 
@@ -76,12 +66,19 @@ export class AuthService {
     });
 
     try {
-      await this.transporter.sendMail({
-        from: this.configService.get<string>('EMAIL_USER'),
+      console.log(`Attempting to send verification email to: ${email}`);
+      const { data, error } = await this.resend.emails.send({
+        from: 'Anajak Tour <onboarding@resend.dev>',
         to: email,
         subject: 'Welcome! Verify your email',
         text: `Your OTP for email verification is: ${otp}. It expires in 10 minutes.`,
       });
+
+      if (error) {
+        console.error('Resend error during registration:', error);
+      } else {
+        console.log('Verification email sent successfully:', data?.id);
+      }
     } catch (emailError) {
       console.error('Email sending failed during registration:', emailError);
     }
@@ -159,12 +156,19 @@ export class AuthService {
     });
 
     try {
-      await this.transporter.sendMail({
-        from: this.configService.get<string>('EMAIL_USER'),
+      console.log(`Attempting to resend verification email to: ${email}`);
+      const { data, error } = await this.resend.emails.send({
+        from: 'Anajak Tour <onboarding@resend.dev>',
         to: email,
         subject: 'Verify your email',
         text: `Your new OTP for email verification is: ${otp}. It expires in 10 minutes.`,
       });
+
+      if (error) {
+        console.error('Resend error during resendVerificationOtp:', error);
+      } else {
+        console.log('Verification email resent successfully:', data?.id);
+      }
     } catch (emailError) {
       console.error('Email resend failed:', emailError);
     }
@@ -188,6 +192,7 @@ export class AuthService {
   }
 
   async forgotPassword(email: string) {
+    console.log(`--- forgotPassword called for: ${email} ---`);
     try {
       const user = await this.usersService.findByEmail(email);
       const message = 'If this email exists, we sent a verification code.';
@@ -207,12 +212,19 @@ export class AuthService {
       });
 
       try {
-        await this.transporter.sendMail({
-          from: this.configService.get<string>('EMAIL_USER'),
+        console.log(`Attempting to send password reset email to: ${email}`);
+        const { data, error } = await this.resend.emails.send({
+          from: 'Anajak Tour <onboarding@resend.dev>',
           to: email,
           subject: 'Password Reset OTP',
           text: `Your OTP for password reset is: ${otp}. It expires in 10 minutes.`,
         });
+
+        if (error) {
+          console.error('Resend error during forgotPassword:', error);
+        } else {
+          console.log('Password reset email sent successfully:', data?.id);
+        }
       } catch (emailError) {
         console.error('Email sending failed:', emailError);
       }
