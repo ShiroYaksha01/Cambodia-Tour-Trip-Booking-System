@@ -261,7 +261,7 @@ function goToChangePassword() {
   router.push("/customer/change-password");
 }
 
-function handleProfileImageUpload(event: Event) {
+async function handleProfileImageUpload(event: Event) {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
 
@@ -278,25 +278,75 @@ function handleProfileImageUpload(event: Event) {
     return;
   }
 
-  const reader = new FileReader();
+  profileLoading.value = true;
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
 
-  reader.onload = () => {
-    profileImage.value = String(reader.result);
+    const uploadResponse = await api.post("/uploads/image", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    const imageUrl = uploadResponse.data.url;
+
+    const profileResponse = await api.put(`/users/${user.value.id}`, {
+      profilePicture: imageUrl,
+    });
+
+    const updatedProfile = profileResponse.data.data || profileResponse.data;
+    profileImage.value = updatedProfile.profilePicture;
+
     if (user.value.id) {
-      localStorage.setItem(`customerProfileImage_${user.value.id}`, profileImage.value);
+      localStorage.removeItem(`customerProfileImage_${user.value.id}`);
     }
-    window.dispatchEvent(new Event("profile-updated"));
-  };
 
-  reader.readAsDataURL(file);
+    const localUser = localStorage.getItem("user");
+    if (localUser) {
+      const parsed = JSON.parse(localUser);
+      parsed.profilePicture = profileImage.value;
+      localStorage.setItem("user", JSON.stringify(parsed));
+    }
+
+    window.dispatchEvent(new Event("profile-updated"));
+    alert("Profile picture updated successfully.");
+  } catch (err: any) {
+    console.error("Upload error:", err);
+    alert(err.response?.data?.message || "Failed to upload image.");
+  } finally {
+    profileLoading.value = false;
+  }
 }
 
-function removeProfileImage() {
-  profileImage.value = "";
-  if (user.value.id) {
-    localStorage.removeItem(`customerProfileImage_${user.value.id}`);
+async function removeProfileImage() {
+  if (!confirm("Are you sure you want to remove your profile picture?")) return;
+
+  profileLoading.value = true;
+  try {
+    const response = await api.put(`/users/${user.value.id}`, {
+      profilePicture: null,
+    });
+
+    profileImage.value = "";
+
+    if (user.value.id) {
+      localStorage.removeItem(`customerProfileImage_${user.value.id}`);
+    }
+
+    const localUser = localStorage.getItem("user");
+    if (localUser) {
+      const parsed = JSON.parse(localUser);
+      parsed.profilePicture = "";
+      localStorage.setItem("user", JSON.stringify(parsed));
+    }
+
+    window.dispatchEvent(new Event("profile-updated"));
+    alert("Profile picture removed.");
+  } catch (err: any) {
+    console.error("Remove image error:", err);
+    alert(err.response?.data?.message || "Failed to remove profile picture.");
+  } finally {
+    profileLoading.value = false;
   }
-  window.dispatchEvent(new Event("profile-updated"));
 }
 
 function savePrivacySettings() {
