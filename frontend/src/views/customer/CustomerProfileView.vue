@@ -322,7 +322,7 @@ async function removeProfileImage() {
 
   profileLoading.value = true;
   try {
-    const response = await api.put(`/users/${user.value.id}`, {
+    await api.put(`/users/${user.value.id}`, {
       profilePicture: null,
     });
 
