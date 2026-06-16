@@ -151,6 +151,10 @@ const bookService = (serviceId: string) => {
           >
             <h2 class="text-xl md:text-2xl font-bold text-gray-900">About Provider</h2>
 
+            <p v-if="provider.tagline" class="mt-2 text-lg font-medium text-emerald-700">
+              "{{ provider.tagline }}"
+            </p>
+
             <p class="mt-4 leading-relaxed text-gray-600">
               {{ provider.description || 'No description provided by this provider yet.' }}
             </p>
@@ -280,7 +284,7 @@ const bookService = (serviceId: string) => {
 
               <p v-if="provider.email">
                 <span class="font-semibold">Email:</span>
-                {{ provider.email }}
+                <a :href="'mailto:' + provider.email" class="text-emerald-600 hover:underline">{{ provider.email }}</a>
               </p>
 
               <p v-if="provider.phone">
@@ -288,19 +292,23 @@ const bookService = (serviceId: string) => {
                 {{ provider.phone }}
               </p>
 
-              <p>
-                <span class="font-semibold">Experience:</span>
-                5 years
+              <p v-if="provider.websiteUrl">
+                <span class="font-semibold">Website:</span>
+                <a :href="provider.websiteUrl.startsWith('http') ? provider.websiteUrl : 'https://' + provider.websiteUrl" target="_blank" class="text-emerald-600 hover:underline">Visit Website</a>
               </p>
 
-              <p>
+              <p v-if="provider.address">
+                <span class="font-semibold">Address:</span>
+                {{ provider.address }}
+              </p>
+
+              <p v-if="provider.languages && provider.languages.length">
+                <span class="font-semibold">Languages:</span>
+                {{ provider.languages.join(', ') }}
+              </p>
+              <p v-else>
                 <span class="font-semibold">Languages:</span>
                 Khmer, English
-              </p>
-
-              <p>
-                <span class="font-semibold">Opening:</span>
-                8:00 AM - 6:00 PM
               </p>
             </div>
           </section>
@@ -313,7 +321,10 @@ const bookService = (serviceId: string) => {
               Why Book With This Provider?
             </h2>
 
-            <ul class="mt-5 space-y-3 text-sm text-gray-700">
+            <ul v-if="provider.highlights && provider.highlights.length" class="mt-5 space-y-3 text-sm text-gray-700">
+              <li v-for="highlight in provider.highlights" :key="highlight">✅ {{ highlight }}</li>
+            </ul>
+            <ul v-else class="mt-5 space-y-3 text-sm text-gray-700">
               <li>✅ Verified local provider</li>
               <li>✅ Secure booking process</li>
               <li>✅ Friendly tour guides</li>

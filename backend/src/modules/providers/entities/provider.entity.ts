@@ -59,6 +59,27 @@ export class Provider {
   @Column({ name: 'guest_requirements', type: 'text', nullable: true })
   guestRequirements: string;
 
+  @Column({ type: 'text', nullable: true })
+  tagline: string;
+
+  @Column({ name: 'website_url', type: 'text', nullable: true })
+  websiteUrl: string;
+
+  @Column({ name: 'instagram_handle', type: 'varchar', length: 255, nullable: true })
+  instagramHandle: string;
+
+  @Column({ name: 'city_province', type: 'varchar', length: 255, nullable: true })
+  cityProvince: string;
+
+  @Column({ name: 'google_maps_link', type: 'text', nullable: true })
+  googleMapsLink: string;
+
+  @Column({ type: 'text', array: true, default: '{}' })
+  highlights: string[];
+
+  @Column({ type: 'text', array: true, default: '{}' })
+  languages: string[];
+
   @Column({
     name: 'commission_rate',
     type: 'decimal',
