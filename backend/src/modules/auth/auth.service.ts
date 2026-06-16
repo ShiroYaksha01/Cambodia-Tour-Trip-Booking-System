@@ -156,12 +156,19 @@ export class AuthService {
     });
 
     try {
-      await this.transporter.sendMail({
-        from: this.configService.get<string>('EMAIL_USER'),
+      console.log(`Attempting to resend verification email to: ${email}`);
+      const { data, error } = await this.resend.emails.send({
+        from: 'Anajak Tour <onboarding@resend.dev>',
         to: email,
         subject: 'Verify your email',
         text: `Your new OTP for email verification is: ${otp}. It expires in 10 minutes.`,
       });
+
+      if (error) {
+        console.error('Resend error during resendVerificationOtp:', error);
+      } else {
+        console.log('Verification email resent successfully:', data?.id);
+      }
     } catch (emailError) {
       console.error('Email resend failed:', emailError);
     }
