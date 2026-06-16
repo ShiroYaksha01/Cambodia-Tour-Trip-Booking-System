@@ -32,7 +32,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Patch('change-password')
   async changePassword(@Request() req: any, @Body() dto: ChangePasswordDto) {
-    const user = await this.usersService.findByEmail(req.user.email);
+    const user = await this.usersService.findByIdWithPassword(req.user.userId);
     if (!user) {
       throw new BadRequestException('User not found');
     }

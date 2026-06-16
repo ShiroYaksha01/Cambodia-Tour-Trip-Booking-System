@@ -38,6 +38,22 @@ export class UsersService {
     return user;
   }
 
+  async findByIdWithPassword(id: string) {
+    const user = await this.userRepo.findOne({
+      where: { id },
+      select: [
+        'id',
+        'email',
+        'passwordHash',
+        'role',
+        'username',
+        'profilePicture',
+      ],
+    });
+    if (!user) throw new NotFoundException('User not found');
+    return user;
+  }
+
   async updateUser(id: string, data: Partial<User> & { password?: string }) {
     const user = await this.findById(id);
 
