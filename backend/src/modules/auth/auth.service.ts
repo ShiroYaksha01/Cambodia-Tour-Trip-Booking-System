@@ -29,7 +29,7 @@ export class AuthService {
     console.log('RESEND_API_KEY (length):', resendApiKey?.length);
     console.log('--------------------------');
 
-    this.resend = new Resend(resendApiKey);
+    this.resend = new Resend(resendApiKey || 'dummy_key_to_prevent_crash');
   }
 
   async register(
