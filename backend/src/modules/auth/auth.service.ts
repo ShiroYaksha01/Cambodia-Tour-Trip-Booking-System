@@ -40,6 +40,11 @@ export class AuthService {
         user: user,
         pass: pass,
       },
+      // Force IPv4 to avoid ENETUNREACH errors on Render/Gmail
+      family: 4,
+      connectionTimeout: 10000, // 10 seconds
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
     });
   }
 
@@ -51,6 +56,7 @@ export class AuthService {
     profilePicture?: string,
     role?: string,
   ) {
+    console.log(`--- Registering user: ${email} ---`);
     const exist = await this.usersService.findByEmail(email);
     if (exist) throw new BadRequestException('Email already exists');
 
@@ -76,12 +82,14 @@ export class AuthService {
     });
 
     try {
+      console.log(`Attempting to send verification email to: ${email}`);
       await this.transporter.sendMail({
         from: this.configService.get<string>('EMAIL_USER'),
         to: email,
         subject: 'Welcome! Verify your email',
         text: `Your OTP for email verification is: ${otp}. It expires in 10 minutes.`,
       });
+      console.log('Verification email sent successfully');
     } catch (emailError) {
       console.error('Email sending failed during registration:', emailError);
     }
@@ -188,6 +196,7 @@ export class AuthService {
   }
 
   async forgotPassword(email: string) {
+    console.log(`--- forgotPassword called for: ${email} ---`);
     try {
       const user = await this.usersService.findByEmail(email);
       const message = 'If this email exists, we sent a verification code.';
@@ -207,12 +216,14 @@ export class AuthService {
       });
 
       try {
+        console.log(`Attempting to send password reset email to: ${email}`);
         await this.transporter.sendMail({
           from: this.configService.get<string>('EMAIL_USER'),
           to: email,
           subject: 'Password Reset OTP',
           text: `Your OTP for password reset is: ${otp}. It expires in 10 minutes.`,
         });
+        console.log('Password reset email sent successfully');
       } catch (emailError) {
         console.error('Email sending failed:', emailError);
       }
