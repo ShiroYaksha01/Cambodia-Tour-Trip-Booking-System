@@ -270,6 +270,7 @@ function handleProfileImageUpload(event: Event) {
   reader.onload = () => {
     profileImage.value = String(reader.result);
     localStorage.setItem("customerProfileImage", profileImage.value);
+    window.dispatchEvent(new Event("profile-updated"));
   };
 
   reader.readAsDataURL(file);
@@ -278,6 +279,7 @@ function handleProfileImageUpload(event: Event) {
 function removeProfileImage() {
   profileImage.value = "";
   localStorage.removeItem("customerProfileImage");
+  window.dispatchEvent(new Event("profile-updated"));
 }
 
 function savePrivacySettings() {
@@ -400,7 +402,6 @@ async function saveProfile() {
       username: editForm.value.name,
       email: editForm.value.email,
       phoneNumber: editForm.value.phone,
-      location: editForm.value.location,
     };
 
     const response = await api.put(`/users/${user.value.id}`, payload);
