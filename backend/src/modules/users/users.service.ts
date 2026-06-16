@@ -25,6 +25,7 @@ export class UsersService {
         'passwordHash',
         'role',
         'username',
+        'profilePicture',
         'emailVerifiedAt',
         'isEmailVerified',
       ],
