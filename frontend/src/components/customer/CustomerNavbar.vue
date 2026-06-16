@@ -130,14 +130,20 @@ function loadUserData() {
       if (user.profilePicture) {
         userProfileImage.value = user.profilePicture;
       }
+
+      if (user.id) {
+        const localImage = localStorage.getItem(`customerProfileImage_${user.id}`);
+        if (localImage) {
+          userProfileImage.value = localImage;
+        }
+      }
     } catch (e) {
       console.error("Failed to parse user data", e);
     }
-  }
-
-  const localImage = localStorage.getItem("customerProfileImage");
-  if (localImage) {
-    userProfileImage.value = localImage;
+  } else {
+    userName.value = "Profile";
+    userInitial.value = "U";
+    userProfileImage.value = "";
   }
 }
 
