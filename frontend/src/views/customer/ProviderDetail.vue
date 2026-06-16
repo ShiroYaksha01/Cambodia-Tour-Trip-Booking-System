@@ -12,8 +12,15 @@ const router = useRouter();
 const providerId = route.params.id as string;
 const provider = ref<any>(null);
 const services = ref<any[]>([]);
+const localReviews = ref<any[]>([]);
 const loading = ref(true);
 const error = ref("");
+
+const providerRating = computed(() => {
+  if (localReviews.value.length === 0) return 0;
+  const sum = localReviews.value.reduce((acc, rev) => acc + rev.rating, 0);
+  return (sum / localReviews.value.length).toFixed(1);
+});
 
 const fetchProviderData = async () => {
   try {
@@ -22,6 +29,13 @@ const fetchProviderData = async () => {
     if (response.data.success) {
       provider.value = response.data.data;
       services.value = response.data.data.services || [];
+      
+      // Load and filter reviews for THIS provider only
+      const stored = localStorage.getItem("customerReviews");
+      if (stored) {
+        const allReviews = JSON.parse(stored);
+        localReviews.value = allReviews.filter((r: any) => r.providerId === providerId);
+      }
     }
   } catch (err) {
     console.error("Failed to fetch provider detail:", err);
@@ -114,9 +128,9 @@ const contactProvider = () => {
                 <p class="text-white/90">📍 {{ provider.location || 'Cambodia' }}</p>
 
                 <p class="mt-2 text-white/90">
-                  ⭐ 0 / 5
+                  ⭐ {{ providerRating }} / 5
                   <span class="text-white/70">
-                    (0 reviews)
+                    ({{ localReviews.length }} reviews)
                   </span>
                 </p>
               </div>
@@ -218,13 +232,52 @@ const contactProvider = () => {
               <h2 class="text-xl md:text-2xl font-bold text-gray-900">Customer Reviews</h2>
 
               <p class="font-semibold text-gray-700">
-                ⭐ 0/5
+                ⭐ {{ providerRating }}/5
               </p>
             </div>
 
-            <div class="py-10 text-center">
+            <div v-if="localReviews.length > 0" class="space-y-6">
+              <div
+                v-for="review in localReviews"
+                :key="review.id"
+                class="border-b border-gray-100 pb-6 last:border-b-0 last:pb-0"
+              >
+                <div class="flex items-center gap-4">
+                  <div class="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold">
+                    {{ review.serviceTitle?.charAt(0) || 'C' }}
+                  </div>
+
+                  <div>
+                    <h4 class="font-semibold text-gray-900">
+                      {{ review.title }}
+                    </h4>
+
+                    <p class="text-sm text-gray-500">
+                      ⭐ {{ review.rating }} · {{ new Date(review.createdAt).toLocaleDateString() }}
+                    </p>
+                  </div>
+                </div>
+
+                <p class="mt-4 leading-relaxed text-gray-600 italic">
+                  "{{ review.message }}"
+                </p>
+                
+                <div class="mt-3 flex gap-2">
+                  <span class="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-500 uppercase font-bold">{{ review.serviceTitle }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div v-else class="py-10 text-center">
               <p class="text-gray-500">No reviews yet for this provider.</p>
               <p class="text-sm text-gray-400 mt-2">Book a service and be the first to leave a review!</p>
+              
+              <button 
+                @click="router.push({ name: 'customer-profile', query: { tab: 'reviews' } })"
+                class="mt-6 inline-flex items-center gap-2 rounded-xl border border-emerald-600 px-6 py-2.5 text-sm font-semibold text-emerald-600 hover:bg-emerald-50"
+              >
+                Write a Review
+              </button>
             </div>
           </section>
         </div>
