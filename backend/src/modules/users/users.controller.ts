@@ -5,10 +5,12 @@ import {
   Body,
   UseGuards,
   Get,
+  Patch,
   UploadedFile,
   UseInterceptors,
   Request,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -16,7 +18,9 @@ import { memoryStorage } from 'multer';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UpdateUserDto } from '../users/dto/update-user.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { SupabaseService } from '../../common/services/supabase.service';
+import * as bcrypt from 'bcrypt';
 
 @Controller('/users')
 export class UsersController {
@@ -24,6 +28,26 @@ export class UsersController {
     private usersService: UsersService,
     private supabaseService: SupabaseService,
   ) {}
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('change-password')
+  async changePassword(@Request() req: any, @Body() dto: ChangePasswordDto) {
+    const user = await this.usersService.findByEmail(req.user.email);
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const isMatch = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!isMatch) {
+      throw new BadRequestException('Incorrect current password');
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const newHash = await bcrypt.hash(dto.newPassword, salt);
+    await this.usersService.updatePassword(user.id, newHash);
+
+    return { success: true, message: 'Password updated successfully' };
+  }
  
   @UseGuards(JwtAuthGuard)
   @Put(':id')
