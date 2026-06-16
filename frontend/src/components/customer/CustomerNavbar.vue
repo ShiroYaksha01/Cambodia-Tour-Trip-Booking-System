@@ -34,7 +34,8 @@
               class="flex items-center gap-2 pl-2 pr-1 py-1 rounded-full border border-gray-200 dark:border-gray-700 hover:border-emerald-200 dark:hover:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/50 transition-all"
             >
               <span class="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300 px-1">{{ userName }}</span>
-              <div class="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+              <img v-if="userProfileImage" :src="resolveImageUrl(userProfileImage)" alt="Profile" class="w-10 h-10 rounded-full object-cover shadow-sm border border-emerald-100 dark:border-emerald-800" />
+              <div v-else class="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
                 {{ userInitial }}
               </div>
             </router-link>
@@ -96,11 +97,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, onUnmounted } from "vue";
 import { hasAuthSession } from "../../utils/auth";
+import { resolveImageUrl } from "../../utils/api";
 
 const userName = ref("Profile");
 const userInitial = ref("U");
+const userProfileImage = ref("");
 const isMobileMenuOpen = ref(false);
 const isAuthenticated = ref(hasAuthSession());
 
@@ -114,7 +117,7 @@ const filteredNavLinks = computed(() => {
   return navLinks.filter(link => !link.requiresAuth || isAuthenticated.value);
 });
 
-onMounted(() => {
+function loadUserData() {
   isAuthenticated.value = hasAuthSession();
   const rawUser = localStorage.getItem("user");
   if (rawUser) {
@@ -124,10 +127,35 @@ onMounted(() => {
         userName.value = user.username || user.name;
         userInitial.value = (user.username || user.name).charAt(0).toUpperCase();
       }
+      if (user.profilePicture) {
+        userProfileImage.value = user.profilePicture;
+      }
+
+      if (user.id) {
+        const localImage = localStorage.getItem(`customerProfileImage_${user.id}`);
+        if (localImage) {
+          userProfileImage.value = localImage;
+        }
+      }
     } catch (e) {
       console.error("Failed to parse user data", e);
     }
+  } else {
+    userName.value = "Profile";
+    userInitial.value = "U";
+    userProfileImage.value = "";
   }
+}
+
+onMounted(() => {
+  loadUserData();
+  window.addEventListener("storage", loadUserData);
+  window.addEventListener("profile-updated", loadUserData);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("storage", loadUserData);
+  window.removeEventListener("profile-updated", loadUserData);
 });
 </script>
 

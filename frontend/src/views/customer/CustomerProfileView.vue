@@ -49,7 +49,20 @@ const activeTab = ref<
 const bookingFilter = ref<"all" | "pending" | "confirmed" | "cancelled">("all");
 const bookingSearch = ref("");
 
-const profileImage = ref(localStorage.getItem("customerProfileImage") || "");
+const profileImage = ref((() => {
+  const rawUser = localStorage.getItem("user");
+  if (rawUser) {
+    try {
+      const user = JSON.parse(rawUser);
+      if (user.id) {
+        return localStorage.getItem(`customerProfileImage_${user.id}`) || "";
+      }
+    } catch (e) {
+      console.error("Failed to parse user data for initial profile image", e);
+    }
+  }
+  return "";
+})());
 const language = ref(localStorage.getItem("customerLanguage") || "English");
 const feedbackMessage = ref("");
 
@@ -269,7 +282,10 @@ function handleProfileImageUpload(event: Event) {
 
   reader.onload = () => {
     profileImage.value = String(reader.result);
-    localStorage.setItem("customerProfileImage", profileImage.value);
+    if (user.value.id) {
+      localStorage.setItem(`customerProfileImage_${user.value.id}`, profileImage.value);
+    }
+    window.dispatchEvent(new Event("profile-updated"));
   };
 
   reader.readAsDataURL(file);
@@ -277,7 +293,10 @@ function handleProfileImageUpload(event: Event) {
 
 function removeProfileImage() {
   profileImage.value = "";
-  localStorage.removeItem("customerProfileImage");
+  if (user.value.id) {
+    localStorage.removeItem(`customerProfileImage_${user.value.id}`);
+  }
+  window.dispatchEvent(new Event("profile-updated"));
 }
 
 function savePrivacySettings() {
@@ -343,6 +362,13 @@ async function fetchProfile() {
       profileImage.value = profile.profilePicture;
     }
 
+    if (profile.id) {
+      const localImage = localStorage.getItem(`customerProfileImage_${profile.id}`);
+      if (localImage) {
+        profileImage.value = localImage;
+      }
+    }
+
     editForm.value = { ...user.value };
   } catch (err) {
     console.error(err);
@@ -400,7 +426,6 @@ async function saveProfile() {
       username: editForm.value.name,
       email: editForm.value.email,
       phoneNumber: editForm.value.phone,
-      location: editForm.value.location,
     };
 
     const response = await api.put(`/users/${user.value.id}`, payload);
