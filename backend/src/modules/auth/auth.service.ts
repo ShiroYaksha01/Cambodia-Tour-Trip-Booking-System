@@ -45,7 +45,7 @@ export class AuthService {
       connectionTimeout: 10000, // 10 seconds
       greetingTimeout: 10000,
       socketTimeout: 10000,
-    });
+    } as any);
   }
 
   async register(
