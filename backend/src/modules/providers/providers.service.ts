@@ -167,8 +167,17 @@ export class ProvidersService {
     return {
       id: provider.id,
       name: provider.companyName,
-      location: provider.address,
+      location: provider.cityProvince || provider.address || 'Cambodia',
+      address: provider.address,
       description: provider.description,
+      tagline: provider.tagline,
+      websiteUrl: provider.websiteUrl,
+      instagramHandle: provider.instagramHandle,
+      facebookUrl: provider.facebookUrl,
+      telegramUrl: provider.telegramUrl,
+      googleMapsLink: provider.googleMapsLink,
+      highlights: provider.highlights,
+      languages: provider.languages,
       logo: provider.logo,
       coverImage: provider.coverImage,
       isVerified: provider.isVerified,
@@ -222,6 +231,7 @@ export class ProvidersService {
     // Update provider fields
     if (updateDto.companyName) provider.companyName = updateDto.companyName;
     if (updateDto.address) provider.address = updateDto.address;
+    if (updateDto.businessAddress) provider.address = updateDto.businessAddress; // Map frontend field
     if (updateDto.description) provider.description = updateDto.description;
     if (updateDto.serviceCategory) provider.serviceCategory = updateDto.serviceCategory;
     if (updateDto.facebookUrl) provider.facebookUrl = updateDto.facebookUrl;
@@ -230,6 +240,15 @@ export class ProvidersService {
     if (updateDto.bankName) provider.bankName = updateDto.bankName;
     if (updateDto.refundPolicy) provider.refundPolicy = updateDto.refundPolicy;
     if (updateDto.guestRequirements) provider.guestRequirements = updateDto.guestRequirements;
+    if (updateDto.tagline) provider.tagline = updateDto.tagline;
+    if (updateDto.websiteUrl) provider.websiteUrl = updateDto.websiteUrl;
+    if (updateDto.instagramHandle) provider.instagramHandle = updateDto.instagramHandle;
+    if (updateDto.cityProvince) provider.cityProvince = updateDto.cityProvince;
+    if (updateDto.googleMapsLink) provider.googleMapsLink = updateDto.googleMapsLink;
+    if (updateDto.highlights) provider.highlights = updateDto.highlights;
+    if (updateDto.languages) provider.languages = updateDto.languages;
+    if (updateDto.coverImage) provider.coverImage = updateDto.coverImage;
+    if (updateDto.logo) provider.logo = updateDto.logo;
 
     // Update user fields
     if (updateDto.email || updateDto.phoneNumber || updateDto.username) {

@@ -31,7 +31,7 @@
               <div class="media-info-grid">
                 <div class="media-column">
                   <div class="cover-uploader">
-                    <div class="cover-preview" :style="coverPreview ? { backgroundImage: `url(${coverPreview})` } : undefined">
+                    <div class="cover-preview" :style="coverPreview ? { backgroundImage: `url(${resolveImageUrl(coverPreview)})` } : undefined">
                       <div v-if="!coverPreview" class="cover-empty">
                         <PhotoIcon />
                         <span>Cover banner preview</span>
@@ -57,7 +57,7 @@
 
                   <div class="logo-uploader">
                     <div class="brand-logo-preview">
-                      <img v-if="logoPreview" :src="logoPreview" :alt="companyName || 'Business logo'" />
+                      <img v-if="logoPreview" :src="resolveImageUrl(logoPreview)" :alt="companyName || 'Business logo'" />
                       <BuildingStorefrontIcon v-else />
                     </div>
                     <div class="logo-upload-copy">
@@ -195,10 +195,10 @@
           </div>
 
           <aside class="verification-preview-card">
-            <div class="preview-cover" :style="coverPreview ? { backgroundImage: `url(${coverPreview})` } : undefined"></div>
+            <div class="preview-cover" :style="coverPreview ? { backgroundImage: `url(${resolveImageUrl(coverPreview)})` } : undefined"></div>
             <div class="preview-body">
               <div class="preview-logo">
-                <img v-if="logoPreview" :src="logoPreview" :alt="companyName || 'Business logo'" />
+                <img v-if="logoPreview" :src="resolveImageUrl(logoPreview)" :alt="companyName || 'Business logo'" />
                 <BuildingStorefrontIcon v-else />
               </div>
               <div class="verified-badge">
@@ -385,7 +385,8 @@ import {
   UserGroupIcon,
 } from "@heroicons/vue/24/outline";
 import { clearAuthData } from "../../utils/auth";
-import { getProviderProfile, updateProviderProfile } from "../../services/api";
+import api, { getProviderProfile, updateProviderProfile } from "../../services/api";
+import { resolveImageUrl } from "../../utils/api";
 
 defineProps<{
   searchQuery?: string;
@@ -574,38 +575,65 @@ function triggerCoverUpload() {
   coverInput.value?.click();
 }
 
-function readImageFile(file: File, onLoad: (src: string) => void) {
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    onLoad(e.target?.result as string);
-  };
-  reader.readAsDataURL(file);
-}
-
-function handleLogoUpload(event: Event) {
+async function handleLogoUpload(event: Event) {
   const target = event.target as HTMLInputElement;
   const file = target.files?.[0];
-  if (file) {
-    if (file.size > 2 * 1024 * 1024) {
-      alert("Logo file must be smaller than 2MB.");
-      target.value = "";
-      return;
-    }
-    logoFileName.value = file.name;
-    readImageFile(file, (src) => {
-      logoPreview.value = src;
+  if (!file) return;
+
+  if (file.size > 2 * 1024 * 1024) {
+    alert("Logo file must be smaller than 2MB.");
+    target.value = "";
+    return;
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const uploadRes = await api.post("/uploads/image", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
     });
+
+    const imageUrl = uploadRes.data.url;
+    logoPreview.value = imageUrl;
+    logoFileName.value = file.name;
+
+    await updateProviderProfile({ logo: imageUrl });
+    alert("Logo updated successfully!");
+  } catch (err) {
+    console.error("Logo upload failed", err);
+    alert("Failed to upload logo.");
   }
 }
 
-function handleCoverUpload(event: Event) {
+async function handleCoverUpload(event: Event) {
   const target = event.target as HTMLInputElement;
   const file = target.files?.[0];
-  if (file) {
-    coverFileName.value = file.name;
-    readImageFile(file, (src) => {
-      coverPreview.value = src;
+  if (!file) return;
+
+  if (file.size > 5 * 1024 * 1024) {
+    alert("Cover image must be smaller than 5MB.");
+    target.value = "";
+    return;
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const uploadRes = await api.post("/uploads/image", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
     });
+
+    const imageUrl = uploadRes.data.url;
+    coverPreview.value = imageUrl;
+    coverFileName.value = file.name;
+
+    await updateProviderProfile({ coverImage: imageUrl });
+    alert("Cover banner updated successfully!");
+  } catch (err) {
+    console.error("Cover upload failed", err);
+    alert("Failed to upload cover image.");
   }
 }
 
@@ -653,6 +681,7 @@ async function saveChanges() {
       refundPolicy: refundRules.value,
       guestRequirements: guestRequirements.value,
     });
+    
     lastSavedProfile = currentProfileSnapshot();
     alert("Settings saved successfully!");
   } catch (err) {

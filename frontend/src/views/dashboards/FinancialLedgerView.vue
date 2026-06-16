@@ -269,15 +269,6 @@ const monthlyTotals = computed(() => {
   return months.map((m, idx) => ({ label: m.label, height: Math.round((sums[idx] / max) * 100), value: sums[idx] }));
 });
 
-const mockTransactions = (): Transaction[] => [
-  { id: "#TXN-90214", date: "July 18, 2023", destination: "ABA Bank •••• 4492", amount: "4,820.00", status: "Released" },
-  { id: "#TXN-88431", date: "July 10, 2023", destination: "ABA Bank •••• 4492", amount: "3,150.00", status: "Released" },
-  { id: "#TXN-87299", date: "July 02, 2023", destination: "ABA Bank •••• 4492", amount: "1,200.00", status: "Processing" },
-  { id: "#TXN-86532", date: "June 25, 2023", destination: "ABA Bank •••• 4492", amount: "2,900.00", status: "Released" },
-  { id: "#TXN-85641", date: "June 18, 2023", destination: "ABA Bank •••• 4492", amount: "3,450.00", status: "Released" },
-  { id: "#TXN-84729", date: "June 10, 2023", destination: "ABA Bank •••• 4492", amount: "2,100.00", status: "Pending" },
-];
-
 onMounted(async () => {
   try {
     const res = await getProviderBookings();
@@ -286,11 +277,9 @@ onMounted(async () => {
     transactions.value = list
       .filter((b) => b.payment_status === "paid")
       .map(mapBookingToTransaction);
-    if (!transactions.value.length) {
-      transactions.value = mockTransactions();
-    }
-  } catch {
-    transactions.value = mockTransactions();
+  } catch (err) {
+    console.error("Failed to load transactions", err);
+    transactions.value = [];
   } finally {
     isLoading.value = false;
   }
