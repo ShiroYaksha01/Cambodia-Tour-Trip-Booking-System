@@ -2,7 +2,7 @@
 
 import { Injectable, BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import * as nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
@@ -13,7 +13,7 @@ import { EmailVerification } from './entities/email-verification.entity';
 
 @Injectable()
 export class AuthService {
-  private transporter: nodemailer.Transporter;
+  private resend: Resend;
 
   constructor(
     private usersService: UsersService,
@@ -24,28 +24,12 @@ export class AuthService {
     private emailVerificationRepository: Repository<EmailVerification>,
     private configService: ConfigService,
   ) {
-    const user = this.configService.get<string>('EMAIL_USER');
-    const pass = this.configService.get<string>('EMAIL_PASS');
-    console.log('--- Email Config Check ---');
-    console.log('EMAIL_USER:', user);
-    console.log('EMAIL_PASS (length):', pass?.length);
+    const resendApiKey = this.configService.get<string>('RESEND_API_KEY');
+    console.log('--- Resend Config Check ---');
+    console.log('RESEND_API_KEY (length):', resendApiKey?.length);
     console.log('--------------------------');
 
-    this.transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-      requireTLS: true,
-      auth: {
-        user: user,
-        pass: pass,
-      },
-      // Force IPv4 to avoid ENETUNREACH errors on Render/Gmail
-      family: 4,
-      connectionTimeout: 10000, // 10 seconds
-      greetingTimeout: 10000,
-      socketTimeout: 10000,
-    } as any);
+    this.resend = new Resend(resendApiKey);
   }
 
   async register(
@@ -83,13 +67,18 @@ export class AuthService {
 
     try {
       console.log(`Attempting to send verification email to: ${email}`);
-      await this.transporter.sendMail({
-        from: this.configService.get<string>('EMAIL_USER'),
+      const { data, error } = await this.resend.emails.send({
+        from: 'Anajak Tour <onboarding@resend.dev>',
         to: email,
         subject: 'Welcome! Verify your email',
         text: `Your OTP for email verification is: ${otp}. It expires in 10 minutes.`,
       });
-      console.log('Verification email sent successfully');
+
+      if (error) {
+        console.error('Resend error during registration:', error);
+      } else {
+        console.log('Verification email sent successfully:', data?.id);
+      }
     } catch (emailError) {
       console.error('Email sending failed during registration:', emailError);
     }
@@ -217,13 +206,18 @@ export class AuthService {
 
       try {
         console.log(`Attempting to send password reset email to: ${email}`);
-        await this.transporter.sendMail({
-          from: this.configService.get<string>('EMAIL_USER'),
+        const { data, error } = await this.resend.emails.send({
+          from: 'Anajak Tour <onboarding@resend.dev>',
           to: email,
           subject: 'Password Reset OTP',
           text: `Your OTP for password reset is: ${otp}. It expires in 10 minutes.`,
         });
-        console.log('Password reset email sent successfully');
+
+        if (error) {
+          console.error('Resend error during forgotPassword:', error);
+        } else {
+          console.log('Password reset email sent successfully:', data?.id);
+        }
       } catch (emailError) {
         console.error('Email sending failed:', emailError);
       }
