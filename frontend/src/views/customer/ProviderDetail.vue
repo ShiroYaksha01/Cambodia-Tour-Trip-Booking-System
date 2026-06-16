@@ -63,6 +63,16 @@ const bookService = (serviceId: string) => {
     params: { id: serviceId },
   });
 };
+
+const contactProvider = () => {
+  if (provider.value?.email) {
+    const subject = encodeURIComponent(`Inquiry about ${provider.value.name} services`);
+    const body = encodeURIComponent(`Hello ${provider.value.name},\n\nI am interested in your services and would like to get more information.\n\nThank you.`);
+    window.location.href = `mailto:${provider.value.email}?subject=${subject}&body=${body}`;
+  } else {
+    alert("Provider contact email not available.");
+  }
+};
 </script>
 
 <template>
@@ -128,9 +138,9 @@ const bookService = (serviceId: string) => {
                 <p class="text-white/90">📍 {{ provider.location || 'Cambodia' }}</p>
 
                 <p class="mt-2 text-white/90">
-                  ⭐ 4.8 / 5
+                  ⭐ 0 / 5
                   <span class="text-white/70">
-                    (124 reviews)
+                    (0 reviews)
                   </span>
                 </p>
               </div>
@@ -232,38 +242,13 @@ const bookService = (serviceId: string) => {
               <h2 class="text-xl md:text-2xl font-bold text-gray-900">Customer Reviews</h2>
 
               <p class="font-semibold text-gray-700">
-                ⭐ 4.8/5
+                ⭐ 0/5
               </p>
             </div>
 
-            <div class="space-y-6">
-              <div
-                v-for="review in reviews"
-                :key="review.id"
-                class="border-b border-gray-100 pb-6 last:border-b-0 last:pb-0"
-              >
-                <div class="flex items-center gap-4">
-                  <img
-                    :src="review.avatar"
-                    :alt="review.name"
-                    class="h-12 w-12 rounded-full object-cover"
-                  />
-
-                  <div>
-                    <h4 class="font-semibold text-gray-900">
-                      {{ review.name }}
-                    </h4>
-
-                    <p class="text-sm text-gray-500">
-                      ⭐ {{ review.rating }} · {{ review.date }}
-                    </p>
-                  </div>
-                </div>
-
-                <p class="mt-4 leading-relaxed text-gray-600">
-                  {{ review.comment }}
-                </p>
-              </div>
+            <div class="py-10 text-center">
+              <p class="text-gray-500">No reviews yet for this provider.</p>
+              <p class="text-sm text-gray-400 mt-2">Book a service and be the first to leave a review!</p>
             </div>
           </section>
         </div>
@@ -343,6 +328,7 @@ const bookService = (serviceId: string) => {
             </p>
 
             <button
+              @click="contactProvider"
               class="mt-5 w-full rounded-xl bg-white px-4 py-3 font-semibold text-emerald-700 hover:bg-gray-100"
             >
               Contact Provider
@@ -351,6 +337,10 @@ const bookService = (serviceId: string) => {
         </aside>
       </main>
     </template>
+
+    <CustomerFooter />
+  </div>
+</template>
 
     <CustomerFooter />
   </div>
