@@ -9,6 +9,8 @@ import { Booking } from './entities/booking.entity';
 import { BookingStatus, PaymentStatus } from '../../shared/enums';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { Service } from '../services/entities/service.entity';
+import { ServiceInventory } from '../services/entities/service-inventory.entity';
+import { InventorySlot } from '../services/entities/inventory-slot.entity';
 import { Provider } from '../providers/entities/provider.entity';
 import { User } from '../users/entities/user.entity';
 
@@ -19,6 +21,10 @@ export class BookingsService {
     private readonly bookingRepository: Repository<Booking>,
     @InjectRepository(Service)
     private readonly serviceRepository: Repository<Service>,
+    @InjectRepository(ServiceInventory)
+    private readonly serviceInventoryRepository: Repository<ServiceInventory>,
+    @InjectRepository(InventorySlot)
+    private readonly inventorySlotRepository: Repository<InventorySlot>,
     @InjectRepository(Provider)
     private readonly providerRepository: Repository<Provider>,
     @InjectRepository(User)
@@ -79,8 +85,11 @@ export class BookingsService {
 
     booking.paymentStatus = PaymentStatus.PAID;
     booking.bookingStatus = BookingStatus.CONFIRMED;
+    await this.bookingRepository.save(booking);
 
-    return this.bookingRepository.save(booking);
+    await this.deductInventoryForBooking(booking);
+
+    return booking;
   }
 
   async getUserBookings(userId: string): Promise<Booking[]> {
@@ -159,7 +168,7 @@ export class BookingsService {
         .leftJoin('booking.provider', 'provider')
         .select('COALESCE(SUM(booking.totalAmount), 0)', 'total_revenue')
         .addSelect(
-          'COALESCE(SUM(booking.totalAmount * provider.commissionRate / 100), 0)',
+          'COALESCE(SUM(booking.totalAmount * COALESCE(provider.commissionRate, 10) / 100), 0)',
           'total_platform_fee',
         )
         .where('booking.paymentStatus = :paymentStatus', { paymentStatus: PaymentStatus.PAID })
@@ -293,8 +302,51 @@ export class BookingsService {
 
     booking.paymentStatus = PaymentStatus.PAID;
     if (transactionId) booking.transactionId = transactionId;
+    await this.bookingRepository.save(booking);
 
-    return this.bookingRepository.save(booking);
+    await this.deductInventoryForBooking(booking);
+
+    return booking;
+  }
+
+  private async deductInventoryForBooking(booking: Booking): Promise<void> {
+    try {
+      const bookingDate = new Date(booking.bookingDate);
+      bookingDate.setHours(0, 0, 0, 0);
+
+      const slot = await this.inventorySlotRepository.findOne({
+        where: {
+          serviceId: booking.serviceId,
+          date: bookingDate,
+        },
+      });
+
+      if (slot) {
+        const available = slot.availableSlots - booking.quantity;
+        slot.bookedSlots += booking.quantity;
+        slot.availableSlots = Math.max(0, available);
+        slot.status = available <= 0 ? 'closed' : available / slot.totalSlots < 0.1 ? 'low_stock' : 'available';
+        await this.inventorySlotRepository.save(slot);
+      }
+
+      const allSlots = await this.inventorySlotRepository.find({
+        where: { serviceId: booking.serviceId },
+      });
+      const totalBooked = allSlots.reduce((sum, s) => sum + s.bookedSlots, 0);
+      const totalCapacity = allSlots.reduce((sum, s) => sum + s.totalSlots, 0);
+
+      await this.serviceInventoryRepository.upsert(
+        {
+          serviceId: booking.serviceId,
+          bookedCount: totalBooked,
+          totalCapacity,
+          isClosed: totalBooked >= totalCapacity && totalCapacity > 0,
+        },
+        ['serviceId'],
+      );
+    } catch (err) {
+      console.error('Failed to deduct inventory for booking:', err);
+    }
   }
 
   async getRevenueAnalytics(range: number) {

@@ -6,17 +6,25 @@
           <div class="section-header">
             <h2>{{ activeCategoryData.title }}</h2>
             <p class="description">{{ activeCategoryData.description }}</p>
+            <div class="category-tabs">
+              <button
+                v-for="cat in categoryKeys"
+                :key="cat"
+                :class="['tab-btn', { active: activeCategory === cat }]"
+                @click="activeCategory = cat"
+              >{{ categoryLabel(cat) }}</button>
+            </div>
           </div>
 
-          <div class="services-grid">
-            <div class="services-header">
+          <div class="services-grid" :style="gridStyle">
+            <div class="services-header" :style="rowGridStyle">
               <div class="header-cell">SERVICE TYPE</div>
               <div v-for="day in activeCategoryData.days" :key="day.label" class="header-cell">
-                {{ day.label }}<br>{{ day.date }}
+                {{ day.label }} {{ day.date }}
               </div>
             </div>
 
-            <div class="service-row" v-for="service in filteredServices" :key="service.id" @click="openServiceDetail(service)" style="cursor: pointer;">
+            <div class="service-row" :style="rowGridStyle" v-for="service in filteredServices" :key="service.id" @click="openServiceDetail(service)" style="cursor: pointer;">
               <div class="service-info">
                 <img :src="serviceImageUrl(service.image)" :alt="service.name" class="service-image" @error="handleImageError">
                 <div class="service-details">
@@ -24,9 +32,11 @@
                   <p>{{ service.type }}</p>
                 </div>
               </div>
-              <div class="availability-cell" v-for="(avail, idx) in service.availability" :key="idx">
-                <div class="price">${{ avail.price }}</div>
-                <div class="slots">{{ avail.slots }} Left</div>
+              <div class="availability-cell" v-for="(avail, idx) in service.availability" :key="idx" :class="{ empty: avail.isEmpty }">
+                <template v-if="!avail.isEmpty">
+                  <div class="price">${{ avail.price }}</div>
+                  <div class="slots">{{ avail.slots }} Left</div>
+                </template>
               </div>
             </div>
           </div>
@@ -132,7 +142,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from "vue";
-import { getProviderDashboardStats } from "../../services/api";
+import { getProviderDashboardStats, getProviderInventory } from "../../services/api";
 import { resolveImageUrl } from "../../utils/api";
 
 const props = withDefaults(
@@ -151,17 +161,8 @@ const stats = ref({
   khmerNewYear: '...',
 });
 
-onMounted(async () => {
-  try {
-    const res = await getProviderDashboardStats();
-    if (res.data) stats.value = res.data;
-  } catch (err) {
-    console.error("Failed to fetch dashboard stats", err);
-  }
-});
-
-type ServiceRow = { id: number; name: string; type: string; image: string; availability: Array<{ price: number; slots: number }>; };
-type CategoryKey = "tours" | "stays" | "transport";
+type ServiceRow = { id: string; name: string; type: string; image: string; availability: Array<{ price: number; slots: number }>; };
+type CategoryKey = "all" | "tours" | "stays" | "transport";
 
 const selectedService = ref<ServiceRow | null>(null);
 const isEditingService = ref(false);
@@ -171,6 +172,133 @@ const capacity = ref(25);
 const seasonalSurchargeEnabled = ref(true);
 const pricingRuleEnabled = ref(true);
 const panelMessage = ref("");
+
+const categoryData = ref<Record<CategoryKey, any>>({
+  all: { title: "All Services", description: "Overview of all services and availability.", days: [], services: [], metrics: { occupancy: "0%", alerts: "0", revenue: "$0" }, capacityHelper: "Sets base capacity.", panelLabel: "Pricing Engine", panelBadge: "SMART RULE", primaryRule: { title: "+20% Seasonal Surcharge", description: "Holiday range" }, updateAction: "Update All" },
+  tours: { title: "Tour Inventory", description: "Master availability control for tours.", days: [], services: [], metrics: { occupancy: "0%", alerts: "0", revenue: "$0" }, capacityHelper: "Sets base capacity for services.", panelLabel: "Pricing Engine", panelBadge: "SMART RULE", primaryRule: { title: "+20% Seasonal Surcharge", description: "Holiday range" }, updateAction: "Update Matrix" },
+  stays: { title: "Accommodation Matrix", description: "Manage room availability.", days: [], services: [], metrics: { occupancy: "0%", alerts: "0", revenue: "$0" }, capacityHelper: "Sets base capacity for rooms.", panelLabel: "Pricing Engine", panelBadge: "SMART RULE", primaryRule: { title: "Standard Rate", description: "Base pricing" }, updateAction: "Update Stays" },
+  transport: { title: "Fleet Matrix", description: "Vehicle availability.", days: [], services: [], metrics: { occupancy: "0%", alerts: "0", revenue: "$0" }, capacityHelper: "Sets fleet capacity.", panelLabel: "Pricing Engine", panelBadge: "SMART RULE", primaryRule: { title: "Standard Rate", description: "Base pricing" }, updateAction: "Update Fleet" },
+});
+
+const categoryKeys = computed<CategoryKey[]>(() => ["all", "tours", "stays", "transport"]);
+
+const categoryLabel = (cat: CategoryKey) => {
+  switch (cat) {
+    case "all": return "All";
+    case "tours": return "Tours";
+    case "stays": return "Stays";
+    case "transport": return "Transport";
+  }
+};
+
+const activeCategory = ref<CategoryKey>("all");
+
+const DAY_NAMES = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+
+function mapServiceType(type: string): CategoryKey {
+  if (type === 'accommodation') return 'stays';
+  if (type === 'transportation') return 'transport';
+  return 'tours';
+}
+
+onMounted(async () => {
+  try {
+    const [statsRes, invRes] = await Promise.all([
+      getProviderDashboardStats(),
+      getProviderInventory(),
+    ]);
+    if (statsRes.data) stats.value = statsRes.data;
+
+    const invData = invRes.data || invRes;
+    const list = Array.isArray(invData) ? invData : invData.data || [];
+
+    const grouped: Record<CategoryKey, any[]> = { all: [], tours: [], stays: [], transport: [] };
+    const allDates: Record<CategoryKey, Date[]> = { all: [], tours: [], stays: [], transport: [] };
+
+    for (const svc of list) {
+      const cat = mapServiceType(svc.serviceType || 'tour');
+      const slotMap = new Map<string, any>();
+      const rawSlots: any[] = (svc.slots || []).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+      rawSlots.forEach((s: any) => {
+        const d = new Date(s.date);
+        const key = d.toDateString();
+        if (!slotMap.has(key)) slotMap.set(key, s);
+        if (!allDates[cat].some(ex => ex.toDateString() === key)) {
+          allDates[cat].push(d);
+        }
+        if (!allDates['all'].some(ex => ex.toDateString() === key)) {
+          allDates['all'].push(d);
+        }
+      });
+
+      grouped[cat].push({ svc, slotMap, cat });
+      grouped['all'].push({ svc, slotMap, cat });
+    }
+
+    for (const cat of ['all', 'tours', 'stays', 'transport'] as CategoryKey[]) {
+      allDates[cat].sort((a, b) => a.getTime() - b.getTime());
+      const days = allDates[cat].map(d => ({
+        label: DAY_NAMES[d.getDay()],
+        date: String(d.getDate()).padStart(2, '0'),
+        raw: d,
+      }));
+
+      const services = (grouped[cat] || []).map((entry: any) => {
+        const svc = entry.svc;
+        const slotMap = entry.slotMap;
+        return {
+          id: svc.id,
+          name: svc.title || 'Untitled',
+          type: svc.serviceType || 'tour',
+          image: svc.coverImage || '',
+          availability: days.map((day: any) => {
+            const key = day.raw.toDateString();
+            const s = slotMap.get(key);
+            return {
+              price: s ? Number(s.price) || 0 : null,
+              slots: s ? (s.availableSlots ?? 0) : null,
+              isEmpty: !s,
+            };
+          }),
+        };
+      });
+
+      categoryData.value[cat] = {
+        ...categoryData.value[cat],
+        days,
+        services,
+      };
+    }
+  } catch (err) {
+    console.error("Failed to fetch dashboard data", err);
+  }
+});
+
+const activeCategoryData = computed(() => {
+  const data = categoryData.value[activeCategory.value] || categoryData.value.tours;
+  return {
+    ...data,
+    metrics: { ...data.metrics, occupancy: stats.value.avgOccupancy, alerts: stats.value.lowStockAlerts, revenue: stats.value.revpar }
+  };
+});
+
+const dayCount = computed(() => activeCategoryData.value.days?.length || 4);
+
+const gridStyle = computed(() => ({
+  gridTemplateColumns: `minmax(260px, 2fr) repeat(${dayCount.value}, minmax(110px, 1fr))`,
+}));
+
+const rowGridStyle = computed(() => ({
+  gridTemplateColumns: `minmax(260px, 2fr) repeat(${dayCount.value}, minmax(110px, 1fr))`,
+}));
+
+const filteredServices = computed(() => {
+  const services = activeCategoryData.value.services;
+  if (!props.searchQuery.trim()) return services;
+  const query = props.searchQuery.toLowerCase();
+  return services.filter((s: ServiceRow) => s.name.toLowerCase().includes(query) || s.type.toLowerCase().includes(query));
+});
 
 // Date Helpers
 const isoToUi = (iso: string) => {
@@ -190,64 +318,9 @@ const startDate = ref(getCurrentDateIso());
 const endDate = ref(getCurrentDateIso());
 const uiStartDate = ref(isoToUi(startDate.value));
 const uiEndDate = ref(isoToUi(endDate.value));
-const activeCategory = ref<CategoryKey>("tours");
 
 const selectedDateRangeLabel = computed(() => `${uiStartDate.value} - ${uiEndDate.value}`);
 const selectedDateRangeSubtitle = computed(() => "Selected Period");
-
-const categoryData: Record<CategoryKey, any> = {
-  tours: {
-    title: "Inventory Matrix",
-    description: "Master availability control for peak season tours.",
-    days: [{ label: "MON", date: "01" }, { label: "TUE", date: "02" }, { label: "WED", date: "03" }, { label: "THU", date: "04" }],
-    services: [{ id: 1, name: "Angkor Sunrise Tour", type: "Tour", image: "/angkor.png", availability: [{ price: 45, slots: 24 }, { price: 45, slots: 18 }, { price: 52, slots: 12 }, { price: 58, slots: 8 }] }],
-    metrics: { occupancy: "84.2%", alerts: "12", revenue: "$12.4k" },
-    capacityHelper: "Sets base capacity for services.",
-    panelLabel: "Pricing Engine",
-    panelBadge: "SMART RULE",
-    primaryRule: { title: "+20% Seasonal Surcharge", description: "Holiday range" },
-    updateAction: "Update Matrix",
-  },
-  stays: {
-    title: "Accommodation Matrix",
-    description: "Manage room availability and seasonal rates.",
-    days: [{ label: "MON", date: "01" }, { label: "TUE", date: "02" }, { label: "WED", date: "03" }, { label: "THU", date: "04" }],
-    services: [],
-    metrics: { occupancy: "0%", alerts: "0", revenue: "$0" },
-    capacityHelper: "Sets base capacity for rooms.",
-    panelLabel: "Pricing Engine",
-    panelBadge: "SMART RULE",
-    primaryRule: { title: "Standard Rate", description: "Base pricing" },
-    updateAction: "Update Stays",
-  },
-  transport: {
-    title: "Fleet Matrix",
-    description: "Vehicle availability and transfer scheduling.",
-    days: [{ label: "MON", date: "01" }, { label: "TUE", date: "02" }, { label: "WED", date: "03" }, { label: "THU", date: "04" }],
-    services: [],
-    metrics: { occupancy: "0%", alerts: "0", revenue: "$0" },
-    capacityHelper: "Sets fleet capacity.",
-    panelLabel: "Pricing Engine",
-    panelBadge: "SMART RULE",
-    primaryRule: { title: "Standard Rate", description: "Base pricing" },
-    updateAction: "Update Fleet",
-  },
-};
-
-const activeCategoryData = computed(() => {
-  const data = categoryData[activeCategory.value] || categoryData.tours;
-  return {
-    ...data,
-    metrics: { ...data.metrics, occupancy: stats.value.avgOccupancy, alerts: stats.value.lowStockAlerts, revenue: stats.value.revpar }
-  };
-});
-
-const filteredServices = computed(() => {
-  const services = activeCategoryData.value.services;
-  if (!props.searchQuery.trim()) return services;
-  const query = props.searchQuery.toLowerCase();
-  return services.filter((s: ServiceRow) => s.name.toLowerCase().includes(query) || s.type.toLowerCase().includes(query));
-});
 
 const applyDatePicker = () => {
   startDate.value = uiToIso(uiStartDate.value);
@@ -291,7 +364,7 @@ const adjustCapacity = (delta: number) => {
 };
 
 const updateMatrix = () => {
-  for (const service of categoryData[activeCategory.value].services) {
+  for (const service of categoryData.value[activeCategory.value].services) {
     service.availability = service.availability.map((availability: { price: number; slots: number }) => {
       const price = seasonalSurchargeEnabled.value && pricingRuleEnabled.value
         ? Math.round(availability.price * 1.2)
@@ -352,8 +425,8 @@ const restorePricingRule = () => {
 .section-header h2 {
   margin: 0;
   color: #111827;
-  font-size: clamp(1.55rem, 2.2vw, 2rem);
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 400;
   letter-spacing: 0;
   line-height: 1.1;
 }
@@ -361,8 +434,40 @@ const restorePricingRule = () => {
 .description {
   margin: 10px 0 0;
   color: #4b5563;
-  font-size: 1rem;
+  font-size: 0.875rem;
   line-height: 1.5;
+}
+
+.category-tabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 14px;
+  padding: 4px;
+  border-radius: 10px;
+  background: #f3f4f6;
+  width: fit-content;
+}
+
+.tab-btn {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.tab-btn:hover {
+  color: #111827;
+}
+
+.tab-btn.active {
+  background: #ffffff;
+  color: #148a74;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 .services-grid,
@@ -380,7 +485,6 @@ const restorePricingRule = () => {
 .services-header,
 .service-row {
   display: grid;
-  grid-template-columns: minmax(260px, 2fr) repeat(4, minmax(110px, 1fr));
   min-width: 760px;
 }
 
@@ -393,8 +497,8 @@ const restorePricingRule = () => {
   padding: 16px;
   color: #6b7280;
   text-align: center;
-  font-size: 0.75rem;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 400;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   line-height: 1.55;
@@ -443,15 +547,15 @@ const restorePricingRule = () => {
 .service-details h3 {
   margin: 0;
   color: #111827;
-  font-size: 1rem;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 400;
   line-height: 1.25;
 }
 
 .service-details p {
   margin: 6px 0 0;
   color: #6b7280;
-  font-size: 0.86rem;
+  font-size: 0.875rem;
 }
 
 .availability-cell {
@@ -464,10 +568,15 @@ const restorePricingRule = () => {
   border-left: 1px solid #f1f5f5;
 }
 
+.availability-cell.empty {
+  background: #fafbfc;
+  border-left-color: #eef2f3;
+}
+
 .price {
   color: #111827;
-  font-size: 1.05rem;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 400;
 }
 
 .slots {
@@ -477,8 +586,8 @@ const restorePricingRule = () => {
   border-radius: 999px;
   background: rgba(20, 138, 116, 0.1);
   color: #148a74;
-  font-size: 0.75rem;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 400;
 }
 
 .config-panel {
@@ -500,8 +609,8 @@ const restorePricingRule = () => {
 .panel-header h3 {
   margin: 0;
   color: #111827;
-  font-size: 1.08rem;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 400;
 }
 
 .close-btn,
@@ -522,8 +631,8 @@ const restorePricingRule = () => {
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  font-size: 0.9rem;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 400;
 }
 
 .close-btn:hover,
@@ -542,8 +651,8 @@ const restorePricingRule = () => {
 .config-section > label,
 .field-group label {
   color: #6b7280;
-  font-size: 0.75rem;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 400;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -581,14 +690,14 @@ const restorePricingRule = () => {
 
 .date-range {
   color: #111827;
-  font-size: 0.95rem;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 400;
 }
 
 .date-label {
   margin-top: 4px;
   color: #6b7280;
-  font-size: 0.8rem;
+  font-size: 0.875rem;
 }
 
 .date-picker-popover {
@@ -643,8 +752,8 @@ const restorePricingRule = () => {
 
 .capacity-value {
   color: #111827;
-  font-size: 1.6rem;
-  font-weight: 900;
+  font-size: 0.875rem;
+  font-weight: 400;
   line-height: 1;
 }
 
@@ -657,15 +766,15 @@ const restorePricingRule = () => {
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  font-size: 1.1rem;
-  font-weight: 900;
+  font-size: 0.875rem;
+  font-weight: 400;
 }
 
 .helper-text,
 .rule-desc {
   margin: 0;
   color: #6b7280;
-  font-size: 0.88rem;
+  font-size: 0.875rem;
   line-height: 1.5;
 }
 
@@ -675,8 +784,8 @@ const restorePricingRule = () => {
   border-radius: 999px;
   background: rgba(245, 166, 35, 0.14);
   color: #b67912;
-  font-size: 0.72rem;
-  font-weight: 900;
+  font-size: 0.875rem;
+  font-weight: 400;
   letter-spacing: 0.06em;
 }
 
@@ -705,7 +814,7 @@ const restorePricingRule = () => {
 
 .rule-item span {
   color: #111827;
-  font-weight: 800;
+  font-weight: 400;
   line-height: 1.3;
 }
 
@@ -715,8 +824,8 @@ const restorePricingRule = () => {
   border-radius: 10px;
   background: rgba(20, 138, 116, 0.1);
   color: #117864;
-  font-size: 0.82rem;
-  font-weight: 700;
+  font-size: 0.875rem;
+  font-weight: 400;
   line-height: 1.45;
 }
 
@@ -730,7 +839,7 @@ const restorePricingRule = () => {
   padding: 10px 16px;
   border-radius: 10px;
   font: inherit;
-  font-weight: 800;
+  font-weight: 400;
   cursor: pointer;
 }
 
@@ -793,8 +902,8 @@ const restorePricingRule = () => {
 .modal-header h2 {
   margin: 0;
   color: #111827;
-  font-size: 1.4rem;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 400;
 }
 
 .modal-close {
@@ -822,15 +931,15 @@ const restorePricingRule = () => {
 
 .info-group label {
   color: #6b7280;
-  font-size: 0.75rem;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 400;
   text-transform: uppercase;
 }
 
 .info-group p {
   margin: 6px 0 0;
   color: #111827;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 @media (max-width: 1180px) {
@@ -845,12 +954,197 @@ const restorePricingRule = () => {
 
 @media (max-width: 720px) {
   .section-header {
-    padding-left: 14px;
+    padding-left: 12px;
+  }
+
+  .section-header h2 {
+    font-size: 0.875rem;
+  }
+
+  .description {
+    font-size: 0.875rem;
+  }
+
+  .category-tabs {
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tab-btn {
+    white-space: nowrap;
+    padding: 6px 14px;
+    font-size: 0.875rem;
   }
 
   .services-header,
   .service-row {
-    min-width: 680px;
+    min-width: 600px;
+  }
+
+  .header-cell {
+    padding: 10px 8px;
+    font-size: 0.875rem;
+  }
+
+  .service-info {
+    padding: 12px 10px;
+    gap: 10px;
+  }
+
+  .service-image {
+    width: 44px;
+    height: 44px;
+  }
+
+  .service-details h3 {
+    font-size: 0.875rem;
+  }
+
+  .service-details p {
+    font-size: 0.875rem;
+  }
+
+  .availability-cell {
+    min-height: 72px;
+    padding: 10px 6px;
+  }
+
+  .price {
+    font-size: 0.875rem;
+  }
+
+  .slots {
+    font-size: 0.875rem;
+    padding: 2px 8px;
+  }
+
+  .config-panel {
+    padding: 16px;
+  }
+
+  .modal-overlay {
+    padding: 12px;
+  }
+
+  .modal-content {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .modal-header h2 {
+    font-size: 0.875rem;
+  }
+
+  .modal-image {
+    height: 160px;
+  }
+
+  .info-group p {
+    font-size: 0.875rem;
+  }
+
+  .btn-update,
+  .btn-discard,
+  .btn-edit,
+  .btn-cancel {
+    min-height: 38px;
+    padding: 8px 14px;
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .content-wrapper {
+    gap: 16px;
+  }
+
+  .services-header,
+  .service-row {
+    min-width: 460px;
+  }
+
+  .header-cell {
+    padding: 8px 4px;
+    font-size: 0.875rem;
+  }
+
+  .service-info {
+    padding: 10px 8px;
+    gap: 8px;
+  }
+
+  .service-image {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  }
+
+  .service-details h3 {
+    font-size: 0.875rem;
+  }
+
+  .availability-cell {
+    min-height: 64px;
+    padding: 8px 4px;
+  }
+
+  .price {
+    font-size: 0.875rem;
+  }
+
+  .config-panel {
+    padding: 12px;
+    gap: 16px;
+  }
+
+  .panel-header h3 {
+    font-size: 0.875rem;
+  }
+
+  .date-display-button {
+    padding: 10px;
+  }
+
+  .capacity-value {
+    font-size: 0.875rem;
+  }
+
+  .modal-overlay {
+    padding: 8px;
+    align-items: flex-end;
+  }
+
+  .modal-content {
+    width: 100%;
+    border-radius: 12px 12px 0 0;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+
+  .modal-image {
+    height: 140px;
+  }
+
+  .modal-footer {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .modal-footer button {
+    width: 100%;
+  }
+
+  .rule-item {
+    grid-template-columns: auto 1fr;
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .rule-item .btn-remove {
+    grid-column: 1 / -1;
+    justify-self: end;
   }
 }
 </style>

@@ -53,10 +53,27 @@ export const fetchServices = async () => {
 };
 
 export const fetchMyServices = async () => {
-  const res = await api.get("/services/my", { skipAuthRedirect: true } as any).catch(() => ({
-    data: getLocalProviderServices(),
-  }));
-  return res.data;
+  // Always read from localStorage as single source of truth.
+  // The API call below silently syncs real data into localStorage.
+  try {
+    const res = await api.get("/services/my", { skipAuthRedirect: true } as any);
+    const list = Array.isArray(res.data) ? res.data : res.data?.data;
+    if (list && list.length > 0) {
+      // Merge API services into localStorage, keeping existing ones
+      const local = getLocalProviderServices();
+      const localIds = new Set(local.map(s => s.id));
+      const newOnes = list.filter((s: any) => !localIds.has(s.id));
+      if (newOnes.length > 0) {
+        const merged = [...newOnes, ...local].map(normalizeLocalService);
+        localStorage.setItem(LOCAL_PROVIDER_SERVICES_KEY, JSON.stringify(merged));
+        return merged;
+      }
+      return local;
+    }
+  } catch {
+    // fall through to return local
+  }
+  return getLocalProviderServices();
 };
 
 export const getProviderBookings = (params?: any) => api.get(`/provider/bookings`, { params, skipAuthRedirect: true } as any).catch(async (err) => {
@@ -146,8 +163,15 @@ export const getProviderInventoryMatrix = () => api.get(`/provider/inventory-mat
   ]
 }))
 
-export const createService = (data: any) =>
-  api.post('/services', data, { skipAuthRedirect: true } as any).catch(() => {
+export const createService = async (data: any) => {
+  try {
+    const res = await api.post('/services', data, { skipAuthRedirect: true } as any);
+    const created = res.data?.data || res.data;
+    const services = getLocalProviderServices();
+    const normalized = normalizeLocalService(created);
+    localStorage.setItem(LOCAL_PROVIDER_SERVICES_KEY, JSON.stringify([normalized, ...services]));
+    return { data: normalized };
+  } catch {
     const services = getLocalProviderServices();
     const created = normalizeLocalService({
       ...data,
@@ -156,26 +180,35 @@ export const createService = (data: any) =>
     });
     localStorage.setItem(LOCAL_PROVIDER_SERVICES_KEY, JSON.stringify([created, ...services]));
     return { data: created };
-  });
+  }
+};
 
-export const updateService = (id: string, data: any) =>
-  api.patch(`/services/${id}`, data, { skipAuthRedirect: true } as any).catch(() => {
-    const services = getLocalProviderServices();
-    const updated = services.map((service) =>
-      String(service.id) === String(id)
-        ? normalizeLocalService({ ...service, ...data, id: service.id })
-        : service,
-    );
-    localStorage.setItem(LOCAL_PROVIDER_SERVICES_KEY, JSON.stringify(updated));
-    return { data: updated.find((service) => String(service.id) === String(id)) || null };
-  });
+export const updateService = async (id: string, data: any) => {
+  try {
+    await api.patch(`/services/${id}`, data, { skipAuthRedirect: true } as any);
+  } catch {
+    // fall through — still update local
+  }
+  const services = getLocalProviderServices();
+  const updated = services.map((service) =>
+    String(service.id) === String(id)
+      ? normalizeLocalService({ ...service, ...data, id: service.id })
+      : service,
+  );
+  localStorage.setItem(LOCAL_PROVIDER_SERVICES_KEY, JSON.stringify(updated));
+  return { data: updated.find((service) => String(service.id) === String(id)) || null };
+};
 
-export const deleteService = (id: string) =>
-  api.delete(`/services/${id}`, { skipAuthRedirect: true } as any).catch(() => {
-    const services = getLocalProviderServices().filter((service) => String(service.id) !== String(id));
-    localStorage.setItem(LOCAL_PROVIDER_SERVICES_KEY, JSON.stringify(services));
-    return { data: { success: true } };
-  });
+export const deleteService = async (id: string) => {
+  try {
+    await api.delete(`/services/${id}`, { skipAuthRedirect: true } as any);
+  } catch {
+    // fall through — still delete from local
+  }
+  const services = getLocalProviderServices().filter((service) => String(service.id) !== String(id));
+  localStorage.setItem(LOCAL_PROVIDER_SERVICES_KEY, JSON.stringify(services));
+  return { data: { success: true } };
+};
 
 export const uploadImage = async (file: File) => {
   const formData = new FormData();
@@ -192,10 +225,16 @@ export const uploadImage = async (file: File) => {
  * Get all services + inventory slots for the authenticated provider
  * GET /inventory/provider
  */
-export const getProviderInventory = () =>
-  api.get('/inventory/provider', { skipAuthRedirect: true } as any).catch(() => ({
-    data: mockProviderInventory(),
-  }));
+export const getProviderInventory = async () => {
+  try {
+    const res = await api.get('/inventory/provider', { skipAuthRedirect: true } as any);
+    const list = Array.isArray(res.data) ? res.data : res.data?.data;
+    if (list && list.length > 0) return { data: list };
+    return { data: mockProviderInventory() };
+  } catch {
+    return { data: mockProviderInventory() };
+  }
+};
 
 /**
  * Batch apply pricing across services (calls per-service endpoint internally)
@@ -445,7 +484,7 @@ function mockProviderInventory() {
     return date.toISOString().slice(0, 10);
   };
 
-  return mockProviderServices().map((service, serviceIndex) => ({
+  return getLocalProviderServices().map((service, serviceIndex) => ({
     ...service,
     slots: Array.from({ length: 5 }, (_, index) => ({
       id: `${service.id}-slot-${index}`,

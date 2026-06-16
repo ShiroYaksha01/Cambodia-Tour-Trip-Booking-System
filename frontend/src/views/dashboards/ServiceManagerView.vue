@@ -207,9 +207,7 @@ const selectedCategoryDescription = computed(() => {
 
 async function loadServices() {
   try {
-    const res = await fetchMyServices();
-    // API might return the list directly or wrapped in a data property
-    services.value = Array.isArray(res) ? res : res.data || [];
+    services.value = await fetchMyServices();
   } catch (err) {
     console.error("Failed to fetch services:", err);
     services.value = [];
@@ -327,14 +325,14 @@ async function handleSaveService(formData: any) {
 
 .sidebar-header h2 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 400;
   color: #1a1a1a;
 }
 
 .subtitle {
   margin: 4px 0 0;
-  font-size: 11px;
+  font-size: 14px;
   color: #999;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -371,7 +369,7 @@ async function handleSaveService(formData: any) {
 }
 
 .nav-item .icon {
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .main-content {
@@ -398,7 +396,7 @@ async function handleSaveService(formData: any) {
 
 .header-left h1 {
   margin: 0;
-  font-size: 24px;
+  font-size: 14px;
   color: #1a1a1a;
 }
 
@@ -440,7 +438,7 @@ async function handleSaveService(formData: any) {
   background: #e8f4f0;
   border-color: #bfe0d8;
   color: #1b7f6a;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .btn-primary {
@@ -451,7 +449,7 @@ async function handleSaveService(formData: any) {
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   transition: all 0.2s;
 }
 
@@ -478,13 +476,13 @@ async function handleSaveService(formData: any) {
 
 .section-header h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 14px;
   color: #1a1a1a;
 }
 
 .description {
   margin: 4px 0 0 0;
-  font-size: 13px;
+  font-size: 14px;
   color: #999;
 }
 
@@ -508,8 +506,8 @@ async function handleSaveService(formData: any) {
 }
 
 .header-cell {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 400;
   color: #666;
   text-align: center;
   text-transform: uppercase;
@@ -556,7 +554,7 @@ async function handleSaveService(formData: any) {
 
 .service-details p {
   margin: 2px 0 0 0;
-  font-size: 12px;
+  font-size: 14px;
   color: #999;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -578,8 +576,8 @@ async function handleSaveService(formData: any) {
   padding: 8px 12px;
   background: #e8f4f0;
   color: #1b7f6a;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .pricing {
@@ -588,12 +586,12 @@ async function handleSaveService(formData: any) {
 
 .pricing strong {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 400;
   color: #1b7f6a;
 }
 
 .pricing p {
-  font-size: 12px;
+  font-size: 14px;
   color: #999;
   margin: 2px 0 0 0;
 }
@@ -609,8 +607,8 @@ async function handleSaveService(formData: any) {
   min-width: 62px;
   padding: 8px 12px;
   border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .status-pill.live {
@@ -659,7 +657,7 @@ async function handleSaveService(formData: any) {
   text-align: left;
   cursor: pointer;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 14px;
   color: #1a1a1a;
 }
 
@@ -678,7 +676,7 @@ async function handleSaveService(formData: any) {
   gap: 14px;
   padding: 18px 6px 18px;
   color: #7d8790;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .table-foot div {
@@ -692,7 +690,7 @@ async function handleSaveService(formData: any) {
   border: 1px solid #ddd;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .config-panel {
@@ -713,14 +711,14 @@ async function handleSaveService(formData: any) {
 
 .panel-header h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 14px;
   color: #1a1a1a;
 }
 
 .close-btn {
   background: none;
   border: none;
-  font-size: 18px;
+  font-size: 14px;
   cursor: pointer;
   color: #999;
 }
@@ -733,8 +731,8 @@ async function handleSaveService(formData: any) {
 
 .config-section label {
   display: block;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 400;
   color: #999;
   margin-bottom: 10px;
   text-transform: uppercase;
@@ -754,14 +752,14 @@ async function handleSaveService(formData: any) {
 
 .rule-item span {
   display: block;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 400;
   color: #1a1a1a;
 }
 
 .rule-desc {
   margin: 2px 0 0 0;
-  font-size: 11px;
+  font-size: 14px;
   color: #999;
 }
 
@@ -774,7 +772,7 @@ async function handleSaveService(formData: any) {
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 400;
   margin-top: 20px;
 }
 
@@ -825,6 +823,87 @@ async function handleSaveService(formData: any) {
   .services-header,
   .service-row {
     grid-template-columns: 1.5fr 1fr 1fr 0.8fr 0.5fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .services-header,
+  .service-row {
+    grid-template-columns: 1.2fr 0.8fr 0.8fr 0.6fr 0.4fr;
+    min-width: 540px;
+  }
+
+  .services-grid {
+    overflow-x: auto;
+  }
+
+  .service-info {
+    gap: 8px;
+  }
+
+  .service-image {
+    width: 40px;
+    height: 40px;
+  }
+
+  .service-name {
+    font-size: 0.875rem;
+  }
+
+  .cell {
+    padding: 12px 8px;
+    font-size: 0.875rem;
+  }
+
+  .header-cell {
+    padding: 10px 8px;
+    font-size: 0.875rem;
+  }
+
+  .config-panel {
+    padding: 16px;
+  }
+
+  .panel-header h3 {
+    font-size: 0.875rem;
+  }
+
+  .field input,
+  .field select {
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .services-header,
+  .service-row {
+    min-width: 420px;
+    grid-template-columns: 1fr 0.7fr 0.7fr 0.5fr 0.4fr;
+  }
+
+  .service-image {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+  }
+
+  .service-name {
+    font-size: 0.875rem;
+  }
+
+  .cell {
+    padding: 10px 4px;
+    font-size: 0.875rem;
+  }
+
+  .price-badge {
+    font-size: 0.875rem;
+    padding: 2px 6px;
+  }
+
+  .config-panel {
+    padding: 12px;
+    gap: 14px;
   }
 }
 </style>

@@ -706,13 +706,13 @@ function showSupport() {
 
 .settings-header h1 {
   margin: 0;
-  font-size: 20px;
+  font-size: 14px;
   color: #1a1a1a;
 }
 
 .subtitle {
   margin: 4px 0 0 0;
-  font-size: 13px;
+  font-size: 14px;
   color: #666;
 }
 
@@ -737,8 +737,8 @@ function showSupport() {
   place-items: center;
   background: linear-gradient(135deg, #148a74, #efb34f);
   color: #fff;
-  font-size: 0.65rem;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 400;
 }
 
 .avatar--image {
@@ -754,7 +754,7 @@ function showSupport() {
 .icon-btn {
   background: none;
   border: none;
-  font-size: 16px;
+  font-size: 14px;
   cursor: pointer;
   padding: 4px;
 }
@@ -818,8 +818,8 @@ function showSupport() {
 .profile-kicker {
   margin: 0 0 4px;
   color: var(--profile-primary);
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 400;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -827,14 +827,14 @@ function showSupport() {
 .profile-section-header h2 {
   margin: 0;
   color: var(--profile-text);
-  font-size: 24px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .profile-section-header p {
   margin: 6px 0 0;
   color: var(--profile-muted);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.45;
 }
 
@@ -894,14 +894,14 @@ function showSupport() {
 .card-title-row h3 {
   margin: 0;
   color: var(--profile-text);
-  font-size: 16px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .card-title-row p {
   margin: 5px 0 0;
   color: var(--profile-muted);
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.45;
 }
 
@@ -934,8 +934,8 @@ function showSupport() {
   align-content: center;
   gap: 8px;
   color: var(--profile-muted);
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .cover-empty svg {
@@ -974,8 +974,8 @@ function showSupport() {
 .highlight-language-grid h4 {
   margin: 0 0 10px;
   color: var(--profile-text);
-  font-size: 12px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 400;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -1017,8 +1017,8 @@ function showSupport() {
 .profile-field label {
   display: block;
   color: var(--profile-text);
-  font-size: 12px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 400;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -1027,7 +1027,7 @@ function showSupport() {
 .logo-upload-copy p {
   margin: 5px 0 0;
   color: var(--profile-muted);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .profile-upload-btn {
@@ -1038,8 +1038,8 @@ function showSupport() {
   border: 0;
   border-radius: 12px;
   cursor: pointer;
-  font-size: 13px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 400;
   white-space: nowrap;
 }
 
@@ -1121,8 +1121,8 @@ function showSupport() {
   background: #fff;
   color: var(--profile-text);
   cursor: pointer;
-  font-size: 13px;
-  font-weight: 750;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .select-chip.compact {
@@ -1178,8 +1178,8 @@ function showSupport() {
   background: var(--profile-primary-soft);
   border: 1px solid var(--profile-primary-border);
   border-radius: 999px;
-  font-size: 12px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .verified-badge svg,
@@ -1190,14 +1190,14 @@ function showSupport() {
 .preview-body h3 {
   margin: 0;
   color: var(--profile-text);
-  font-size: 20px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .preview-tagline {
   margin: 6px 0 12px;
   color: var(--profile-muted);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.4;
 }
 
@@ -1207,8 +1207,8 @@ function showSupport() {
   align-items: center;
   margin: 0 0 8px;
   color: var(--profile-text);
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .preview-location svg {
@@ -1220,7 +1220,7 @@ function showSupport() {
 .preview-bio {
   margin: 0 0 12px;
   color: var(--profile-muted);
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.45;
 }
 
@@ -1242,8 +1242,8 @@ function showSupport() {
   background: var(--profile-primary-soft);
   border: 1px solid var(--profile-primary-border);
   border-radius: 999px;
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .preview-languages {
@@ -1258,8 +1258,8 @@ function showSupport() {
   background: #f2f4f7;
   border: 1px solid #e5e7eb;
   border-radius: 999px;
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .preview-contact-actions {
@@ -1280,8 +1280,8 @@ function showSupport() {
   background: #fff;
   border: 1px solid var(--profile-primary-border);
   border-radius: 12px;
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 400;
   text-decoration: none;
 }
 
@@ -1324,8 +1324,8 @@ function showSupport() {
 
 .section-header h2 {
   margin: 0 0 4px 0;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 400;
   color: #1a1a1a;
 }
 
@@ -1340,13 +1340,13 @@ function showSupport() {
   color: #148a74;
   padding: 2px 6px;
   border-radius: 3px;
-  font-size: 10px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .section-description {
   margin: 8px 0 0 0;
-  font-size: 12px;
+  font-size: 14px;
   color: #666;
   line-height: 1.4;
 }
@@ -1373,8 +1373,8 @@ function showSupport() {
 }
 
 .settings-group label {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 400;
   color: #999;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -1382,7 +1382,7 @@ function showSupport() {
 
 .field-hint {
   margin: 0;
-  font-size: 12px;
+  font-size: 14px;
   color: #999;
 }
 
@@ -1391,7 +1391,7 @@ function showSupport() {
   padding: 8px 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
-  font-size: 13px;
+  font-size: 14px;
   font-family: inherit;
 }
 
@@ -1418,7 +1418,7 @@ function showSupport() {
   padding: 8px 12px;
   background: #f5f5f5;
   border-right: 1px solid #ddd;
-  font-weight: 600;
+  font-weight: 400;
   color: #148a74;
 }
 
@@ -1462,7 +1462,7 @@ function showSupport() {
 }
 
 .logo-placeholder {
-  font-size: 32px;
+  font-size: 14px;
   color: #ddd;
 }
 
@@ -1474,7 +1474,7 @@ function showSupport() {
 
 .file-name {
   margin: 0;
-  font-size: 12px;
+  font-size: 14px;
   color: #999;
 }
 
@@ -1485,8 +1485,8 @@ function showSupport() {
   border: none;
   border-radius: 3px;
   cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .upload-btn:hover {
@@ -1501,8 +1501,8 @@ function showSupport() {
   background: #148a74;
   color: white;
   border-radius: 50%;
-  font-size: 16px;
-  font-weight: bold;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .admin-note {
@@ -1514,7 +1514,7 @@ function showSupport() {
   gap: 8px;
   background: #f9f9f9;
   border-left: 2px solid #148a74;
-  font-size: 12px;
+  font-size: 14px;
   color: #666;
 }
 
@@ -1542,8 +1542,8 @@ function showSupport() {
 }
 
 .payout-field label {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 400;
   color: rgba(255, 255, 255, 0.7);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -1557,8 +1557,8 @@ function showSupport() {
 
 .account-number,
 .bank-name {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 400;
   color: white;
 }
 
@@ -1568,8 +1568,8 @@ function showSupport() {
   border-radius: 4px;
   padding: 4px 8px;
   color: white;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 400;
   width: 100%;
 }
 
@@ -1591,7 +1591,7 @@ function showSupport() {
   padding: 4px 8px;
   border-radius: 10px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .copy-btn svg,
@@ -1613,8 +1613,8 @@ function showSupport() {
   border: none;
   border-radius: 12px;
   cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .btn-secure-update:hover {
@@ -1637,13 +1637,13 @@ function showSupport() {
 .policy-box h3 {
   margin: 0;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 400;
   color: #1a1a1a;
 }
 
 .policy-hint {
   margin: 0;
-  font-size: 12px;
+  font-size: 14px;
   color: #999;
 }
 
@@ -1651,7 +1651,7 @@ function showSupport() {
   padding: 8px 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 14px;
   font-family: inherit;
   resize: vertical;
 }
@@ -1687,7 +1687,7 @@ function showSupport() {
 
 .compliance-warning p {
   margin: 0;
-  font-size: 12px;
+  font-size: 14px;
   color: #8b6f47;
   line-height: 1.4;
 }
@@ -1715,8 +1715,8 @@ function showSupport() {
   border: none;
   color: #148a74;
   cursor: pointer;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 400;
   padding: 4px 8px;
 }
 
@@ -1737,7 +1737,7 @@ function showSupport() {
 
 .last-updated {
   margin: 0;
-  font-size: 11px;
+  font-size: 14px;
   color: #999;
 }
 
@@ -1747,8 +1747,8 @@ function showSupport() {
   border: 1px solid #ddd;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 400;
   color: #1a1a1a;
 }
 
@@ -1763,8 +1763,8 @@ function showSupport() {
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .btn-primary:hover {
@@ -1805,7 +1805,7 @@ function showSupport() {
   }
 
   .profile-section-header h2 {
-    font-size: 21px;
+    font-size: 14px;
   }
 
   .profile-card {

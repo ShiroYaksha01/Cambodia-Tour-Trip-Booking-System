@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, Not } from 'typeorm';
 import { InventorySlot } from './entities/inventory-slot.entity';
 import { Service } from './entities/service.entity';
+import { ServiceInventory } from './entities/service-inventory.entity';
 import { Provider } from '../providers/entities/provider.entity';
 import {
   CreateInventorySlotDto,
@@ -17,6 +18,8 @@ export class InventoryService {
     private inventorySlotRepository: Repository<InventorySlot>,
     @InjectRepository(Service)
     private serviceRepository: Repository<Service>,
+    @InjectRepository(ServiceInventory)
+    private serviceInventoryRepository: Repository<ServiceInventory>,
     @InjectRepository(Provider)
     private providerRepository: Repository<Provider>,
   ) {}
@@ -59,7 +62,9 @@ export class InventoryService {
       isPeakPeriod: dto.isPeakPeriod || false,
     });
 
-    return this.inventorySlotRepository.save(slot);
+    const saved = await this.inventorySlotRepository.save(slot);
+    await this.syncServiceInventory(serviceId);
+    return saved;
   }
 
   /**
@@ -105,7 +110,11 @@ export class InventoryService {
       }
     }
 
-    return this.inventorySlotRepository.save(slots);
+    const saved = await this.inventorySlotRepository.save(slots);
+    if (saved.length > 0) {
+      await this.syncServiceInventory(serviceId);
+    }
+    return saved;
   }
 
   /**
@@ -205,7 +214,9 @@ export class InventoryService {
       slot.status = this.computeStatus(slot.availableSlots, slot.totalSlots);
     }
 
-    return this.inventorySlotRepository.save(slot);
+    const saved = await this.inventorySlotRepository.save(slot);
+    await this.syncServiceInventory(saved.serviceId);
+    return saved;
   }
 
   /**
@@ -213,7 +224,9 @@ export class InventoryService {
    */
   async deleteSlot(slotId: string): Promise<void> {
     const slot = await this.getSlot(slotId);
+    const serviceId = slot.serviceId;
     await this.inventorySlotRepository.remove(slot);
+    await this.syncServiceInventory(serviceId);
   }
 
   /**
@@ -232,7 +245,11 @@ export class InventoryService {
     slot.availableSlots -= quantity;
     slot.status = this.computeStatus(slot.availableSlots, slot.totalSlots);
 
-    return this.inventorySlotRepository.save(slot);
+    await this.inventorySlotRepository.save(slot);
+
+    await this.syncServiceInventory(slot.serviceId);
+
+    return slot;
   }
 
   /**
@@ -245,7 +262,11 @@ export class InventoryService {
     slot.availableSlots = slot.totalSlots - slot.bookedSlots;
     slot.status = this.computeStatus(slot.availableSlots, slot.totalSlots);
 
-    return this.inventorySlotRepository.save(slot);
+    await this.inventorySlotRepository.save(slot);
+
+    await this.syncServiceInventory(slot.serviceId);
+
+    return slot;
   }
 
   /**
@@ -371,6 +392,28 @@ export class InventoryService {
     });
 
     return this.inventorySlotRepository.save(slots);
+  }
+
+  /**
+   * Sync ServiceInventory.bookedCount from all InventorySlot records for a service
+   */
+  private async syncServiceInventory(serviceId: string): Promise<void> {
+    const slots = await this.inventorySlotRepository.find({
+      where: { serviceId },
+    });
+
+    const totalBooked = slots.reduce((sum, s) => sum + s.bookedSlots, 0);
+    const totalCapacity = slots.reduce((sum, s) => sum + s.totalSlots, 0);
+
+    await this.serviceInventoryRepository.upsert(
+      {
+        serviceId,
+        bookedCount: totalBooked,
+        totalCapacity,
+        isClosed: totalBooked >= totalCapacity && totalCapacity > 0,
+      },
+      ['serviceId'],
+    );
   }
 
   /**

@@ -51,7 +51,7 @@
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th>Company & Category</th>
+                    <th>Company &amp; Category</th>
                     <th>Contact Details</th>
                     <th>Services</th>
                     <th>Status</th>
@@ -60,7 +60,7 @@
                 </thead>
                 <tbody>
                   <tr v-for="provider in filteredProviders" :key="provider.id" class="data-row">
-                    <td>
+                    <td data-label="Company">
                       <div class="company-cell">
                         <div class="company-logo">{{ provider.companyName.charAt(0) }}</div>
                         <div>
@@ -69,25 +69,25 @@
                         </div>
                       </div>
                     </td>
-                    <td>
+                    <td data-label="Contact">
                       <div class="contact-info">
                         <span class="contact-name">{{ provider.contactPerson }}</span>
                         <span class="contact-sub">{{ provider.email }}</span>
                         <span class="contact-sub">{{ provider.phoneNumber }}</span>
                       </div>
                     </td>
-                    <td>
+                    <td data-label="Services">
                       <div class="service-stat">
                         <span class="stat-number">{{ provider.totalServices }}</span>
                         <span class="stat-label">Services</span>
                       </div>
                     </td>
-                    <td>
+                    <td data-label="Status">
                       <span :class="['status-pill', provider.status === 'active' ? 'active' : 'inactive']">
                         {{ provider.status === 'active' ? 'Active' : 'Inactive' }}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Actions">
                       <div class="action-stack">
                         <button class="action-btn edit" title="Edit Provider" @click="openEditModal(provider)">
                           ✎
@@ -947,7 +947,117 @@ onMounted(() => {
   opacity: 0;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
+  .toolbar-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-group {
+    justify-content: space-between;
+  }
+
+  .data-table thead {
+    display: none;
+  }
+
+  .data-table,
+  .data-table tbody,
+  .data-table tr,
+  .data-table td {
+    display: block;
+  }
+
+  .data-table tr {
+    padding: 16px;
+    border-bottom: 1px solid #edf2f5;
+    margin-bottom: 0;
+  }
+
+  .data-table td {
+    padding: 6px 0;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+  }
+
+  .data-table td::before {
+    content: attr(data-label);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+    font-weight: 700;
+    min-width: 90px;
+    flex-shrink: 0;
+  }
+
+  .action-stack {
+    justify-content: flex-start;
+  }
+
+  .action-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  .company-cell {
+    flex-wrap: wrap;
+  }
+
+  .contact-info {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+
+  .contact-sub {
+    width: 100%;
+  }
+
+  .service-stat {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .stat-number {
+    font-size: 0.88rem;
+  }
+
+  .modal-window {
+    max-width: 100%;
+    margin: 0 12px;
+    max-height: 85vh;
+    border-radius: 12px;
+  }
+
+  .modal-header {
+    padding: 16px 20px;
+  }
+
+  .modal-header h2 {
+    font-size: 1rem;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+
+  .modal-footer {
+    padding: 14px 20px;
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .modal-footer button {
+    width: 100%;
+    justify-content: center;
+  }
+
   .form-grid {
     grid-template-columns: 1fr;
   }
@@ -960,6 +1070,84 @@ onMounted(() => {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
+  }
+
+  .primary-button.add-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-content {
+    gap: 14px;
+  }
+
+  .page-heading {
+    padding-bottom: 16px;
+  }
+
+  .heading-group h1 {
+    font-size: 1.3rem;
+  }
+
+  .card-header {
+    padding: 14px 16px;
+  }
+
+  .data-table td {
+    font-size: 0.82rem;
+  }
+
+  .data-table td::before {
+    min-width: 80px;
+  }
+
+  .table-card {
+    border-radius: 8px;
+  }
+
+  .modal-overlay {
+    padding: 8px;
+  }
+
+  .modal-window {
+    border-radius: 10px;
+    margin: 0 4px;
+  }
+
+  .modal-header {
+    padding: 12px 16px;
+  }
+
+  .modal-body {
+    padding: 16px;
+    gap: 20px;
+  }
+
+  .form-section h3 {
+    margin-bottom: 12px;
+  }
+
+  .modal-footer {
+    padding: 12px 16px;
+  }
+
+  .company-logo {
+    width: 28px;
+    height: 28px;
+    font-size: 0.82rem;
+  }
+
+  .action-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 0.88rem;
+  }
+
+  .primary-button {
+    padding: 8px 14px;
+    font-size: 0.82rem;
   }
 }
 </style>

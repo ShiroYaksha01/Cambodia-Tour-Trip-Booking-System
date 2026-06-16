@@ -306,7 +306,7 @@ export default defineComponent({
 .sidebar-card__eyebrow,
 .nav-section__label {
   margin: 0;
-  font-size: 0.66rem;
+  font-size: 0.875rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #8a9897;
@@ -324,7 +324,7 @@ export default defineComponent({
 
 .nav-section__label {
   padding: 0 10px 4px;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .nav-item {
@@ -356,9 +356,9 @@ export default defineComponent({
   border-color: rgba(15, 110, 112, 0.1);
 }
 
-.router-link-active.nav-item {
-  background: rgba(15, 110, 112, 0.08) !important;
-  border-color: rgba(15, 110, 112, 0.12) !important;
+.router-link-exact-active.nav-item {
+  background: #eaf5f4;
+  border-color: rgba(15, 110, 112, 0.1);
   transform: translateX(4px);
 }
 
@@ -378,7 +378,7 @@ export default defineComponent({
 .sidebar-card__metric strong,
 .system-status strong {
   display: block;
-  font-size: 0.83rem;
+  font-size: 0.875rem;
   color: inherit;
 }
 
@@ -388,7 +388,7 @@ export default defineComponent({
   text-transform: none;
   letter-spacing: 0;
   color: #8a9897;
-  font-size: 0.69rem;
+  font-size: 0.875rem;
 }
 
 .sidebar-card {
@@ -415,12 +415,12 @@ export default defineComponent({
 
 .system-status p {
   margin: 0;
-  font-size: 0.69rem;
+  font-size: 0.875rem;
   color: #7a8782;
 }
 
 .system-status strong {
-  font-size: 0.76rem;
+  font-size: 0.875rem;
   line-height: 1.45;
   color: #203c3e;
 }
@@ -437,7 +437,7 @@ export default defineComponent({
 .sidebar-actions a {
   color: inherit;
   text-decoration: none;
-  font-size: 0.8rem;
+  font-size: 0.875rem;
 }
 
 @media (max-width: 1024px) {

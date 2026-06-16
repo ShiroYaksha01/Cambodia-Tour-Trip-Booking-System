@@ -385,7 +385,7 @@ function viewTransactionDetails(transaction: Transaction) {
 
 .ledger-header h1 {
   margin: 0;
-  font-size: 20px;
+  font-size: 14px;
   color: #1a1a1a;
 }
 
@@ -406,7 +406,7 @@ function viewTransactionDetails(transaction: Transaction) {
   padding: 8px 12px 8px 32px;
   border: 1px solid #ddd;
   border-radius: 4px;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .search-icon {
@@ -438,8 +438,8 @@ function viewTransactionDetails(transaction: Transaction) {
   place-items: center;
   background: linear-gradient(135deg, #0f6e70, #efb34f);
   color: #fff;
-  font-size: 0.65rem;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 400;
 }
 
 .avatar--image {
@@ -455,7 +455,7 @@ function viewTransactionDetails(transaction: Transaction) {
 .icon-btn {
   background: none;
   border: none;
-  font-size: 16px;
+  font-size: 14px;
   cursor: pointer;
   padding: 4px;
 }
@@ -479,14 +479,14 @@ function viewTransactionDetails(transaction: Transaction) {
 
 .section-header h2 {
   margin: 0 0 8px 0;
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 400;
   color: #1a1a1a;
 }
 
 .subtitle {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   color: #666;
   line-height: 1.5;
 }
@@ -503,8 +503,8 @@ function viewTransactionDetails(transaction: Transaction) {
   border: 1px solid #ddd;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 400;
   color: #1a1a1a;
 }
 
@@ -519,8 +519,8 @@ function viewTransactionDetails(transaction: Transaction) {
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .btn-primary:hover {
@@ -554,8 +554,8 @@ function viewTransactionDetails(transaction: Transaction) {
 
 .card-header h3 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 400;
   color: #1a1a1a;
 }
 
@@ -564,8 +564,8 @@ function viewTransactionDetails(transaction: Transaction) {
   color: #9b6b1f;
   padding: 4px 8px;
   border-radius: 3px;
-  font-size: 10px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .card-content {
@@ -584,17 +584,17 @@ function viewTransactionDetails(transaction: Transaction) {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: 14px;
   color: #666;
 }
 
 .earning-icon {
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .earning-value {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 400;
   color: #1a1a1a;
 }
 
@@ -617,13 +617,13 @@ function viewTransactionDetails(transaction: Transaction) {
 }
 
 .earning-item.total .amount {
-  font-size: 24px;
+  font-size: 14px;
   color: #0f6e70;
 }
 
 .earning-item.total .status {
-  font-size: 10px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 400;
   color: #0f6e70;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -663,15 +663,15 @@ function viewTransactionDetails(transaction: Transaction) {
 }
 
 .bar-label {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 400;
   color: #999;
 }
 
 .chart-legend {
   display: flex;
   gap: 16px;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .legend-item {
@@ -709,8 +709,8 @@ function viewTransactionDetails(transaction: Transaction) {
 
 .transaction-header h3 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 400;
   color: #1a1a1a;
 }
 
@@ -723,7 +723,7 @@ function viewTransactionDetails(transaction: Transaction) {
   padding: 6px 10px;
   border: 1px solid #ddd;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 14px;
   cursor: pointer;
   background: white;
 }
@@ -735,7 +735,7 @@ function viewTransactionDetails(transaction: Transaction) {
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 thead {
@@ -746,9 +746,9 @@ thead {
 th {
   padding: 12px;
   text-align: left;
-  font-weight: 600;
+  font-weight: 400;
   color: #999;
-  font-size: 11px;
+  font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -760,7 +760,7 @@ td {
 
 .transfer-id {
   color: #0f6e70;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .date {
@@ -775,20 +775,20 @@ td {
 }
 
 .bank-icon {
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .amount {
   color: #1a1a1a;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .status-badge {
   display: inline-block;
   padding: 4px 8px;
   border-radius: 3px;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .status-badge.released {
@@ -812,9 +812,9 @@ td {
   border: 1px solid #ddd;
   border-radius: 3px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 14px;
   color: #0f6e70;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .action-btn:hover {
@@ -828,7 +828,7 @@ td {
   margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid #f0f0f0;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .showing-text {
@@ -847,9 +847,9 @@ td {
   border: 1px solid #ddd;
   border-radius: 3px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 14px;
   color: #666;
-  font-weight: 500;
+  font-weight: 400;
   transition: all 0.2s;
 }
 
@@ -866,6 +866,106 @@ td {
 @media (max-width: 1024px) {
   .cards-row {
     grid-template-columns: 1fr;
+  }
+
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .page-header h1 {
+    font-size: 0.875rem;
+  }
+
+  .stats-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 14px;
+  }
+
+  .stat-value {
+    font-size: 0.875rem;
+  }
+
+  .transactions-table {
+    font-size: 0.875rem;
+  }
+
+  .transactions-table th,
+  .transactions-table td {
+    padding: 10px 8px;
+  }
+
+  .amount-text {
+    font-size: 0.875rem;
+  }
+
+  .badge {
+    font-size: 0.875rem;
+    padding: 2px 6px;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .page-btn {
+    min-width: 32px;
+    height: 32px;
+    font-size: 0.875rem;
+  }
+
+  .bar-chart-wrapper {
+    height: 120px;
+  }
+
+  .cards-row {
+    gap: 12px;
+  }
+
+  .earnings-card,
+  .revenue-card {
+    padding: 18px;
+  }
+
+  .earnings-amount {
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-content {
+    padding: 14px;
+    gap: 16px;
+  }
+
+  .transactions-table th,
+  .transactions-table td {
+    padding: 8px 6px;
+    font-size: 0.875rem;
+  }
+
+  .stat-card {
+    padding: 12px;
+  }
+
+  .stat-value {
+    font-size: 0.875rem;
+  }
+
+  .stat-label {
+    font-size: 0.875rem;
   }
 }
 </style>
