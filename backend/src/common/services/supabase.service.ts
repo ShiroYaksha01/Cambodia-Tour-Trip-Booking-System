@@ -1,6 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import * as ws from 'ws';
 
 @Injectable()
 export class SupabaseService {
@@ -11,7 +12,11 @@ export class SupabaseService {
     const supabaseKey = this.configService.get<string>('SUPABASE_KEY');
 
     if (supabaseUrl && supabaseKey) {
-      this.supabase = createClient(supabaseUrl, supabaseKey);
+      this.supabase = createClient(supabaseUrl, supabaseKey, {
+        realtime: {
+          transport: ws as any,
+        },
+      });
     } else {
       console.warn('Supabase credentials missing! SupabaseService will not be functional.');
     }

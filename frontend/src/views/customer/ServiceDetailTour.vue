@@ -59,18 +59,7 @@
           <section class="gallery-section">
             <div class="gallery-layout">
               <div class="gallery-main">
-                <img :src="currentMainImage" :alt="service.title" />
-              </div>
-              <div class="gallery-sidebar">
-                <div 
-                  v-for="(img, i) in galleryImages" 
-                  :key="i" 
-                  class="sidebar-thumb"
-                  :class="{ active: currentMainImage === img }"
-                  @click="activeImageUrl = img"
-                >
-                  <img :src="img" :alt="service.title + ' ' + (i + 1)" />
-                </div>
+                <img :src="mainImage" :alt="service.title" />
               </div>
             </div>
           </section>
@@ -149,7 +138,7 @@
             <div class="provider-card">
               <div class="provider-top">
                 <div class="provider-logo">
-                  <img v-if="provider?.logo" :src="provider.logo" :alt="provider?.companyName" />
+                  <img v-if="provider?.logo" :src="resolveImageUrl(provider.logo)" :alt="provider?.companyName" />
                   <span v-else class="provider-logo-fallback">🏛</span>
                 </div>
                 <div class="provider-info">
@@ -237,7 +226,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { apiGet } from '../../utils/api'
+import { apiGet, resolveImageUrl } from '../../utils/api'
 import { hasAuthSession } from '../../utils/auth'
 import CustomerNavbar from '../../components/customer/CustomerNavbar.vue'
 import CustomerFooter from '../../components/customer/CustomerFooter.vue'
@@ -315,7 +304,6 @@ const service = ref<Service | null>(null)
 const isLoading = ref(true)
 const fetchError = ref('')
 const guests = ref(1)
-const activeImageUrl = ref<string | null>(null)
 
 const tourPackage = computed(() => service.value?.tourPackage)
 const provider = computed(() => service.value?.provider)
@@ -341,26 +329,23 @@ const displayTags = computed(() => {
   return tags
 })
 
-const galleryImages = computed(() => {
-  if (!service.value) return []
-  const imgs = service.value.images || []
+const mainImage = computed(() => {
+  if (!service.value) return ''
   
-  const sorted = [...imgs].sort((a, b) => {
-    if (a.isCover) return -1
-    if (b.isCover) return 1
-    return (a.sortOrder || 0) - (b.sortOrder || 0)
-  })
-
-  const results = sorted.map(i => i.imageUrl)
-  
-  while (results.length < 4) {
-    results.push(`https://placehold.co/800x600/006566/ffffff?text=Tour+Photo+${results.length + 1}`)
+  // 1. Prioritize coverImage
+  if (service.value.coverImage) {
+    return resolveImageUrl(service.value.coverImage)
   }
   
-  return results
+  // 2. Fallback to first image in images array
+  if (service.value.images && service.value.images.length > 0) {
+    const cover = service.value.images.find(img => img.isCover) || service.value.images[0]
+    return resolveImageUrl(cover.imageUrl)
+  }
+  
+  // 3. Fallback to placeholder
+  return `https://placehold.co/800x600/006566/ffffff?text=Tour+Photo`
 })
-
-const currentMainImage = computed(() => activeImageUrl.value || galleryImages.value[0])
 
 function formatDate(dateStr?: string): string {
   if (!dateStr) return 'N/A'
@@ -537,39 +522,9 @@ h1, h2, h3, h4 {
   display: block;
   transition: opacity 0.3s ease;
 }
-.gallery-sidebar { 
-  display: flex; 
-  flex-direction: row; 
-  gap: 0.5rem; 
-  overflow-x: auto;
-  padding-bottom: 4px;
-}
-/* Custom scrollbar for sidebar */
-.gallery-sidebar::-webkit-scrollbar { height: 4px; }
-.gallery-sidebar::-webkit-scrollbar-track { background: transparent; }
-.gallery-sidebar::-webkit-scrollbar-thumb { background: var(--outline-variant); border-radius: 10px; }
-
-.sidebar-thumb { 
-  width: 80px;
-  height: 60px;
-  border-radius: 8px; 
-  overflow: hidden; 
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-  background: var(--surface-container-high);
-}
-.sidebar-thumb:hover { opacity: 0.8; }
-.sidebar-thumb.active { 
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(0, 101, 102, 0.2);
-}
-.sidebar-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 @media (max-width: 640px) {
   .gallery-main { height: 300px; }
-  .sidebar-thumb { width: 70px; height: 52px; }
 }
 
 /* ── Content Sections ── */
@@ -666,7 +621,7 @@ h1, h2, h3, h4 {
   padding: 1.5rem;
   position: sticky;
   top: 5rem;
-  height: 552px; /* Matches gallery height (480 + 12 gap + 60 thumbs) */
+  height: 480px; /* Matches gallery height */
   box-shadow: 0 0 24px -4px rgba(25, 28, 29, 0.06);
   display: flex;
   flex-direction: column;
@@ -708,12 +663,6 @@ h1, h2, h3, h4 {
   font-weight: 700; font-size: 1.1rem;
   padding-top: 0.75rem; border-top: 1px solid rgba(189, 201, 200, 0.2);
 }
-.btn-cta {
-  padding: 10px 24px; border-radius: 6px; font-weight: 600; font-size: 0.9rem;
-  border: none; cursor: pointer; color: #fff;
-  background: linear-gradient(135deg, #006566, #117f81);
-  transition: opacity 0.2s;
-}
 .btn-cta-full {
   width: 100%; padding: 12px; border-radius: 6px; font-weight: 700; font-size: 0.95rem;
   font-family: 'Plus Jakarta Sans', sans-serif;
@@ -721,5 +670,5 @@ h1, h2, h3, h4 {
   background: linear-gradient(135deg, #006566, #117f81);
   transition: opacity 0.2s;
 }
-.btn-cta-full:hover, .btn-cta:hover { opacity: 0.9; }
+.btn-cta-full:hover { opacity: 0.9; }
 </style>
