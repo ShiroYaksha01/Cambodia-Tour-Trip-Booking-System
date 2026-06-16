@@ -15,30 +15,6 @@ const services = ref<any[]>([]);
 const loading = ref(true);
 const error = ref("");
 
-// Mock reviews for now as we don't have a review system yet
-const reviews = [
-  {
-    id: 1,
-    name: "Sokha",
-    rating: 5,
-    date: "May 2026",
-    comment:
-      "Amazing tour experience. The guide was friendly and explained the history very clearly.",
-    avatar:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop",
-  },
-  {
-    id: 2,
-    name: "Dara",
-    rating: 4.5,
-    date: "April 2026",
-    comment:
-      "Good service, comfortable transportation, and beautiful places. Highly recommended.",
-    avatar:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop",
-  },
-];
-
 const fetchProviderData = async () => {
   try {
     loading.value = true;
@@ -337,10 +313,6 @@ const contactProvider = () => {
         </aside>
       </main>
     </template>
-
-    <CustomerFooter />
-  </div>
-</template>
 
     <CustomerFooter />
   </div>
