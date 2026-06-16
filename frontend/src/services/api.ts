@@ -6,9 +6,6 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000",
 });
 
-const LOCAL_PROVIDER_SERVICES_KEY = "mockProviderServices";
-const LOCAL_PROVIDER_PROFILE_KEY = "mockProviderProfile";
-
 // Attach JWT from localStorage if present.
 api.interceptors.request.use((config) => {
   try {
@@ -53,161 +50,36 @@ export const fetchServices = async () => {
 };
 
 export const fetchMyServices = async () => {
-  // Always read from localStorage as single source of truth.
-  // The API call below silently syncs real data into localStorage.
-  try {
-    const res = await api.get("/services/my", { skipAuthRedirect: true } as any);
-    const list = Array.isArray(res.data) ? res.data : res.data?.data;
-    if (list && list.length > 0) {
-      // Merge API services into localStorage, keeping existing ones
-      const local = getLocalProviderServices();
-      const localIds = new Set(local.map(s => s.id));
-      const newOnes = list.filter((s: any) => !localIds.has(s.id));
-      if (newOnes.length > 0) {
-        const merged = [...newOnes, ...local].map(normalizeLocalService);
-        localStorage.setItem(LOCAL_PROVIDER_SERVICES_KEY, JSON.stringify(merged));
-        return merged;
-      }
-      return local;
-    }
-  } catch {
-    // fall through to return local
-  }
-  return getLocalProviderServices();
+  const res = await api.get("/services/my");
+  return Array.isArray(res.data) ? res.data : res.data?.data || [];
 };
 
-export const getProviderBookings = (params?: any) => api.get(`/provider/bookings`, { params, skipAuthRedirect: true } as any).catch(async (err) => {
-  // If the request fails (network error, auth missing, or server error), return a local mock for quick preview
-  const isAuthError = err && err.response && (err.response.status === 401 || err.response.status === 403)
-  const isNetworkError = err && !err.response
-
-  if (isAuthError || isNetworkError) {
-    return { data: mockProviderBookings() }
-  }
-
-  // For other errors, still fallback to mock to enable quick dev preview
-  return { data: mockProviderBookings() }
-})
+export const getProviderBookings = (params?: any) => api.get(`/provider/bookings`, { params });
 
 export const checkInBooking = (id: string) =>
-  api.patch(`/provider/bookings/${id}/check-in`, undefined, { skipAuthRedirect: true } as any).catch(() => ({
-    data: { id, checkedIn: true },
-  }));
+  api.patch(`/provider/bookings/${id}/check-in`);
 
-export const getProviderProfile = () => api.get("/provider/profile", { skipAuthRedirect: true } as any).catch(() => ({
-  data: getLocalProviderProfile(),
-}));
+export const getProviderProfile = () => api.get("/provider/profile");
+
 export const updateProviderProfile = (data: any) =>
-  api.patch("/provider/profile", data, { skipAuthRedirect: true } as any).catch(() => {
-    const current = getLocalProviderProfile();
-    const next = {
-      ...current,
-      companyName: data.companyName ?? current.companyName,
-      description: data.description ?? current.description,
-      facebookUrl: data.facebookUrl ?? current.facebookUrl,
-      telegramUrl: data.telegramUrl ?? current.telegramUrl,
-      bankAccountNumber: data.bankAccountNumber ?? current.bankAccountNumber,
-      bankName: data.bankName ?? current.bankName,
-      refundPolicy: data.refundPolicy ?? current.refundPolicy,
-      guestRequirements: data.guestRequirements ?? current.guestRequirements,
-      user: {
-        ...current.user,
-        email: data.email ?? current.user?.email,
-        phoneNumber: data.phoneNumber ?? current.user?.phoneNumber,
-      },
-    };
-    localStorage.setItem(LOCAL_PROVIDER_PROFILE_KEY, JSON.stringify(next));
-    return { data: next };
-  });
+  api.patch("/provider/profile", data);
 
 export const getProviderDetail = (id: string) => api.get(`/providers/${id}`);
 
-export const getProviderDashboardStats = () => api.get(`/provider/dashboard-stats`).catch(() => ({
-  data: {
-    avgOccupancy: '84.2%',
-    revpar: '$142.50',
-    lowStockAlerts: '04',
-    khmerNewYear: '98%',
-  }
-}))
+export const getProviderDashboardStats = () => api.get(`/provider/dashboard-stats`);
 
-export const getProviderInventoryMatrix = () => api.get(`/provider/inventory-matrix`).catch(() => ({
-  data: [
-    {
-      id: '1',
-      title: 'Angkor Wat Sunrise Premium',
-      description: 'Daily Departure (4am)',
-      price: 85,
-      remaining: 19,
-      total: 50,
-      isClosed: false,
-    },
-    {
-      id: '2',
-      title: 'Floating Village Photography',
-      description: 'Afternoon Boat Tour',
-      price: 45,
-      remaining: 14,
-      total: 30,
-      isClosed: false,
-    },
-    {
-      id: '3',
-      title: 'Khmer Cooking Masterclass',
-      description: 'Limited to 12 Pax',
-      price: 65,
-      remaining: 7,
-      total: 12,
-      isClosed: false,
-    },
-  ]
-}))
+export const getProviderInventoryMatrix = () => api.get(`/provider/inventory-matrix`);
 
 export const createService = async (data: any) => {
-  try {
-    const res = await api.post('/services', data, { skipAuthRedirect: true } as any);
-    const created = res.data?.data || res.data;
-    const services = getLocalProviderServices();
-    const normalized = normalizeLocalService(created);
-    localStorage.setItem(LOCAL_PROVIDER_SERVICES_KEY, JSON.stringify([normalized, ...services]));
-    return { data: normalized };
-  } catch {
-    const services = getLocalProviderServices();
-    const created = normalizeLocalService({
-      ...data,
-      id: `local-${Date.now()}`,
-      isActive: data.isActive ?? true,
-    });
-    localStorage.setItem(LOCAL_PROVIDER_SERVICES_KEY, JSON.stringify([created, ...services]));
-    return { data: created };
-  }
+  return await api.post('/services', data);
 };
 
 export const updateService = async (id: string, data: any) => {
-  try {
-    await api.patch(`/services/${id}`, data, { skipAuthRedirect: true } as any);
-  } catch {
-    // fall through — still update local
-  }
-  const services = getLocalProviderServices();
-  const updated = services.map((service) =>
-    String(service.id) === String(id)
-      ? normalizeLocalService({ ...service, ...data, id: service.id })
-      : service,
-  );
-  localStorage.setItem(LOCAL_PROVIDER_SERVICES_KEY, JSON.stringify(updated));
-  return { data: updated.find((service) => String(service.id) === String(id)) || null };
+  return await api.patch(`/services/${id}`, data);
 };
 
 export const deleteService = async (id: string) => {
-  try {
-    await api.delete(`/services/${id}`, { skipAuthRedirect: true } as any);
-  } catch {
-    // fall through — still delete from local
-  }
-  const services = getLocalProviderServices().filter((service) => String(service.id) !== String(id));
-  localStorage.setItem(LOCAL_PROVIDER_SERVICES_KEY, JSON.stringify(services));
-  return { data: { success: true } };
+  return await api.delete(`/services/${id}`);
 };
 
 export const uploadImage = async (file: File) => {
@@ -226,14 +98,7 @@ export const uploadImage = async (file: File) => {
  * GET /inventory/provider
  */
 export const getProviderInventory = async () => {
-  try {
-    const res = await api.get('/inventory/provider', { skipAuthRedirect: true } as any);
-    const list = Array.isArray(res.data) ? res.data : res.data?.data;
-    if (list && list.length > 0) return { data: list };
-    return { data: mockProviderInventory() };
-  } catch {
-    return { data: mockProviderInventory() };
-  }
+  return await api.get('/inventory/provider');
 };
 
 /**
@@ -250,9 +115,7 @@ export const applyPricingToService = (
     startDate,
     endDate,
     markupPercentage,
-  }, { skipAuthRedirect: true } as any).catch(() => ({
-    data: { serviceId, startDate, endDate, markupPercentage, applied: true },
-  }));
+  });
 
 // ── Inventory API ──────────────────────────────────────────────
 
@@ -261,18 +124,14 @@ export const applyPricingToService = (
  * POST /inventory/:serviceId/slot
  */
 export const createInventorySlot = (serviceId: string, slotData: any) =>
-  api.post(`/inventory/${serviceId}/slot`, slotData, { skipAuthRedirect: true } as any).catch(() => ({
-    data: { id: `local-slot-${Date.now()}`, serviceId, ...slotData },
-  }));
+  api.post(`/inventory/${serviceId}/slot`, slotData);
 
 /**
  * Create multiple inventory slots for a date range
  * POST /inventory/:serviceId/batch
  */
 export const createBatchInventorySlots = (serviceId: string, batchData: any) =>
-  api.post(`/inventory/${serviceId}/batch`, batchData, { skipAuthRedirect: true } as any).catch(() => ({
-    data: { serviceId, ...batchData, created: true },
-  }));
+  api.post(`/inventory/${serviceId}/batch`, batchData);
 
 /**
  * Get inventory matrix for a service in a date range
@@ -299,36 +158,28 @@ export const getInventorySlot = (slotId: string) =>
  * PUT /inventory/slot/:slotId
  */
 export const updateInventorySlot = (slotId: string, updateData: any) =>
-  api.put(`/inventory/slot/${slotId}`, updateData, { skipAuthRedirect: true } as any).catch(() => ({
-    data: { id: slotId, ...updateData },
-  }));
+  api.put(`/inventory/slot/${slotId}`, updateData);
 
 /**
  * Delete an inventory slot
  * DELETE /inventory/slot/:slotId
  */
 export const deleteInventorySlot = (slotId: string) =>
-  api.delete(`/inventory/slot/${slotId}`, { skipAuthRedirect: true } as any).catch(() => ({
-    data: { id: slotId, deleted: true },
-  }));
+  api.delete(`/inventory/slot/${slotId}`);
 
 /**
  * Book slots (increment booked count when booking is confirmed)
  * POST /inventory/slot/:slotId/book
  */
 export const bookInventorySlots = (slotId: string, quantity: number) =>
-  api.post(`/inventory/slot/${slotId}/book`, { quantity }, { skipAuthRedirect: true } as any).catch(() => ({
-    data: { id: slotId, quantity, booked: true },
-  }));
+  api.post(`/inventory/slot/${slotId}/book`, { quantity });
 
 /**
  * Cancel booking (decrement booked count when booking is cancelled)
  * POST /inventory/slot/:slotId/cancel
  */
 export const cancelInventoryBooking = (slotId: string, quantity: number) =>
-  api.post(`/inventory/slot/${slotId}/cancel`, { quantity }, { skipAuthRedirect: true } as any).catch(() => ({
-    data: { id: slotId, quantity, cancelled: true },
-  }));
+  api.post(`/inventory/slot/${slotId}/cancel`, { quantity });
 
 /**
  * Apply dynamic pricing to a date range
@@ -344,9 +195,7 @@ export const applyDynamicPricing = (
     startDate,
     endDate,
     markupPercentage,
-  }, { skipAuthRedirect: true } as any).catch(() => ({
-    data: { serviceId, startDate, endDate, markupPercentage, applied: true },
-  }));
+  });
 
 /**
  * Set peak period flags for a date range
@@ -362,139 +211,7 @@ export const setPeakPeriod = (
     startDate,
     endDate,
     isPeak,
-  }, { skipAuthRedirect: true } as any).catch(() => ({
-    data: { serviceId, startDate, endDate, isPeak },
-  }));
-
-function mockProviderBookings() {
-  return [
-    {
-      id: 101,
-      service_name: 'Angkor Temple Tour',
-      user: { id: 11, name: 'Jane Doe', email: 'jane@example.com', phone_number: '+85512345678' },
-      quantity: 2,
-      date: new Date().toISOString(),
-      payment_status: 'paid',
-      amount: 120.0,
-    },
-    {
-      id: 102,
-      service_name: 'Phnom Penh City Walk',
-      user: { id: 12, name: 'John Smith', email: 'john@example.com' },
-      quantity: 1,
-      date: new Date(Date.now() - 86400_000).toISOString(),
-      payment_status: 'pending',
-      amount: 45.0,
-    },
-  ]
-}
-
-function mockProviderServices() {
-  return [
-    {
-      id: "mock-tour-1",
-      title: "Angkor Sunrise Premium",
-      description: "Daily sunrise temple tour with a local guide.",
-      location: "Siem Reap",
-      price: 85,
-      serviceType: "tour",
-      isActive: true,
-      coverImage: "",
-    },
-    {
-      id: "mock-transport-1",
-      title: "Private Airport Transfer",
-      description: "Comfortable transfer between airport and hotel.",
-      location: "Phnom Penh",
-      price: 28,
-      serviceType: "transportation",
-      isActive: true,
-      coverImage: "",
-    },
-  ];
-}
-
-function getLocalProviderServices() {
-  try {
-    const raw = localStorage.getItem(LOCAL_PROVIDER_SERVICES_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed.map(normalizeLocalService);
-    }
-  } catch {
-    // Fall back to seeded mock data below.
-  }
-
-  const seeded = mockProviderServices().map(normalizeLocalService);
-  try {
-    localStorage.setItem(LOCAL_PROVIDER_SERVICES_KEY, JSON.stringify(seeded));
-  } catch {
-    // Ignore storage failures.
-  }
-  return seeded;
-}
-
-function normalizeLocalService(service: any) {
-  const serviceType = service.serviceType || service.type || "tour";
-  return {
-    id: service.id,
-    title: service.title || service.name || "Untitled Service",
-    description: service.description || "",
-    location: service.location || "",
-    price: Number(service.price) || 0,
-    isActive: service.isActive ?? service.status !== "draft",
-    coverImage: service.coverImage || service.image || "",
-    ...service,
-    serviceType,
-  };
-}
-
-function getLocalProviderProfile() {
-  const fallback = {
-    companyName: "Anajak Tour Provider",
-    description: "Verified local travel provider.",
-    user: {
-      email: "provider@anajaktour.local",
-      phoneNumber: "+855 12 345 678",
-    },
-    facebookUrl: "fb.com/yourbrand",
-    telegramUrl: "@brand_support",
-    bankAccountNumber: "Not set",
-    bankName: "Not set",
-    refundPolicy: "",
-    guestRequirements: "",
-    logo: "",
-  };
-
-  try {
-    const raw = localStorage.getItem(LOCAL_PROVIDER_PROFILE_KEY);
-    if (raw) return { ...fallback, ...JSON.parse(raw) };
-  } catch {
-    // Use fallback profile.
-  }
-
-  return fallback;
-}
-
-function mockProviderInventory() {
-  const today = new Date();
-  const toDate = (offset: number) => {
-    const date = new Date(today);
-    date.setDate(today.getDate() + offset);
-    return date.toISOString().slice(0, 10);
-  };
-
-  return getLocalProviderServices().map((service, serviceIndex) => ({
-    ...service,
-    slots: Array.from({ length: 5 }, (_, index) => ({
-      id: `${service.id}-slot-${index}`,
-      date: toDate(index),
-      availableSlots: Math.max(3, 24 - index * 3 - serviceIndex * 2),
-      price: Number(service.price) + index * 3,
-      status: index === 3 ? "low_stock" : index === 4 ? "peak_demand" : "available",
-    })),
-  }));
-}
+  });
 
 export const getAdminDashboardSummary = () => api.get(`/admin/dashboard/summary`).then(res => res.data)
 
