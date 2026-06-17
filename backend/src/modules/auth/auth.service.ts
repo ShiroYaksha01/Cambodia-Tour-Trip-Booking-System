@@ -2,7 +2,7 @@
 
 import { Injectable, BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { BrevoClient } from '@getbrevo/brevo';
+import { google } from 'googleapis';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
@@ -13,7 +13,7 @@ import { EmailVerification } from './entities/email-verification.entity';
 
 @Injectable()
 export class AuthService {
-  private brevoClient: BrevoClient;
+  private oAuth2Client;
 
   constructor(
     private usersService: UsersService,
@@ -24,14 +24,46 @@ export class AuthService {
     private emailVerificationRepository: Repository<EmailVerification>,
     private configService: ConfigService,
   ) {
-    const brevoApiKey = this.configService.get<string>('BREVO_API_KEY');
-    console.log('--- Brevo Config Check ---');
-    console.log('BREVO_API_KEY (length):', brevoApiKey?.length);
-    console.log('--------------------------');
-
-    this.brevoClient = new BrevoClient({
-      apiKey: brevoApiKey || 'dummy_key_to_prevent_crash'
+    this.oAuth2Client = new google.auth.OAuth2(
+      this.configService.get<string>('GMAIL_CLIENT_ID'),
+      this.configService.get<string>('GMAIL_CLIENT_SECRET'),
+      'https://developers.google.com/oauthplayground'
+    );
+    this.oAuth2Client.setCredentials({ 
+      refresh_token: this.configService.get<string>('GMAIL_REFRESH_TOKEN') 
     });
+  }
+
+  private async sendEmail(to: string, subject: string, text: string) {
+    try {
+      const gmail = google.gmail({ version: 'v1', auth: this.oAuth2Client });
+      
+      const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
+      const messageParts = [
+        `From: Anajak Tour <sethaonthemix@gmail.com>`,
+        `To: ${to}`,
+        `Subject: ${utf8Subject}`,
+        `MIME-Version: 1.0`,
+        `Content-Type: text/html; charset=utf-8`,
+        '',
+        text,
+      ];
+      const message = messageParts.join('\n');
+      const encodedMessage = Buffer.from(message)
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+
+      await gmail.users.messages.send({
+        userId: 'me',
+        requestBody: { raw: encodedMessage },
+      });
+      console.log('Email sent successfully via Gmail API');
+    } catch (error) {
+      console.error('Failed to send email via Gmail API:', error);
+      throw error;
+    }
   }
 
   async register(
@@ -69,13 +101,11 @@ export class AuthService {
 
     try {
       console.log(`Attempting to send verification email to: ${email}`);
-      await this.brevoClient.transactionalEmails.sendTransacEmail({
-        subject: 'Welcome! Verify your email',
-        textContent: `Your OTP for email verification is: ${otp}. It expires in 10 minutes.`,
-        sender: { name: "Anajak Tour", email: "sethaonthemix@gmail.com" },
-        to: [{ email }]
-      });
-      console.log('Verification email sent successfully');
+      await this.sendEmail(
+        email, 
+        'Welcome! Verify your email', 
+        `Your OTP for email verification is: ${otp}. It expires in 10 minutes.`
+      );
     } catch (emailError) {
       console.error('Email sending failed during registration:', emailError);
       console.log(`[LOCAL DEV] Registration OTP for ${email} is: ${otp}`);
@@ -161,13 +191,11 @@ export class AuthService {
 
     try {
       console.log(`Attempting to resend verification email to: ${email}`);
-      await this.brevoClient.transactionalEmails.sendTransacEmail({
-        subject: 'Verify your email',
-        textContent: `Your new OTP for email verification is: ${otp}. It expires in 10 minutes.`,
-        sender: { name: "Anajak Tour", email: "sethaonthemix@gmail.com" },
-        to: [{ email }]
-      });
-      console.log('Verification email resent successfully');
+      await this.sendEmail(
+        email,
+        'Verify your email',
+        `Your new OTP for email verification is: ${otp}. It expires in 10 minutes.`
+      );
     } catch (emailError) {
       console.error('Email resend failed:', emailError);
       console.log(`[LOCAL DEV] Resend OTP for ${email} is: ${otp}`);
@@ -228,13 +256,11 @@ export class AuthService {
 
       try {
         console.log(`Attempting to send password reset email to: ${email}`);
-        await this.brevoClient.transactionalEmails.sendTransacEmail({
-          subject: 'Password Reset OTP',
-          textContent: `Your OTP for password reset is: ${otp}. It expires in 10 minutes.`,
-          sender: { name: "Anajak Tour", email: "sethaonthemix@gmail.com" },
-          to: [{ email }]
-        });
-        console.log('Password reset email sent successfully');
+        await this.sendEmail(
+          email,
+          'Password Reset OTP',
+          `Your OTP for password reset is: ${otp}. It expires in 10 minutes.`
+        );
       } catch (emailError) {
         console.error('Email sending failed:', emailError);
       }
