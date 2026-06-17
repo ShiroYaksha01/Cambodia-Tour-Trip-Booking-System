@@ -24,7 +24,7 @@
               </div>
             </div>
 
-            <div class="service-row" :style="rowGridStyle" v-for="service in filteredServices" :key="service.id" @click="openServiceDetail(service)" style="cursor: pointer;">
+            <div class="service-row" :style="rowGridStyle" v-for="service in filteredServices.slice(0, 5)" :key="service.id" @click="openServiceDetail(service)" style="cursor: pointer;">
               <div class="service-info">
                 <img :src="serviceImageUrl(service.image)" :alt="service.name" class="service-image" @error="handleImageError">
                 <div class="service-details">
@@ -103,7 +103,6 @@
           </div>
 
           <button type="button" class="btn-update" @click="updateMatrix">{{ activeCategoryData.updateAction }}</button>
-          <button type="button" class="btn-discard" @click="discardMatrixChanges">Discard Changes</button>
           <p v-if="panelMessage" class="panel-message">{{ panelMessage }}</p>
         </aside>
       </div>
@@ -131,8 +130,8 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn-cancel" @click="closeServiceDetail">Close</button>
-            <button type="button" class="btn-edit" @click="startEditing" v-if="!isEditingService">Edit Service</button>
-            <button type="button" class="btn-edit" @click="saveServiceChanges" v-else>Save Changes</button>
+            <!-- <button type="button" class="btn-edit" @click="startEditing" v-if="!isEditingService">Done</button> -->
+            <!-- <button type="button" class="btn-edit" @click="saveServiceChanges" v-else>Save Changes</button> -->
           </div>
         </div>
       </div>
@@ -238,7 +237,7 @@ onMounted(async () => {
 
     for (const cat of ['all', 'tours', 'stays', 'transport'] as CategoryKey[]) {
       allDates[cat].sort((a, b) => a.getTime() - b.getTime());
-      const days = allDates[cat].map(d => ({
+      const days = allDates[cat].slice(0, 5).map(d => ({
         label: DAY_NAMES[d.getDay()],
         date: String(d.getDate()).padStart(2, '0'),
         raw: d,

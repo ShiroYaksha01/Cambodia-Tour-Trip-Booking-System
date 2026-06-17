@@ -92,11 +92,11 @@
               <div class="inventory-table">
               <div class="inventory-head">
                 <span>PRODUCT / SERVICE</span>
-                <span v-for="i in 5" :key="i">SCHEDULE {{ i }}</span>
+                <span v-for="(label, i) in scheduleLabels" :key="i">SCHEDULE {{ label }}</span>
               </div>
 
               <div
-                v-for="(item, itemIdx) in filteredInventoryItems"
+                v-for="(item, itemIdx) in filteredInventoryItems.slice(0, 5)"
                 :key="item.id || itemIdx"
                 class="inventory-row"
               >
@@ -195,30 +195,6 @@
               <div class="switch-on">Apply only when stock &lt; 20%</div>
             </div>
             <button class="primary-action amber" @click="applyPricing">Update Market Prices</button>
-          </div>
-
-          <div class="panel-card">
-            <h3>Inventory Controller</h3>
-            <div class="notice-box">
-              <strong>Summer Scheduling</strong>
-              <p>June–August is the early summer booking window. Adjust inventory accordingly.</p>
-            </div>
-            <div class="two-col">
-              <div class="field-group">
-                <label>Start Date</label>
-                <input v-model="controllerStartDate" type="text" placeholder="DD/MM/YYYY" />
-              </div>
-              <div class="field-group">
-                <label>End Date</label>
-                <input v-model="controllerEndDate" type="text" placeholder="DD/MM/YYYY" />
-              </div>
-            </div>
-            <div class="field-group">
-              <label>Max Pax / Daily Limit</label>
-              <input v-model.number="controllerMaxPax" type="number" />
-              <small>Value auto-triggers at 100% occupancy.</small>
-            </div>
-            <button class="secondary-action" @click="batchProcess">Batch Process Dates</button>
           </div>
 
           <div class="panel-card small">
@@ -348,9 +324,7 @@ const editPrice = ref(0);
 const pricingRuleType = ref("markup");
 const pricingValue = ref(25);
 const pricingTarget = ref("all");
-const controllerStartDate = ref("13/07/2026");
-const controllerEndDate = ref("16/07/2026");
-const controllerMaxPax = ref(15);
+
 const recentChanges = ref<{ type: string; text: string }[]>([]);
 const hasChanges = ref(false);
 const viewMode = ref<"month" | "fortnight">("fortnight");
@@ -434,6 +408,15 @@ function dayPrice(day: InventoryDay) {
 
 const inventoryItems = ref<InventoryItem[]>([]);
 
+const scheduleLabels = computed(() => {
+  const today = new Date();
+  return Array.from({ length: 5 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() + i);
+    return d.getDate();
+  });
+});
+
 onMounted(async () => {
   try {
     const res = await getProviderInventory();
@@ -444,7 +427,7 @@ onMounted(async () => {
       name: svc.title || "Untitled",
       subtitle: svc.description || "",
       image: resolveImageUrl(svc.coverImage) || "https://via.placeholder.com/120",
-      days: (svc.slots || []).map((slot: any) => ({
+      days: (svc.slots || []).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime()).slice(0, 5).map((slot: any) => ({
         id: slot.id,
         date: typeof slot.date === "string" ? slot.date.slice(0, 10) : "",
         slots: slot.availableSlots ?? 0,
@@ -618,24 +601,7 @@ function applyPricing() {
   });
 }
 
-function batchProcess() {
-  const maxPax = controllerMaxPax.value;
-  for (const item of inventoryItems.value) {
-    for (const day of item.days) {
-      if (day.slots > maxPax) {
-        day.slots = maxPax;
-        if (day.id) {
-          updateInventorySlot(day.id, { availableSlots: maxPax }).catch(() => {});
-        }
-      }
-    }
-  }
-  hasChanges.value = true;
-  recentChanges.value.unshift({
-    type: "teal",
-    text: `Batch processed: max ${maxPax} pax limit applied`,
-  });
-}
+
 
 const filteredInventoryItems = computed(() => {
   if (!props.searchQuery.trim()) {

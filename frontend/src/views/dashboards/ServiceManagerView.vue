@@ -119,39 +119,7 @@
           </div>
         </section>
 
-        <aside v-if="showFocusPanel" class="config-panel">
-          <div class="panel-header">
-            <h3>Service Focus</h3>
-            <button class="close-btn" type="button" @click="showFocusPanel = false">✕</button>
-          </div>
 
-          <div class="config-section">
-            <label>QUICK STATS</label>
-            <div class="pricing-rules">
-              <div class="rule-item">
-                <span>Total Services</span>
-                <p class="rule-desc">{{ services.length }} curated offerings</p>
-              </div>
-              <div class="rule-item">
-                <span>Active Listings</span>
-                <p class="rule-desc">{{ services.filter(s => s.isActive).length }} live on marketplace</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="config-section">
-            <label>AVAILABLE ACTIONS</label>
-            <div class="pricing-rules">
-              <div class="rule-item">
-                <span>Bulk Update</span>
-                <p class="rule-desc">Use category filters, then update services one by one from the actions menu.</p>
-              </div>
-            </div>
-          </div>
-
-          <button class="btn-update secondary" type="button" @click="showBulkUpdateInfo">Bulk Update Info</button>
-          <button class="btn-update" @click="openCreateModal">Create New Offering</button>
-        </aside>
       </div>
 
       <ServiceModal :show="showModal" :service="selectedService" @close="closeModal" @save="handleSaveService" />
@@ -181,7 +149,6 @@ const selectedService = ref<any>(null);
 const actionMenuIndex = ref<number | null>(null);
 const currentPage = ref(1);
 const pageSize = 6;
-const showFocusPanel = ref(true);
 
 const categoryOptions = [
   { label: "All Services", value: "all" },
@@ -251,10 +218,6 @@ function closeModal() {
 
 function toggleActionMenu(i: number) {
   actionMenuIndex.value = actionMenuIndex.value === i ? null : i;
-}
-
-function showBulkUpdateInfo() {
-  alert("Bulk update is handled through the filtered service list for now. Select a category, open a service action menu, then update each matching service.");
 }
 
 function startEditService(item: any) {
@@ -691,95 +654,6 @@ async function handleSaveService(formData: any) {
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
-}
-
-.config-panel {
-  width: 280px;
-  background: white;
-  border-radius: 6px;
-  padding: 20px;
-  max-height: calc(100vh - 200px);
-  overflow-y: auto;
-}
-
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.panel-header h3 {
-  margin: 0;
-  font-size: 14px;
-  color: #1a1a1a;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 14px;
-  cursor: pointer;
-  color: #999;
-}
-
-.config-section {
-  margin-bottom: 20px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.config-section label {
-  display: block;
-  font-size: 14px;
-  font-weight: 400;
-  color: #999;
-  margin-bottom: 10px;
-  text-transform: uppercase;
-}
-
-.pricing-rules {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.rule-item {
-  padding: 10px;
-  background: #f9f9f9;
-  border-radius: 4px;
-}
-
-.rule-item span {
-  display: block;
-  font-size: 14px;
-  font-weight: 400;
-  color: #1a1a1a;
-}
-
-.rule-desc {
-  margin: 2px 0 0 0;
-  font-size: 14px;
-  color: #999;
-}
-
-.btn-update {
-  width: 100%;
-  padding: 12px;
-  background: #1b7f6a;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 400;
-  margin-top: 20px;
-}
-
-.btn-update.secondary {
-  background: #eef3f2;
-  color: #25504a;
-  margin-top: 12px;
 }
 
 @media (max-width: 1180px) {
