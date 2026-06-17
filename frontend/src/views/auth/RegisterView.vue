@@ -70,7 +70,7 @@ const handleRegister = async () => {
     });
 
     message.value = res.data.message;
-    router.push({ name: "verify-email", query: { email: email.value } });
+    router.push({ name: "login", query: { registered: "true" } });
   } catch (err: any) {
     message.value = err.response?.data?.message || "Register failed";
   } finally {

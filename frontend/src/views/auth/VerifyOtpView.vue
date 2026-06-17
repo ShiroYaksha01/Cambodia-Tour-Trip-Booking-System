@@ -136,8 +136,8 @@ const handleResendCode = async () => {
 <template>
   <AuthLayout>
     <AuthCard
-      title="Verify Your Email"
-      subtitle="Enter the code sent to your email to activate your account."
+      title="Enter Verification Code"
+      subtitle="Enter the code sent to your email to reset your password."
     >
       <form class="auth-form" @submit.prevent="handleVerifyCode">
         <div class="auth-otp-group" @paste="handlePaste">
@@ -165,7 +165,7 @@ const handleResendCode = async () => {
           :disabled="!isCodeComplete"
           loading-text="Verifying..."
         >
-          Verify Account
+          Verify Code
         </AuthButton>
 
         <p class="auth-note">

@@ -89,14 +89,6 @@ export class UsersService {
     await this.userRepo.update(id, { lastLoginAt: new Date() });
   }
 
-  async verifyEmail(email: string) {
-    const user = await this.userRepo.findOne({ where: { email } });
-    if (!user) throw new NotFoundException('User not found');
-    user.isEmailVerified = true;
-    user.emailVerifiedAt = new Date();
-    return this.userRepo.save(user);
-  }
-
   async findAll() {
     return this.userRepo.find({
       select: [

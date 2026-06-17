@@ -2,67 +2,51 @@
 
 import { Injectable, BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { google } from 'googleapis';
+import * as nodemailer from 'nodemailer';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
 import { PasswordReset } from './entities/password-reset.entity';
-import { EmailVerification } from './entities/email-verification.entity';
 
 @Injectable()
 export class AuthService {
-  private oAuth2Client;
+  private transporter: nodemailer.Transporter;
 
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
     @InjectRepository(PasswordReset)
     private passwordResetRepository: Repository<PasswordReset>,
-    @InjectRepository(EmailVerification)
-    private emailVerificationRepository: Repository<EmailVerification>,
     private configService: ConfigService,
   ) {
-    this.oAuth2Client = new google.auth.OAuth2(
-      this.configService.get<string>('GMAIL_CLIENT_ID'),
-      this.configService.get<string>('GMAIL_CLIENT_SECRET'),
-      'https://developers.google.com/oauthplayground'
-    );
-    this.oAuth2Client.setCredentials({ 
-      refresh_token: this.configService.get<string>('GMAIL_REFRESH_TOKEN') 
+    this.transporter = nodemailer.createTransport({
+      host: this.configService.get<string>('SMTP_HOST'),
+      port: this.configService.get<number>('SMTP_PORT', 587),
+      secure: this.configService.get<boolean>('SMTP_SECURE', false),
+      auth: {
+        user: this.configService.get<string>('SMTP_USER'),
+        pass: this.configService.get<string>('SMTP_PASS'),
+      },
     });
   }
 
   private async sendEmail(to: string, subject: string, text: string) {
     try {
-      const gmail = google.gmail({ version: 'v1', auth: this.oAuth2Client });
-      
-      const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
-      const messageParts = [
-        `From: Anajak Tour <sethaonthemix@gmail.com>`,
-        `To: ${to}`,
-        `Subject: ${utf8Subject}`,
-        `MIME-Version: 1.0`,
-        `Content-Type: text/html; charset=utf-8`,
-        '',
-        text,
-      ];
-      const message = messageParts.join('\n');
-      const encodedMessage = Buffer.from(message)
-        .toString('base64')
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
+      const mailOptions = {
+        from: this.configService.get<string>('SMTP_FROM', '"Anajak Tour" <sethaonthemix@gmail.com>'),
+        to,
+        subject,
+        html: text,
+      };
 
-      await gmail.users.messages.send({
-        userId: 'me',
-        requestBody: { raw: encodedMessage },
-      });
-      console.log('Email sent successfully via Gmail API');
+      await this.transporter.sendMail(mailOptions);
+      console.log('Email sent successfully via SMTP');
     } catch (error) {
-      console.error('Failed to send email via Gmail API:', error);
-      throw error;
+      console.error('Failed to send email via SMTP:', error);
+      // Don't throw error to prevent breaking registration/forgot-password flow 
+      // if email service is down in dev/test, but in prod you might want to.
     }
   }
 
@@ -79,39 +63,31 @@ export class AuthService {
     if (exist) throw new BadRequestException('Email already exists');
 
     const hash = await bcrypt.hash(password, 10);
-    const registrationData = {
+    const userToCreate = {
       username,
       email,
       passwordHash: hash,
       phoneNumber,
       profilePicture,
       role: (role ?? 'customer') as any,
+      isEmailVerified: true,
+      emailVerifiedAt: new Date(),
     };
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 10);
-
-    await this.emailVerificationRepository.save({
-      email,
-      otp,
-      expiresAt,
-      registrationData,
-    });
+    await this.usersService.create(userToCreate);
 
     try {
-      console.log(`Attempting to send verification email to: ${email}`);
+      console.log(`Attempting to send welcome email to: ${email}`);
       await this.sendEmail(
         email, 
-        'Welcome! Verify your email', 
-        `Your OTP for email verification is: ${otp}. It expires in 10 minutes.`
+        'Welcome to Anajak Tour!', 
+        `Your account has been created successfully. You can now log in.`
       );
     } catch (emailError) {
-      console.error('Email sending failed during registration:', emailError);
-      console.log(`[LOCAL DEV] Registration OTP for ${email} is: ${otp}`);
+      console.error('Welcome email sending failed:', emailError);
     }
 
-    return { success: true, message: 'OTP sent for verification' };
+    return { success: true, message: 'Registration successful' };
   }
 
   async login(email: string, password: string) {
@@ -119,19 +95,6 @@ export class AuthService {
 
     if (!user) {
       throw new BadRequestException('Invalid credentials');
-    }
-
-    const isVerified = user.isEmailVerified || user.emailVerifiedAt;
-
-    if (!isVerified) {
-      throw new BadRequestException(
-        'Please verify your email before logging in',
-      );
-    }
-
-    // Sync emailVerifiedAt if it's null but isEmailVerified is true
-    if (user.isEmailVerified && !user.emailVerifiedAt) {
-      await this.usersService.verifyEmail(email);
     }
 
     const match = await bcrypt.compare(password, user.passwordHash);
@@ -159,79 +122,6 @@ export class AuthService {
       },
       token,
     };
-  }
-
-  async resendVerificationOtp(email: string) {
-    const user = await this.usersService.findByEmail(email);
-    if (user && (user.isEmailVerified || user.emailVerifiedAt)) {
-      return { message: 'Email is already verified' };
-    }
-
-    const latestVerification = await this.emailVerificationRepository.findOne({
-      where: { email },
-      order: { createdAt: 'DESC' }
-    });
-
-    // Invalidate old OTPs
-    await this.emailVerificationRepository.update(
-      { email, isUsed: false },
-      { isUsed: true },
-    );
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 10);
-
-    await this.emailVerificationRepository.save({
-      email,
-      otp,
-      expiresAt,
-      registrationData: latestVerification?.registrationData,
-    });
-
-    try {
-      console.log(`Attempting to resend verification email to: ${email}`);
-      await this.sendEmail(
-        email,
-        'Verify your email',
-        `Your new OTP for email verification is: ${otp}. It expires in 10 minutes.`
-      );
-    } catch (emailError) {
-      console.error('Email resend failed:', emailError);
-      console.log(`[LOCAL DEV] Resend OTP for ${email} is: ${otp}`);
-    }
-
-    return { success: true };
-  }
-
-  async verifyRegistrationEmail(email: string, otp: string) {
-    const verificationRecord = await this.emailVerificationRepository.findOne({
-      where: { email, otp, isUsed: false },
-    });
-
-    if (!verificationRecord || verificationRecord.expiresAt < new Date()) {
-      throw new BadRequestException('Invalid or expired OTP');
-    }
-
-    if (verificationRecord.registrationData) {
-      const exist = await this.usersService.findByEmail(email);
-      if (!exist) {
-        const userToCreate = {
-          ...verificationRecord.registrationData,
-          isEmailVerified: true,
-          emailVerifiedAt: new Date(),
-        };
-        await this.usersService.create(userToCreate);
-      } else {
-        await this.usersService.verifyEmail(email);
-      }
-    } else {
-      await this.usersService.verifyEmail(email);
-    }
-
-    await this.emailVerificationRepository.update({ id: verificationRecord.id }, { isUsed: true });
-
-    return { success: true };
   }
 
   async forgotPassword(email: string) {

@@ -50,8 +50,8 @@ const handleEmailSubmit = async () => {
           required
         />
 
-        <AuthButton :loading="loading" loading-text="Sending reset link...">
-          Send Reset Link
+        <AuthButton :loading="loading" loading-text="Sending code...">
+          Send Code
         </AuthButton>
       </form>
 
