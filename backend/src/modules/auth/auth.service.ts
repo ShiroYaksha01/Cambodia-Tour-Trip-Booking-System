@@ -2,7 +2,7 @@
 
 import { Injectable, BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import * as brevo from '@getbrevo/brevo';
+import { BrevoClient } from '@getbrevo/brevo';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
@@ -13,7 +13,7 @@ import { EmailVerification } from './entities/email-verification.entity';
 
 @Injectable()
 export class AuthService {
-  private brevoApiInstance: brevo.TransactionalEmailsApi;
+  private brevoClient: BrevoClient;
 
   constructor(
     private usersService: UsersService,
@@ -29,11 +29,9 @@ export class AuthService {
     console.log('BREVO_API_KEY (length):', brevoApiKey?.length);
     console.log('--------------------------');
 
-    const defaultClient = brevo.ApiClient.instance;
-    const apiKey = defaultClient.authentications['api-key'];
-    apiKey.apiKey = brevoApiKey || 'dummy_key_to_prevent_crash';
-
-    this.brevoApiInstance = new brevo.TransactionalEmailsApi();
+    this.brevoClient = new BrevoClient({
+      apiKey: brevoApiKey || 'dummy_key_to_prevent_crash'
+    });
   }
 
   async register(
@@ -71,13 +69,12 @@ export class AuthService {
 
     try {
       console.log(`Attempting to send verification email to: ${email}`);
-      const sendSmtpEmail = new brevo.SendSmtpEmail();
-      sendSmtpEmail.subject = 'Welcome! Verify your email';
-      sendSmtpEmail.textContent = `Your OTP for email verification is: ${otp}. It expires in 10 minutes.`;
-      sendSmtpEmail.sender = { name: "Anajak Tour", email: "sethaonthemix@gmail.com" };
-      sendSmtpEmail.to = [{ email }];
-
-      await this.brevoApiInstance.sendTransacEmail(sendSmtpEmail);
+      await this.brevoClient.transactionalEmails.sendTransacEmail({
+        subject: 'Welcome! Verify your email',
+        textContent: `Your OTP for email verification is: ${otp}. It expires in 10 minutes.`,
+        sender: { name: "Anajak Tour", email: "sethaonthemix@gmail.com" },
+        to: [{ email }]
+      });
       console.log('Verification email sent successfully');
     } catch (emailError) {
       console.error('Email sending failed during registration:', emailError);
@@ -158,13 +155,12 @@ export class AuthService {
 
     try {
       console.log(`Attempting to resend verification email to: ${email}`);
-      const sendSmtpEmail = new brevo.SendSmtpEmail();
-      sendSmtpEmail.subject = 'Verify your email';
-      sendSmtpEmail.textContent = `Your new OTP for email verification is: ${otp}. It expires in 10 minutes.`;
-      sendSmtpEmail.sender = { name: "Anajak Tour", email: "sethaonthemix@gmail.com" };
-      sendSmtpEmail.to = [{ email }];
-
-      await this.brevoApiInstance.sendTransacEmail(sendSmtpEmail);
+      await this.brevoClient.transactionalEmails.sendTransacEmail({
+        subject: 'Verify your email',
+        textContent: `Your new OTP for email verification is: ${otp}. It expires in 10 minutes.`,
+        sender: { name: "Anajak Tour", email: "sethaonthemix@gmail.com" },
+        to: [{ email }]
+      });
       console.log('Verification email resent successfully');
     } catch (emailError) {
       console.error('Email resend failed:', emailError);
@@ -211,13 +207,12 @@ export class AuthService {
 
       try {
         console.log(`Attempting to send password reset email to: ${email}`);
-        const sendSmtpEmail = new brevo.SendSmtpEmail();
-        sendSmtpEmail.subject = 'Password Reset OTP';
-        sendSmtpEmail.textContent = `Your OTP for password reset is: ${otp}. It expires in 10 minutes.`;
-        sendSmtpEmail.sender = { name: "Anajak Tour", email: "sethaonthemix@gmail.com" };
-        sendSmtpEmail.to = [{ email }];
-
-        await this.brevoApiInstance.sendTransacEmail(sendSmtpEmail);
+        await this.brevoClient.transactionalEmails.sendTransacEmail({
+          subject: 'Password Reset OTP',
+          textContent: `Your OTP for password reset is: ${otp}. It expires in 10 minutes.`,
+          sender: { name: "Anajak Tour", email: "sethaonthemix@gmail.com" },
+          to: [{ email }]
+        });
         console.log('Password reset email sent successfully');
       } catch (emailError) {
         console.error('Email sending failed:', emailError);
