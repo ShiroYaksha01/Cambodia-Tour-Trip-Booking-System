@@ -2,7 +2,7 @@
 
 import { Injectable, BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { Resend } from 'resend';
+import { BrevoClient } from '@getbrevo/brevo';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
@@ -13,7 +13,7 @@ import { EmailVerification } from './entities/email-verification.entity';
 
 @Injectable()
 export class AuthService {
-  private resend: Resend;
+  private brevoClient: BrevoClient;
 
   constructor(
     private usersService: UsersService,
@@ -24,12 +24,14 @@ export class AuthService {
     private emailVerificationRepository: Repository<EmailVerification>,
     private configService: ConfigService,
   ) {
-    const resendApiKey = this.configService.get<string>('RESEND_API_KEY');
-    console.log('--- Resend Config Check ---');
-    console.log('RESEND_API_KEY (length):', resendApiKey?.length);
+    const brevoApiKey = this.configService.get<string>('BREVO_API_KEY');
+    console.log('--- Brevo Config Check ---');
+    console.log('BREVO_API_KEY (length):', brevoApiKey?.length);
     console.log('--------------------------');
 
-    this.resend = new Resend(resendApiKey || 'dummy_key_to_prevent_crash');
+    this.brevoClient = new BrevoClient({
+      apiKey: brevoApiKey || 'dummy_key_to_prevent_crash'
+    });
   }
 
   async register(
@@ -45,15 +47,14 @@ export class AuthService {
     if (exist) throw new BadRequestException('Email already exists');
 
     const hash = await bcrypt.hash(password, 10);
-
-    const user = await this.usersService.create({
+    const registrationData = {
       username,
       email,
       passwordHash: hash,
       phoneNumber,
       profilePicture,
       role: (role ?? 'customer') as any,
-    });
+    };
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date();
@@ -63,27 +64,24 @@ export class AuthService {
       email,
       otp,
       expiresAt,
+      registrationData,
     });
 
     try {
       console.log(`Attempting to send verification email to: ${email}`);
-      const { data, error } = await this.resend.emails.send({
-        from: 'Anajak Tour <onboarding@resend.dev>',
-        to: email,
+      await this.brevoClient.transactionalEmails.sendTransacEmail({
         subject: 'Welcome! Verify your email',
-        text: `Your OTP for email verification is: ${otp}. It expires in 10 minutes.`,
+        textContent: `Your OTP for email verification is: ${otp}. It expires in 10 minutes.`,
+        sender: { name: "Anajak Tour", email: "sethaonthemix@gmail.com" },
+        to: [{ email }]
       });
-
-      if (error) {
-        console.error('Resend error during registration:', error);
-      } else {
-        console.log('Verification email sent successfully:', data?.id);
-      }
+      console.log('Verification email sent successfully');
     } catch (emailError) {
       console.error('Email sending failed during registration:', emailError);
+      console.log(`[LOCAL DEV] Registration OTP for ${email} is: ${otp}`);
     }
 
-    return user;
+    return { success: true, message: 'OTP sent for verification' };
   }
 
   async login(email: string, password: string) {
@@ -135,9 +133,14 @@ export class AuthService {
 
   async resendVerificationOtp(email: string) {
     const user = await this.usersService.findByEmail(email);
-    if (!user) throw new BadRequestException('User not found');
-    if (user.isEmailVerified || user.emailVerifiedAt)
+    if (user && (user.isEmailVerified || user.emailVerifiedAt)) {
       return { message: 'Email is already verified' };
+    }
+
+    const latestVerification = await this.emailVerificationRepository.findOne({
+      where: { email },
+      order: { createdAt: 'DESC' }
+    });
 
     // Invalidate old OTPs
     await this.emailVerificationRepository.update(
@@ -153,24 +156,21 @@ export class AuthService {
       email,
       otp,
       expiresAt,
+      registrationData: latestVerification?.registrationData,
     });
 
     try {
       console.log(`Attempting to resend verification email to: ${email}`);
-      const { data, error } = await this.resend.emails.send({
-        from: 'Anajak Tour <onboarding@resend.dev>',
-        to: email,
+      await this.brevoClient.transactionalEmails.sendTransacEmail({
         subject: 'Verify your email',
-        text: `Your new OTP for email verification is: ${otp}. It expires in 10 minutes.`,
+        textContent: `Your new OTP for email verification is: ${otp}. It expires in 10 minutes.`,
+        sender: { name: "Anajak Tour", email: "sethaonthemix@gmail.com" },
+        to: [{ email }]
       });
-
-      if (error) {
-        console.error('Resend error during resendVerificationOtp:', error);
-      } else {
-        console.log('Verification email resent successfully:', data?.id);
-      }
+      console.log('Verification email resent successfully');
     } catch (emailError) {
       console.error('Email resend failed:', emailError);
+      console.log(`[LOCAL DEV] Resend OTP for ${email} is: ${otp}`);
     }
 
     return { success: true };
@@ -185,8 +185,23 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired OTP');
     }
 
+    if (verificationRecord.registrationData) {
+      const exist = await this.usersService.findByEmail(email);
+      if (!exist) {
+        const userToCreate = {
+          ...verificationRecord.registrationData,
+          isEmailVerified: true,
+          emailVerifiedAt: new Date(),
+        };
+        await this.usersService.create(userToCreate);
+      } else {
+        await this.usersService.verifyEmail(email);
+      }
+    } else {
+      await this.usersService.verifyEmail(email);
+    }
+
     await this.emailVerificationRepository.update({ id: verificationRecord.id }, { isUsed: true });
-    await this.usersService.verifyEmail(email);
 
     return { success: true };
   }
@@ -213,18 +228,13 @@ export class AuthService {
 
       try {
         console.log(`Attempting to send password reset email to: ${email}`);
-        const { data, error } = await this.resend.emails.send({
-          from: 'Anajak Tour <onboarding@resend.dev>',
-          to: email,
+        await this.brevoClient.transactionalEmails.sendTransacEmail({
           subject: 'Password Reset OTP',
-          text: `Your OTP for password reset is: ${otp}. It expires in 10 minutes.`,
+          textContent: `Your OTP for password reset is: ${otp}. It expires in 10 minutes.`,
+          sender: { name: "Anajak Tour", email: "sethaonthemix@gmail.com" },
+          to: [{ email }]
         });
-
-        if (error) {
-          console.error('Resend error during forgotPassword:', error);
-        } else {
-          console.log('Password reset email sent successfully:', data?.id);
-        }
+        console.log('Password reset email sent successfully');
       } catch (emailError) {
         console.error('Email sending failed:', emailError);
       }

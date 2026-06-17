@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CustomerNavbar from "../../components/customer/CustomerNavbar.vue";
 import CustomerFooter from "../../components/customer/CustomerFooter.vue";
@@ -12,32 +12,15 @@ const router = useRouter();
 const providerId = route.params.id as string;
 const provider = ref<any>(null);
 const services = ref<any[]>([]);
+const localReviews = ref<any[]>([]);
 const loading = ref(true);
 const error = ref("");
 
-// Mock reviews for now as we don't have a review system yet
-const reviews = [
-  {
-    id: 1,
-    name: "Sokha",
-    rating: 5,
-    date: "May 2026",
-    comment:
-      "Amazing tour experience. The guide was friendly and explained the history very clearly.",
-    avatar:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop",
-  },
-  {
-    id: 2,
-    name: "Dara",
-    rating: 4.5,
-    date: "April 2026",
-    comment:
-      "Good service, comfortable transportation, and beautiful places. Highly recommended.",
-    avatar:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop",
-  },
-];
+const providerRating = computed(() => {
+  if (localReviews.value.length === 0) return 0;
+  const sum = localReviews.value.reduce((acc, rev) => acc + rev.rating, 0);
+  return (sum / localReviews.value.length).toFixed(1);
+});
 
 const fetchProviderData = async () => {
   try {
@@ -46,6 +29,13 @@ const fetchProviderData = async () => {
     if (response.data.success) {
       provider.value = response.data.data;
       services.value = response.data.data.services || [];
+      
+      // Load and filter reviews for THIS provider only
+      const stored = localStorage.getItem("customerReviews");
+      if (stored) {
+        const allReviews = JSON.parse(stored);
+        localReviews.value = allReviews.filter((r: any) => r.providerId === providerId);
+      }
     }
   } catch (err) {
     console.error("Failed to fetch provider detail:", err);
@@ -62,6 +52,16 @@ const bookService = (serviceId: string) => {
     name: "booking-form",
     params: { id: serviceId },
   });
+};
+
+const contactProvider = () => {
+  if (provider.value?.email) {
+    const subject = encodeURIComponent(`Inquiry about ${provider.value.name} services`);
+    const body = encodeURIComponent(`Hello ${provider.value.name},\n\nI am interested in your services and would like to get more information.\n\nThank you.`);
+    window.location.href = `mailto:${provider.value.email}?subject=${subject}&body=${body}`;
+  } else {
+    alert("Provider contact email not available.");
+  }
 };
 </script>
 
@@ -128,9 +128,9 @@ const bookService = (serviceId: string) => {
                 <p class="text-white/90">📍 {{ provider.location || 'Cambodia' }}</p>
 
                 <p class="mt-2 text-white/90">
-                  ⭐ 4.8 / 5
+                  ⭐ {{ providerRating }} / 5
                   <span class="text-white/70">
-                    (124 reviews)
+                    ({{ localReviews.length }} reviews)
                   </span>
                 </p>
               </div>
@@ -232,38 +232,52 @@ const bookService = (serviceId: string) => {
               <h2 class="text-xl md:text-2xl font-bold text-gray-900">Customer Reviews</h2>
 
               <p class="font-semibold text-gray-700">
-                ⭐ 4.8/5
+                ⭐ {{ providerRating }}/5
               </p>
             </div>
 
-            <div class="space-y-6">
+            <div v-if="localReviews.length > 0" class="space-y-6">
               <div
-                v-for="review in reviews"
+                v-for="review in localReviews"
                 :key="review.id"
                 class="border-b border-gray-100 pb-6 last:border-b-0 last:pb-0"
               >
                 <div class="flex items-center gap-4">
-                  <img
-                    :src="review.avatar"
-                    :alt="review.name"
-                    class="h-12 w-12 rounded-full object-cover"
-                  />
+                  <div class="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold">
+                    {{ review.serviceTitle?.charAt(0) || 'C' }}
+                  </div>
 
                   <div>
                     <h4 class="font-semibold text-gray-900">
-                      {{ review.name }}
+                      {{ review.title }}
                     </h4>
 
                     <p class="text-sm text-gray-500">
-                      ⭐ {{ review.rating }} · {{ review.date }}
+                      ⭐ {{ review.rating }} · {{ new Date(review.createdAt).toLocaleDateString() }}
                     </p>
                   </div>
                 </div>
 
-                <p class="mt-4 leading-relaxed text-gray-600">
-                  {{ review.comment }}
+                <p class="mt-4 leading-relaxed text-gray-600 italic">
+                  "{{ review.message }}"
                 </p>
+                
+                <div class="mt-3 flex gap-2">
+                  <span class="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-500 uppercase font-bold">{{ review.serviceTitle }}</span>
+                </div>
               </div>
+            </div>
+
+            <div v-else class="py-10 text-center">
+              <p class="text-gray-500">No reviews yet for this provider.</p>
+              <p class="text-sm text-gray-400 mt-2">Book a service and be the first to leave a review!</p>
+              
+              <button 
+                @click="router.push({ name: 'customer-profile', query: { tab: 'reviews' } })"
+                class="mt-6 inline-flex items-center gap-2 rounded-xl border border-emerald-600 px-6 py-2.5 text-sm font-semibold text-emerald-600 hover:bg-emerald-50"
+              >
+                Write a Review
+              </button>
             </div>
           </section>
         </div>
@@ -343,6 +357,7 @@ const bookService = (serviceId: string) => {
             </p>
 
             <button
+              @click="contactProvider"
               class="mt-5 w-full rounded-xl bg-white px-4 py-3 font-semibold text-emerald-700 hover:bg-gray-100"
             >
               Contact Provider

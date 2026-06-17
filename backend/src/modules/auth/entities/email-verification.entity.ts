@@ -17,6 +17,9 @@ export class EmailVerification {
   @Column({ name: 'is_used', type: 'boolean', default: false })
   isUsed: boolean;
 
+  @Column({ type: 'jsonb', nullable: true, name: 'registration_data' })
+  registrationData?: any;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamp with time zone' })
   createdAt: Date;
 }

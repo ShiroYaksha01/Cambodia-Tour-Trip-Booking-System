@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import CustomerNavbar from "../../components/customer/CustomerNavbar.vue";
 import CustomerFooter from "../../components/customer/CustomerFooter.vue";
 import LogoutButton from "../../components/LogoutButton.vue";
@@ -9,6 +9,7 @@ import { resolveImageUrl } from "../../utils/api";
 import { useTheme } from "../../composables/useTheme";
 
 const router = useRouter();
+const route = useRoute();
 const { isDarkMode, toggleDarkMode } = useTheme();
 
 interface ServiceInfo {
@@ -45,6 +46,15 @@ const profileError = ref("");
 const activeTab = ref<
   "profile" | "bookings" | "activity" | "reviews" | "settings"
 >("profile");
+
+onMounted(() => {
+  if (route.query.tab) {
+    const tab = route.query.tab as any;
+    if (["profile", "bookings", "activity", "reviews", "settings"].includes(tab)) {
+      activeTab.value = tab;
+    }
+  }
+});
 
 const bookingFilter = ref<"all" | "pending" | "confirmed" | "cancelled">("all");
 const bookingSearch = ref("");
@@ -90,6 +100,18 @@ const user = ref({
 
 const editForm = ref({ ...user.value });
 const bookings = ref<Booking[]>([]);
+const localReviews = ref<any[]>([]);
+
+onMounted(() => {
+  const stored = localStorage.getItem("customerReviews");
+  if (stored) {
+    try {
+      localReviews.value = JSON.parse(stored);
+    } catch (e) {
+      console.error("Failed to parse local reviews", e);
+    }
+  }
+});
 
 watch(language, (value) => {
   localStorage.setItem("customerLanguage", value);
@@ -988,16 +1010,18 @@ onMounted(() => {
               </div>
 
               <div class="review-list">
-                <div v-if="!reviewBookings.length" class="empty-box">
+                <div v-if="!reviewBookings.length && !localReviews.length" class="empty-box">
                   No confirmed bookings available for reviews yet.
                 </div>
 
+                <!-- Pending Reviews -->
                 <div
                   v-for="booking in reviewBookings"
                   :key="booking.id"
                   class="review-card"
                 >
                   <div>
+                    <span class="review-badge pending">Pending</span>
                     <strong>{{
                       booking.service?.title || "Unknown Service"
                     }}</strong>
@@ -1009,6 +1033,24 @@ onMounted(() => {
                   <button @click="goToFeedback(booking.id)">
                     Write Review
                   </button>
+                </div>
+
+                <!-- Submitted Reviews -->
+                <div
+                  v-for="review in localReviews"
+                  :key="review.id"
+                  class="review-card submitted"
+                >
+                  <div>
+                    <div class="review-header">
+                      <span class="review-badge success">Submitted</span>
+                      <span class="review-stars">★ {{ review.rating }}/5</span>
+                    </div>
+                    <strong>{{ review.serviceTitle }}</strong>
+                    <p class="review-title">{{ review.title }}</p>
+                    <p class="review-msg line-clamp-2">{{ review.message }}</p>
+                    <p class="review-date">{{ formatDate(review.createdAt) }}</p>
+                  </div>
                 </div>
               </div>
 
@@ -1967,6 +2009,61 @@ onMounted(() => {
   justify-content: space-between;
   gap: 14px;
   align-items: center;
+  margin-bottom: 12px;
+}
+
+.review-card.submitted {
+  background: #f9fbfb;
+  border-left: 4px solid #0f6e70;
+}
+
+.review-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.review-badge {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.review-badge.pending {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.review-badge.success {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.review-stars {
+  color: #f59e0b;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.review-title {
+  font-weight: 700;
+  font-size: 13px;
+  margin: 4px 0 !important;
+  color: #374151 !important;
+}
+
+.review-msg {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.review-date {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 8px;
 }
 
 .review-card p {
