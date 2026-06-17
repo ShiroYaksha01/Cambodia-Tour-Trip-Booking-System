@@ -47,15 +47,14 @@ export class AuthService {
     if (exist) throw new BadRequestException('Email already exists');
 
     const hash = await bcrypt.hash(password, 10);
-
-    const user = await this.usersService.create({
+    const registrationData = {
       username,
       email,
       passwordHash: hash,
       phoneNumber,
       profilePicture,
       role: (role ?? 'customer') as any,
-    });
+    };
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date();
@@ -65,6 +64,7 @@ export class AuthService {
       email,
       otp,
       expiresAt,
+      registrationData,
     });
 
     try {
@@ -81,7 +81,7 @@ export class AuthService {
       console.log(`[LOCAL DEV] Registration OTP for ${email} is: ${otp}`);
     }
 
-    return user;
+    return { success: true, message: 'OTP sent for verification' };
   }
 
   async login(email: string, password: string) {
@@ -133,9 +133,14 @@ export class AuthService {
 
   async resendVerificationOtp(email: string) {
     const user = await this.usersService.findByEmail(email);
-    if (!user) throw new BadRequestException('User not found');
-    if (user.isEmailVerified || user.emailVerifiedAt)
+    if (user && (user.isEmailVerified || user.emailVerifiedAt)) {
       return { message: 'Email is already verified' };
+    }
+
+    const latestVerification = await this.emailVerificationRepository.findOne({
+      where: { email },
+      order: { createdAt: 'DESC' }
+    });
 
     // Invalidate old OTPs
     await this.emailVerificationRepository.update(
@@ -151,6 +156,7 @@ export class AuthService {
       email,
       otp,
       expiresAt,
+      registrationData: latestVerification?.registrationData,
     });
 
     try {
@@ -179,8 +185,23 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired OTP');
     }
 
+    if (verificationRecord.registrationData) {
+      const exist = await this.usersService.findByEmail(email);
+      if (!exist) {
+        const userToCreate = {
+          ...verificationRecord.registrationData,
+          isEmailVerified: true,
+          emailVerifiedAt: new Date(),
+        };
+        await this.usersService.create(userToCreate);
+      } else {
+        await this.usersService.verifyEmail(email);
+      }
+    } else {
+      await this.usersService.verifyEmail(email);
+    }
+
     await this.emailVerificationRepository.update({ id: verificationRecord.id }, { isUsed: true });
-    await this.usersService.verifyEmail(email);
 
     return { success: true };
   }
