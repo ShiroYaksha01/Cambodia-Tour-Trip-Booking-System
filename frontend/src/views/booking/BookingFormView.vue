@@ -245,7 +245,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, computed, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { apiPost, apiGet } from "../../utils/api";
 
@@ -313,7 +313,6 @@ const checkAvailability = async () => {
 
 onMounted(fetchService);
 
-import { watch } from "vue";
 watch(() => [form.date, form.quantity], () => {
   checkAvailability();
 });
