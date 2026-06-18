@@ -49,8 +49,30 @@ export class BookingsService {
       throw new NotFoundException('Service not found');
     }
 
+    // Normalize date to midnight for slot lookup
+    const normalizedDate = new Date(dateObj);
+    normalizedDate.setHours(0, 0, 0, 0);
+
+    // Check for specific date inventory and pricing
+    const slot = await this.inventorySlotRepository.findOne({
+      where: { serviceId, date: normalizedDate },
+    });
+
+    if (slot && slot.availableSlots < quantity) {
+      throw new BadRequestException(`Only ${slot.availableSlots} slots available for this date`);
+    }
+
+    // Use slot price if available, otherwise fallback to service base price
+    let unitPrice = Number(service.price);
+    if (slot) {
+      const basePrice = Number(slot.price);
+      unitPrice = slot.markupPercentage > 0 
+        ? basePrice * (1 + slot.markupPercentage / 100) 
+        : basePrice;
+    }
+
     // Calculate total price
-    const totalAmount = service.price * quantity;
+    const totalAmount = unitPrice * quantity;
     const transactionId = `TX-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
     const referenceCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
@@ -322,11 +344,26 @@ export class BookingsService {
       });
 
       if (slot) {
-        const available = slot.availableSlots - booking.quantity;
+        if (slot.availableSlots < booking.quantity) {
+          console.warn(`Overbooking detected for booking ${booking.id}. Attempting to deduct anyway.`);
+        }
+        
         slot.bookedSlots += booking.quantity;
-        slot.availableSlots = Math.max(0, available);
-        slot.status = available <= 0 ? 'closed' : available / slot.totalSlots < 0.1 ? 'low_stock' : 'available';
+        slot.availableSlots = Math.max(0, slot.totalSlots - slot.bookedSlots);
+        
+        // Update status based on new availability
+        const occupancy = slot.bookedSlots / slot.totalSlots;
+        if (slot.availableSlots <= 0) {
+          slot.status = 'closed';
+        } else if (occupancy >= 0.9) {
+          slot.status = 'low_stock';
+        } else {
+          slot.status = 'available';
+        }
+        
         await this.inventorySlotRepository.save(slot);
+      } else {
+        console.warn(`No inventory slot found for service ${booking.serviceId} on ${bookingDate.toISOString()}. Skipping deduction.`);
       }
 
       const allSlots = await this.inventorySlotRepository.find({

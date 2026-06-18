@@ -66,7 +66,7 @@
                   >Unit Price</span
                 >
                 <span class="text-lg font-bold"
-                  >${{ service?.price || 0 }}</span
+                  >${{ currentPrice }}</span
                 >
               </div>
             </div>
@@ -80,7 +80,7 @@
                   >Total Investment</span
                 >
                 <span class="text-4xl font-extrabold text-white"
-                  >${{ (service?.price || 0) * form.quantity }}</span
+                  >${{ currentPrice * form.quantity }}</span
                 >
               </div>
             </div>
@@ -253,6 +253,7 @@ const router = useRouter();
 const route = useRoute();
 
 const service = ref<any>(null);
+const availability = ref<any>(null);
 const rawId = route.params.id;
 const serviceId = Array.isArray(rawId)
   ? rawId[0]
@@ -269,6 +270,7 @@ const errors = reactive({
 });
 
 const isLoading = ref(false);
+const isCheckingAvailability = ref(false);
 const apiError = ref("");
 const minDate = new Date(Date.now() + 24 * 60 * 60 * 1000)
   .toISOString()
@@ -277,12 +279,48 @@ const minDate = new Date(Date.now() + 24 * 60 * 60 * 1000)
 const fetchService = async () => {
   try {
     service.value = await apiGet(`/services/${serviceId}`);
+    if (form.date) {
+      await checkAvailability();
+    }
   } catch (error) {
     console.error("Failed to fetch service details:", error);
   }
 };
 
+const checkAvailability = async () => {
+  if (!form.date) return;
+  
+  isCheckingAvailability.value = true;
+  try {
+    const res = await apiGet(`/services/${serviceId}/availability`, {
+      params: {
+        date: form.date,
+        quantity: form.quantity
+      }
+    });
+    availability.value = res;
+    if (!res.available) {
+      errors.date = `Only ${res.remainingSlots} slots remaining for this date.`;
+    } else {
+      errors.date = "";
+    }
+  } catch (error) {
+    console.error("Failed to check availability:", error);
+  } finally {
+    isCheckingAvailability.value = false;
+  }
+};
+
 onMounted(fetchService);
+
+import { watch } from "vue";
+watch(() => [form.date, form.quantity], () => {
+  checkAvailability();
+});
+
+const currentPrice = computed(() => {
+  return availability.value?.price ?? service.value?.price ?? 0;
+});
 
 const validateForm = () => {
   let isValid = true;

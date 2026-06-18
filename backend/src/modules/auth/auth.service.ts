@@ -52,31 +52,32 @@ export class AuthService {
       // if email service is down in dev/test, but in prod you might want to.
     }
   }
+async register(
+  username: string,
+  email: string,
+  password: string,
+  phoneNumber?: string,
+  profilePicture?: string,
+  role?: string,
+) {
+  const normalizedEmail = email.toLowerCase();
+  const existing = await this.usersService.findByEmail(normalizedEmail);
+  if (existing) {
+    throw new BadRequestException('Email already in use');
+  }
 
-  async register(
-    username: string,
-    email: string,
-    password: string,
-    phoneNumber?: string,
-    profilePicture?: string,
-    role?: string,
-  ) {
-    console.log(`--- Registering user: ${email} ---`);
-    const exist = await this.usersService.findByEmail(email);
-    if (exist) throw new BadRequestException('Email already exists');
+  const hash = await bcrypt.hash(password, 10);
 
-    const hash = await bcrypt.hash(password, 10);
-    const userToCreate = {
-      username,
-      email,
-      passwordHash: hash,
-      phoneNumber,
-      profilePicture,
-      role: (role ?? 'customer') as any,
-      isEmailVerified: true,
-      emailVerifiedAt: new Date(),
-    };
-
+  const userToCreate = {
+    username,
+    email: normalizedEmail,
+    passwordHash: hash,
+    phoneNumber,
+    profilePicture,
+    role: (role ?? 'customer') as any,
+    isEmailVerified: true,
+    emailVerifiedAt: new Date(),
+  };
     const user = await this.usersService.create(userToCreate);
 
     // If role is provider, create the provider profile record
@@ -104,7 +105,7 @@ export class AuthService {
   }
 
   async login(email: string, password: string) {
-    const user = await this.usersService.findByEmail(email);
+    const user = await this.usersService.findByEmail(email.toLowerCase());
 
     if (!user) {
       throw new BadRequestException('Invalid credentials');
@@ -138,9 +139,10 @@ export class AuthService {
   }
 
   async forgotPassword(email: string) {
-    console.log(`--- forgotPassword called for: ${email} ---`);
+    const normalizedEmail = email.toLowerCase();
+    console.log(`--- forgotPassword called for: ${normalizedEmail} ---`);
     try {
-      const user = await this.usersService.findByEmail(email);
+      const user = await this.usersService.findByEmail(normalizedEmail);
       const message = 'If this email exists, we sent a verification code.';
       
       if (!user) {
@@ -152,15 +154,15 @@ export class AuthService {
       expiresAt.setMinutes(expiresAt.getMinutes() + 10);
 
       await this.passwordResetRepository.save({
-        email,
+        email: normalizedEmail,
         otp,
         expiresAt,
       });
 
       try {
-        console.log(`Attempting to send password reset email to: ${email}`);
+        console.log(`Attempting to send password reset email to: ${normalizedEmail}`);
         await this.sendEmail(
-          email,
+          normalizedEmail,
           'Password Reset OTP',
           `Your OTP for password reset is: ${otp}. It expires in 10 minutes.`
         );
@@ -176,8 +178,9 @@ export class AuthService {
   }
 
   async verifyOtp(email: string, otp: string) {
+    const normalizedEmail = email.toLowerCase();
     const resetRecord = await this.passwordResetRepository.findOne({
-      where: { email, otp, isUsed: false },
+      where: { email: normalizedEmail, otp, isUsed: false },
     });
 
     if (!resetRecord || resetRecord.expiresAt < new Date()) {
@@ -188,16 +191,17 @@ export class AuthService {
   }
 
   async resetPassword(email: string, otp: string, newPassword: string) {
-    await this.verifyOtp(email, otp);
+    const normalizedEmail = email.toLowerCase();
+    await this.verifyOtp(normalizedEmail, otp);
 
-    const user = await this.usersService.findByEmail(email);
+    const user = await this.usersService.findByEmail(normalizedEmail);
     if (!user) throw new BadRequestException('User not found');
 
     const hash = await bcrypt.hash(newPassword, 10);
     
     await this.usersService.updatePassword(user.id, hash);
     
-    await this.passwordResetRepository.update({ email, otp }, { isUsed: true });
+    await this.passwordResetRepository.update({ email: normalizedEmail, otp }, { isUsed: true });
 
     return { success: true };
   }
