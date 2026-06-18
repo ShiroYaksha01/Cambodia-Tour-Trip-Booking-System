@@ -42,69 +42,18 @@
           </div>
         </section>
 
-        <aside class="config-panel">
-          <div class="panel-header">
-            <h3>Bulk Configuration</h3>
-            <button type="button" class="close-btn" aria-label="Reset configuration" @click="discardMatrixChanges">✕</button>
-          </div>
-
-          <div class="config-section">
-            <label>SELECTED DATE RANGE</label>
-            <button type="button" class="date-display date-display-button" @click="showDatePicker = !showDatePicker">
-              <span class="calendar-icon">📅</span>
-              <div>
-                <p class="date-range">{{ selectedDateRangeLabel }}</p>
-                <p class="date-label">{{ selectedDateRangeSubtitle }}</p>
-              </div>
-            </button>
-
-            <div v-if="showDatePicker" class="date-picker-popover">
-              <div class="field-group compact">
-                <label>Start Date (DD/MM/YYYY)</label>
-                <input v-model="uiStartDate" type="text" placeholder="DD/MM/YYYY" />
-              </div>
-              <div class="field-group compact">
-                <label>End Date (DD/MM/YYYY)</label>
-                <input v-model="uiEndDate" type="text" placeholder="DD/MM/YYYY" />
-              </div>
-              <div class="picker-actions">
-                <button type="button" class="picker-cancel" @click="resetDatePicker">Cancel</button>
-                <button type="button" class="picker-apply" @click="applyDatePicker">Apply</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="config-section">
-            <label>INVENTORY CAPACITY</label>
-            <div class="capacity-control">
-              <span class="capacity-value">{{ capacity }}</span>
-              <div class="capacity-buttons">
-                <button type="button" class="btn-icon" aria-label="Decrease capacity" @click="adjustCapacity(-1)">−</button>
-                <button type="button" class="btn-icon" aria-label="Increase capacity" @click="adjustCapacity(1)">+</button>
-              </div>
-            </div>
-            <p class="helper-text">{{ activeCategoryData.capacityHelper }}</p>
-          </div>
-
-          <div class="config-section">
-            <label>{{ activeCategoryData.panelLabel }}</label>
-            <div class="pricing-badge">{{ activeCategoryData.panelBadge }}</div>
-            <div class="pricing-rules">
-              <div v-if="pricingRuleEnabled" class="rule-item">
-                <input v-model="seasonalSurchargeEnabled" type="checkbox">
-                <div>
-                  <span>{{ activeCategoryData.primaryRule.title }}</span>
-                  <p class="rule-desc">{{ activeCategoryData.primaryRule.description }}</p>
-                </div>
-                <button type="button" class="btn-remove" aria-label="Remove pricing rule" @click="pricingRuleEnabled = false">✕</button>
-              </div>
-              <button v-else type="button" class="btn-discard" @click="restorePricingRule">Restore Smart Rule</button>
-            </div>
-          </div>
-
-          <button type="button" class="btn-update" @click="updateMatrix">{{ activeCategoryData.updateAction }}</button>
-          <p v-if="panelMessage" class="panel-message">{{ panelMessage }}</p>
-        </aside>
+        <DashboardConfigPanel 
+          :categoryData="activeCategoryData"
+          v-model:uiStartDate="uiStartDate"
+          v-model:uiEndDate="uiEndDate"
+          v-model:capacity="capacity"
+          v-model:seasonalSurchargeEnabled="seasonalSurchargeEnabled"
+          :panelMessage="panelMessage"
+          @applyDates="applyDatePicker"
+          @resetDates="resetDatePicker"
+          @updateMatrix="updateMatrix"
+          @discard="discardMatrixChanges"
+        />
       </div>
 
       <div v-if="selectedService" class="modal-overlay" @click="closeServiceDetail">
@@ -130,8 +79,6 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn-cancel" @click="closeServiceDetail">Close</button>
-            <!-- <button type="button" class="btn-edit" @click="startEditing" v-if="!isEditingService">Done</button> -->
-            <!-- <button type="button" class="btn-edit" @click="saveServiceChanges" v-else>Save Changes</button> -->
           </div>
         </div>
       </div>
@@ -143,6 +90,7 @@
 import { computed, ref, onMounted } from "vue";
 import { getProviderDashboardStats, getProviderInventory } from "../../services/api";
 import { resolveImageUrl } from "../../utils/api";
+import DashboardConfigPanel from "../../components/provider/DashboardConfigPanel.vue";
 
 const props = withDefaults(
   defineProps<{
@@ -318,9 +266,6 @@ const endDate = ref(getCurrentDateIso());
 const uiStartDate = ref(isoToUi(startDate.value));
 const uiEndDate = ref(isoToUi(endDate.value));
 
-const selectedDateRangeLabel = computed(() => `${uiStartDate.value} - ${uiEndDate.value}`);
-const selectedDateRangeSubtitle = computed(() => "Selected Period");
-
 const applyDatePicker = () => {
   startDate.value = uiToIso(uiStartDate.value);
   endDate.value = uiToIso(uiEndDate.value);
@@ -355,12 +300,13 @@ const handleImageError = (event: Event) => {
   target.src = fallbackImage;
 };
 
-const adjustCapacity = (delta: number) => {
-  capacity.value = Math.max(1, capacity.value + delta);
-  panelMessage.value = "";
-};
-
-const updateMatrix = () => {
+const updateMatrix = (payload?: any) => {
+  if (payload) {
+    capacity.value = payload.capacity;
+    seasonalSurchargeEnabled.value = payload.seasonalSurchargeEnabled;
+    pricingRuleEnabled.value = payload.pricingRuleEnabled;
+  }
+  
   for (const service of categoryData.value[activeCategory.value].services) {
     service.availability = service.availability.map((availability: { price: number; slots: number }) => {
       const price = seasonalSurchargeEnabled.value && pricingRuleEnabled.value
@@ -383,12 +329,6 @@ const discardMatrixChanges = () => {
   pricingRuleEnabled.value = true;
   resetDatePicker();
   panelMessage.value = "Configuration reset.";
-};
-
-const restorePricingRule = () => {
-  pricingRuleEnabled.value = true;
-  seasonalSurchargeEnabled.value = true;
-  panelMessage.value = "";
 };
 </script>
 

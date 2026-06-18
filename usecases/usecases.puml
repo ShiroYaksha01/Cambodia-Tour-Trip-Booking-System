@@ -1,0 +1,45 @@
+@startuml
+!pragma layout smetana
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Guest" as guest
+actor "Customer" as customer
+actor "Provider" as provider
+actor "Admin" as admin
+
+rectangle "Cambodia Tour Trip Booking System" {
+    
+    ' Authentication & Account Management
+    guest -- (Register)
+    guest -- (Login)
+    customer -- (Reset Password)
+    (Reset Password) ..> (OTP Verification) : <<include>>
+
+    ' Customer Features
+    guest -- (Search & Filter Services)
+    guest -- (View Service Detail)
+    customer -- (Search & Filter Services)
+    customer -- (View Service Detail)
+    customer -- (Book Service)
+    customer -- (View Booking History)
+    (Book Service) ..> (Mock Payment) : <<include>>
+
+    ' Provider Features
+    provider -- (Manage Provider Profile)
+    provider -- (Manage Services)
+    provider -- (Manage Inventory & Pricing)
+    provider -- (Check-in Guest)
+    provider -- (View Financial Ledger)
+    (Check-in Guest) ..> (Verify Reference Code) : <<include>>
+
+    ' Admin Features
+    admin -- (Manage Users)
+    admin -- (Verify Provider)
+    admin -- (View Analytics & Revenue)
+    admin -- (Manage Platform Settings)
+    (Manage Users) ..> (Suspend/Activate Account) : <<include>>
+
+}
+
+@enduml
