@@ -43,7 +43,8 @@ export class InventoryService {
         userId,
         companyName: user.username || 'New Provider',
       });
-      provider = await this.providerRepository.save(provider);
+      const savedProvider = await this.providerRepository.save(provider);
+      return savedProvider;
     }
 
     return provider;

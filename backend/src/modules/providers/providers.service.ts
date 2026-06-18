@@ -224,10 +224,14 @@ export class ProvidersService {
       });
       provider = await this.providerRepository.save(provider);
       // Reload to get relations
-      provider = await this.providerRepository.findOne({
+      const reloadedProvider = await this.providerRepository.findOne({
         where: { id: provider.id },
         relations: ['user'],
       });
+      if (!reloadedProvider) {
+        throw new NotFoundException('Failed to retrieve newly created provider profile.');
+      }
+      return reloadedProvider;
     }
 
     return provider;
