@@ -38,6 +38,22 @@ export class UsersService {
     return user;
   }
 
+  async findByIdWithPassword(id: string) {
+    const user = await this.userRepo.findOne({
+      where: { id },
+      select: [
+        'id',
+        'email',
+        'passwordHash',
+        'role',
+        'username',
+        'profilePicture',
+      ],
+    });
+    if (!user) throw new NotFoundException('User not found');
+    return user;
+  }
+
   async updateUser(id: string, data: Partial<User> & { password?: string }) {
     const user = await this.findById(id);
 
@@ -71,14 +87,6 @@ export class UsersService {
 
   async updateLastLogin(id: string) {
     await this.userRepo.update(id, { lastLoginAt: new Date() });
-  }
-
-  async verifyEmail(email: string) {
-    const user = await this.userRepo.findOne({ where: { email } });
-    if (!user) throw new NotFoundException('User not found');
-    user.isEmailVerified = true;
-    user.emailVerifiedAt = new Date();
-    return this.userRepo.save(user);
   }
 
   async findAll() {

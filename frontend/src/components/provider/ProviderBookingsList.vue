@@ -1,5 +1,16 @@
 <template>
   <section class="ledger-card">
+    <BookingDetailModal
+      :show="showDetailModal"
+      :booking-code="detailBookingCode"
+      :service-name="detailServiceName"
+      :guest-label="detailGuestLabel"
+      :booking-date="detailBookingDate"
+      :booking-amount="detailBookingAmount"
+      :status-text="detailStatusText"
+      :status-class="detailStatusClass"
+      @close="showDetailModal = false"
+    />
     <div class="ledger-card__header">
       <div>
         <p class="section-kicker">Transaction History</p>
@@ -62,6 +73,18 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+import BookingDetailModal from './BookingDetailModal.vue'
+
+const showDetailModal = ref(false)
+const detailBookingCode = ref('')
+const detailServiceName = ref('')
+const detailGuestLabel = ref('')
+const detailBookingDate = ref('')
+const detailBookingAmount = ref<number | null>(null)
+const detailStatusText = ref('')
+const detailStatusClass = ref('')
+
 type BookingRecord = {
   id?: string | number
   booking_id?: string | number
@@ -170,7 +193,14 @@ function formatDate(value: string) {
 }
 
 function viewDetails(booking: BookingRecord) {
-  alert(`${bookingCode(booking)}\n${serviceName(booking)}\nGuest: ${guestLabel(booking)}\nAmount: ${formatMoney(bookingAmount(booking))}\nStatus: ${statusText(booking)}`)
+  detailBookingCode.value = bookingCode(booking)
+  detailServiceName.value = serviceName(booking)
+  detailGuestLabel.value = guestLabel(booking)
+  detailBookingDate.value = bookingDate(booking)
+  detailBookingAmount.value = bookingAmount(booking)
+  detailStatusText.value = statusText(booking)
+  detailStatusClass.value = statusClass(booking)
+  showDetailModal.value = true
 }
 </script>
 

@@ -140,58 +140,6 @@
               </div>
             </div>
 
-            <div class="profile-card">
-              <div class="card-title-row">
-                <div>
-                  <h3>Location & Public Links</h3>
-                  <p>Help travelers find, contact, and trust your business.</p>
-                </div>
-                <MapPinIcon class="card-title-icon" />
-              </div>
-              <div class="location-social-grid">
-                <div class="profile-form-grid">
-                  <div class="profile-field">
-                    <label>City / Province</label>
-                    <input v-model="cityProvince" type="text" placeholder="Siem Reap" />
-                  </div>
-                  <div class="profile-field">
-                    <label>Google Maps Link</label>
-                    <input v-model="googleMapsLink" type="url" placeholder="https://maps.google.com/..." />
-                  </div>
-                  <div class="profile-field full">
-                    <label>Business Address</label>
-                    <input v-model="businessAddress" type="text" placeholder="Street, commune, district" />
-                  </div>
-                </div>
-
-                <div class="profile-form-grid">
-                  <div class="profile-field">
-                    <label>Public Email</label>
-                    <input v-model="officialEmail" type="email" placeholder="hello@anajaktour.com" />
-                  </div>
-                  <div class="profile-field">
-                    <label>Phone Number</label>
-                    <input v-model="phoneNumber" type="tel" placeholder="+855 12 345 678" />
-                  </div>
-                  <div class="profile-field">
-                    <label>Facebook Page</label>
-                    <input v-model="facebookUrl" type="text" placeholder="fb.com/yourbrand" />
-                  </div>
-                  <div class="profile-field">
-                    <label>Telegram Handle</label>
-                    <input v-model="telegramHandle" type="text" placeholder="@brand_support" />
-                  </div>
-                  <div class="profile-field">
-                    <label>Website</label>
-                    <input v-model="websiteUrl" type="url" placeholder="https://yourbrand.com" />
-                  </div>
-                  <div class="profile-field">
-                    <label>Instagram</label>
-                    <input v-model="instagramHandle" type="text" placeholder="@yourbrand" />
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
 
           <aside class="verification-preview-card">
@@ -207,11 +155,6 @@
               </div>
               <h3>{{ companyName || "Your Business Name" }}</h3>
               <p class="preview-tagline">{{ tagline || "Premium Cambodia travel experiences" }}</p>
-              <p class="preview-location">
-                <MapPinIcon />
-                {{ cityProvince || "City / Province" }}
-              </p>
-              <p v-if="businessAddress" class="preview-address">{{ businessAddress }}</p>
               <p v-if="biography" class="preview-bio">{{ biography }}</p>
               <div class="preview-tags">
                 <span v-for="highlight in previewHighlights" :key="highlight">{{ highlight }}</span>
@@ -377,7 +320,6 @@ import {
   ExclamationTriangleIcon,
   GlobeAltIcon,
   InformationCircleIcon,
-  MapPinIcon,
   PencilSquareIcon,
   PhotoIcon,
   PlusIcon,
@@ -838,8 +780,7 @@ function showSupport() {
 .brand-logo-preview svg,
 .preview-logo svg,
 .verified-badge svg,
-.preview-location svg,
-.preview-contact-actions svg {
+  .preview-contact-actions svg {
   width: 22px;
   height: 22px;
 }
@@ -989,14 +930,10 @@ function showSupport() {
   border-radius: 16px;
 }
 
-.highlight-language-grid,
-.location-social-grid {
+.highlight-language-grid {
   display: grid;
   gap: 18px;
   min-width: 0;
-}
-
-.highlight-language-grid {
   grid-template-columns: minmax(0, 1.15fr) minmax(220px, 0.85fr);
 }
 
@@ -1007,19 +944,6 @@ function showSupport() {
   font-weight: 400;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-}
-
-.location-social-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.location-social-grid .profile-form-grid {
-  align-content: start;
-}
-
-.location-social-grid .profile-form-grid + .profile-form-grid {
-  padding-left: 18px;
-  border-left: 1px solid #eef0f2;
 }
 
 .brand-logo-preview {
@@ -1211,8 +1135,7 @@ function showSupport() {
   font-weight: 400;
 }
 
-.verified-badge svg,
-.preview-location svg {
+.verified-badge svg {
   color: var(--profile-primary);
 }
 
@@ -1230,22 +1153,6 @@ function showSupport() {
   line-height: 1.4;
 }
 
-.preview-location {
-  display: flex;
-  gap: 7px;
-  align-items: center;
-  margin: 0 0 8px;
-  color: var(--profile-text);
-  font-size: 14px;
-  font-weight: 400;
-}
-
-.preview-location svg {
-  width: 18px;
-  height: 18px;
-}
-
-.preview-address,
 .preview-bio {
   margin: 0 0 12px;
   color: var(--profile-muted);
@@ -1811,16 +1718,8 @@ function showSupport() {
 }
 
 @media (max-width: 1320px) {
-  .media-info-grid,
-  .location-social-grid {
+  .media-info-grid {
     grid-template-columns: 1fr;
-  }
-
-  .location-social-grid .profile-form-grid + .profile-form-grid {
-    padding-left: 0;
-    padding-top: 16px;
-    border-left: 0;
-    border-top: 1px solid #eef0f2;
   }
 }
 
@@ -1843,18 +1742,10 @@ function showSupport() {
 
   .media-info-grid,
   .highlight-language-grid,
-  .location-social-grid,
   .profile-form-grid,
   .upload-row,
   .logo-uploader {
     grid-template-columns: 1fr;
-  }
-
-  .location-social-grid .profile-form-grid + .profile-form-grid {
-    padding-left: 0;
-    padding-top: 16px;
-    border-left: 0;
-    border-top: 1px solid #eef0f2;
   }
 
   .profile-upload-btn {

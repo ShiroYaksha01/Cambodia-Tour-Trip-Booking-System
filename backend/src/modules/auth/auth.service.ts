@@ -2,34 +2,52 @@
 
 import { Injectable, BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { Resend } from 'resend';
+import * as nodemailer from 'nodemailer';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
 import { PasswordReset } from './entities/password-reset.entity';
-import { EmailVerification } from './entities/email-verification.entity';
 
 @Injectable()
 export class AuthService {
-  private resend: Resend;
+  private transporter: nodemailer.Transporter;
 
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
     @InjectRepository(PasswordReset)
     private passwordResetRepository: Repository<PasswordReset>,
-    @InjectRepository(EmailVerification)
-    private emailVerificationRepository: Repository<EmailVerification>,
     private configService: ConfigService,
   ) {
-    const resendApiKey = this.configService.get<string>('RESEND_API_KEY');
-    console.log('--- Resend Config Check ---');
-    console.log('RESEND_API_KEY (length):', resendApiKey?.length);
-    console.log('--------------------------');
+    this.transporter = nodemailer.createTransport({
+      host: this.configService.get<string>('SMTP_HOST'),
+      port: this.configService.get<number>('SMTP_PORT', 587),
+      secure: this.configService.get<boolean>('SMTP_SECURE', false),
+      auth: {
+        user: this.configService.get<string>('SMTP_USER'),
+        pass: this.configService.get<string>('SMTP_PASS'),
+      },
+    });
+  }
 
-    this.resend = new Resend(resendApiKey || 'dummy_key_to_prevent_crash');
+  private async sendEmail(to: string, subject: string, text: string) {
+    try {
+      const mailOptions = {
+        from: this.configService.get<string>('SMTP_FROM', '"Anajak Tour" <sethaonthemix@gmail.com>'),
+        to,
+        subject,
+        html: text,
+      };
+
+      await this.transporter.sendMail(mailOptions);
+      console.log('Email sent successfully via SMTP');
+    } catch (error) {
+      console.error('Failed to send email via SMTP:', error);
+      // Don't throw error to prevent breaking registration/forgot-password flow 
+      // if email service is down in dev/test, but in prod you might want to.
+    }
   }
 
   async register(
@@ -45,45 +63,31 @@ export class AuthService {
     if (exist) throw new BadRequestException('Email already exists');
 
     const hash = await bcrypt.hash(password, 10);
-
-    const user = await this.usersService.create({
+    const userToCreate = {
       username,
       email,
       passwordHash: hash,
       phoneNumber,
       profilePicture,
       role: (role ?? 'customer') as any,
-    });
+      isEmailVerified: true,
+      emailVerifiedAt: new Date(),
+    };
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 10);
-
-    await this.emailVerificationRepository.save({
-      email,
-      otp,
-      expiresAt,
-    });
+    await this.usersService.create(userToCreate);
 
     try {
-      console.log(`Attempting to send verification email to: ${email}`);
-      const { data, error } = await this.resend.emails.send({
-        from: 'Anajak Tour <onboarding@resend.dev>',
-        to: email,
-        subject: 'Welcome! Verify your email',
-        text: `Your OTP for email verification is: ${otp}. It expires in 10 minutes.`,
-      });
-
-      if (error) {
-        console.error('Resend error during registration:', error);
-      } else {
-        console.log('Verification email sent successfully:', data?.id);
-      }
+      console.log(`Attempting to send welcome email to: ${email}`);
+      await this.sendEmail(
+        email, 
+        'Welcome to Anajak Tour!', 
+        `Your account has been created successfully. You can now log in.`
+      );
     } catch (emailError) {
-      console.error('Email sending failed during registration:', emailError);
+      console.error('Welcome email sending failed:', emailError);
     }
 
-    return user;
+    return { success: true, message: 'Registration successful' };
   }
 
   async login(email: string, password: string) {
@@ -91,19 +95,6 @@ export class AuthService {
 
     if (!user) {
       throw new BadRequestException('Invalid credentials');
-    }
-
-    const isVerified = user.isEmailVerified || user.emailVerifiedAt;
-
-    if (!isVerified) {
-      throw new BadRequestException(
-        'Please verify your email before logging in',
-      );
-    }
-
-    // Sync emailVerifiedAt if it's null but isEmailVerified is true
-    if (user.isEmailVerified && !user.emailVerifiedAt) {
-      await this.usersService.verifyEmail(email);
     }
 
     const match = await bcrypt.compare(password, user.passwordHash);
@@ -133,64 +124,6 @@ export class AuthService {
     };
   }
 
-  async resendVerificationOtp(email: string) {
-    const user = await this.usersService.findByEmail(email);
-    if (!user) throw new BadRequestException('User not found');
-    if (user.isEmailVerified || user.emailVerifiedAt)
-      return { message: 'Email is already verified' };
-
-    // Invalidate old OTPs
-    await this.emailVerificationRepository.update(
-      { email, isUsed: false },
-      { isUsed: true },
-    );
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 10);
-
-    await this.emailVerificationRepository.save({
-      email,
-      otp,
-      expiresAt,
-    });
-
-    try {
-      console.log(`Attempting to resend verification email to: ${email}`);
-      const { data, error } = await this.resend.emails.send({
-        from: 'Anajak Tour <onboarding@resend.dev>',
-        to: email,
-        subject: 'Verify your email',
-        text: `Your new OTP for email verification is: ${otp}. It expires in 10 minutes.`,
-      });
-
-      if (error) {
-        console.error('Resend error during resendVerificationOtp:', error);
-      } else {
-        console.log('Verification email resent successfully:', data?.id);
-      }
-    } catch (emailError) {
-      console.error('Email resend failed:', emailError);
-    }
-
-    return { success: true };
-  }
-
-  async verifyRegistrationEmail(email: string, otp: string) {
-    const verificationRecord = await this.emailVerificationRepository.findOne({
-      where: { email, otp, isUsed: false },
-    });
-
-    if (!verificationRecord || verificationRecord.expiresAt < new Date()) {
-      throw new BadRequestException('Invalid or expired OTP');
-    }
-
-    await this.emailVerificationRepository.update({ id: verificationRecord.id }, { isUsed: true });
-    await this.usersService.verifyEmail(email);
-
-    return { success: true };
-  }
-
   async forgotPassword(email: string) {
     console.log(`--- forgotPassword called for: ${email} ---`);
     try {
@@ -213,18 +146,11 @@ export class AuthService {
 
       try {
         console.log(`Attempting to send password reset email to: ${email}`);
-        const { data, error } = await this.resend.emails.send({
-          from: 'Anajak Tour <onboarding@resend.dev>',
-          to: email,
-          subject: 'Password Reset OTP',
-          text: `Your OTP for password reset is: ${otp}. It expires in 10 minutes.`,
-        });
-
-        if (error) {
-          console.error('Resend error during forgotPassword:', error);
-        } else {
-          console.log('Password reset email sent successfully:', data?.id);
-        }
+        await this.sendEmail(
+          email,
+          'Password Reset OTP',
+          `Your OTP for password reset is: ${otp}. It expires in 10 minutes.`
+        );
       } catch (emailError) {
         console.error('Email sending failed:', emailError);
       }

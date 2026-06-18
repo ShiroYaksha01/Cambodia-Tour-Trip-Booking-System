@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { EnvelopeIcon, LockClosedIcon } from "@heroicons/vue/24/outline";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import AuthButton from "../../components/auth/AuthButton.vue";
 import AuthCard from "../../components/auth/AuthCard.vue";
 import AuthInput from "../../components/auth/AuthInput.vue";
@@ -10,15 +10,22 @@ import api from "../../services/api";
 import { setCurrentUserRole } from "../../utils/auth";
 
 const router = useRouter();
+const route = useRoute();
 
 const email = ref("");
 const password = ref("");
 const rememberMe = ref(true);
 const message = ref("");
+const successMessage = ref("");
 const loading = ref(false);
+
+if (route.query.registered === "true") {
+  successMessage.value = "Registration successful! You can now log in.";
+}
 
 const handleLogin = async () => {
   message.value = "";
+  successMessage.value = "";
 
   if (!email.value.trim() || !password.value) {
     message.value = "Please enter your email and password.";
@@ -98,6 +105,7 @@ const handleLogin = async () => {
         </div>
 
         <p v-if="message" class="auth-message error">{{ message }}</p>
+        <p v-if="successMessage" class="auth-message success">{{ successMessage }}</p>
 
         <AuthButton :loading="loading" loading-text="Signing in...">
           Sign In

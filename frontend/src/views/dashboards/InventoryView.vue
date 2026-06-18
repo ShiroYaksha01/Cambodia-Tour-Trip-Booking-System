@@ -1,45 +1,5 @@
 <template>
   <div class="inventory-shell">
-    <aside class="sidebar">
-      <div class="sidebar-brand">
-        <div class="brand-mark">🏛️</div>
-        <div>
-          <h1>Angkor Treasures</h1>
-          <p>VERIFIED PROVIDER</p>
-        </div>
-      </div>
-
-      <nav class="sidebar-nav">
-        <RouterLink class="nav-item" :to="{ name: 'provider-inventory' }" exact-active-class="active">
-          <span>🗓️</span>
-          Inventory
-        </RouterLink>
-        <RouterLink class="nav-item" :to="{ name: 'provider-manifest' }" exact-active-class="active">
-          <span>👥</span>
-          Manifest
-        </RouterLink>
-        <RouterLink class="nav-item" :to="{ name: 'provider-ledger' }" exact-active-class="active">
-          <span>💳</span>
-          Finance
-        </RouterLink>
-        <a href="#" class="nav-item" @click.prevent="showSupport">
-          <span>💬</span>
-          Messages
-        </a>
-        <RouterLink class="nav-item" :to="{ name: 'provider-settings' }" exact-active-class="active">
-          <span>⚙️</span>
-          Settings
-        </RouterLink>
-      </nav>
-
-      <button class="new-booking-btn" @click="router.push({ name: 'provider-service' })">New Booking</button>
-
-      <div class="sidebar-footer">
-        <button class="footer-link" @click="showSupport">Support</button>
-        <button class="footer-link" @click="logout">Logout</button>
-      </div>
-    </aside>
-
     <main class="inventory-main">
       <header class="topbar">
         <div class="topbar-title">Inventory & Pricing</div>
@@ -92,11 +52,11 @@
               <div class="inventory-table">
               <div class="inventory-head">
                 <span>PRODUCT / SERVICE</span>
-                <span v-for="i in 5" :key="i">SCHEDULE {{ i }}</span>
+                <span v-for="(label, i) in scheduleLabels" :key="i">SCHEDULE {{ label }}</span>
               </div>
 
               <div
-                v-for="(item, itemIdx) in filteredInventoryItems"
+                v-for="(item, itemIdx) in filteredInventoryItems.slice(0, 5)"
                 :key="item.id || itemIdx"
                 class="inventory-row"
               >
@@ -197,30 +157,6 @@
             <button class="primary-action amber" @click="applyPricing">Update Market Prices</button>
           </div>
 
-          <div class="panel-card">
-            <h3>Inventory Controller</h3>
-            <div class="notice-box">
-              <strong>Summer Scheduling</strong>
-              <p>June–August is the early summer booking window. Adjust inventory accordingly.</p>
-            </div>
-            <div class="two-col">
-              <div class="field-group">
-                <label>Start Date</label>
-                <input v-model="controllerStartDate" type="text" placeholder="DD/MM/YYYY" />
-              </div>
-              <div class="field-group">
-                <label>End Date</label>
-                <input v-model="controllerEndDate" type="text" placeholder="DD/MM/YYYY" />
-              </div>
-            </div>
-            <div class="field-group">
-              <label>Max Pax / Daily Limit</label>
-              <input v-model.number="controllerMaxPax" type="number" />
-              <small>Value auto-triggers at 100% occupancy.</small>
-            </div>
-            <button class="secondary-action" @click="batchProcess">Batch Process Dates</button>
-          </div>
-
           <div class="panel-card small">
             <h3>Recent Changes</h3>
             <ul class="changes-list">
@@ -284,13 +220,11 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
 import {
   getProviderInventory,
   updateInventorySlot,
 } from "../../services/api";
 import { resolveImageUrl } from "../../utils/api";
-import { clearAuthData } from "../../utils/auth";
 
 const props = withDefaults(
   defineProps<{
@@ -300,8 +234,6 @@ const props = withDefaults(
     searchQuery: "",
   },
 );
-
-const router = useRouter();
 
 type InventoryDay = {
   id: string | null;
@@ -348,9 +280,7 @@ const editPrice = ref(0);
 const pricingRuleType = ref("markup");
 const pricingValue = ref(25);
 const pricingTarget = ref("all");
-const controllerStartDate = ref("13/07/2026");
-const controllerEndDate = ref("16/07/2026");
-const controllerMaxPax = ref(15);
+
 const recentChanges = ref<{ type: string; text: string }[]>([]);
 const hasChanges = ref(false);
 const viewMode = ref<"month" | "fortnight">("fortnight");
@@ -434,6 +364,15 @@ function dayPrice(day: InventoryDay) {
 
 const inventoryItems = ref<InventoryItem[]>([]);
 
+const scheduleLabels = computed(() => {
+  const today = new Date();
+  return Array.from({ length: 5 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() + i);
+    return d.getDate();
+  });
+});
+
 onMounted(async () => {
   try {
     const res = await getProviderInventory();
@@ -444,7 +383,7 @@ onMounted(async () => {
       name: svc.title || "Untitled",
       subtitle: svc.description || "",
       image: resolveImageUrl(svc.coverImage) || "https://via.placeholder.com/120",
-      days: (svc.slots || []).map((slot: any) => ({
+      days: (svc.slots || []).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime()).slice(0, 5).map((slot: any) => ({
         id: slot.id,
         date: typeof slot.date === "string" ? slot.date.slice(0, 10) : "",
         slots: slot.availableSlots ?? 0,
@@ -579,15 +518,6 @@ function exportMatrix() {
   URL.revokeObjectURL(url);
 }
 
-function showSupport() {
-  alert("Support: hello@anajakktour.kh");
-}
-
-function logout() {
-  clearAuthData();
-  window.location.href = "/customer/homepage";
-}
-
 function applyPricing() {
   const value = pricingValue.value;
   const targetItems = pricingTarget.value === "all"
@@ -618,24 +548,7 @@ function applyPricing() {
   });
 }
 
-function batchProcess() {
-  const maxPax = controllerMaxPax.value;
-  for (const item of inventoryItems.value) {
-    for (const day of item.days) {
-      if (day.slots > maxPax) {
-        day.slots = maxPax;
-        if (day.id) {
-          updateInventorySlot(day.id, { availableSlots: maxPax }).catch(() => {});
-        }
-      }
-    }
-  }
-  hasChanges.value = true;
-  recentChanges.value.unshift({
-    type: "teal",
-    text: `Batch processed: max ${maxPax} pax limit applied`,
-  });
-}
+
 
 const filteredInventoryItems = computed(() => {
   if (!props.searchQuery.trim()) {

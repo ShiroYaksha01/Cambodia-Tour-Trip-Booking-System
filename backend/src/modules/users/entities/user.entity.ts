@@ -55,7 +55,7 @@ export class User {
   })
   status: AccountStatus;
 
-  @Column({ name: 'is_email_verified', type: 'boolean', default: false })
+  @Column({ name: 'is_email_verified', type: 'boolean', default: true })
   isEmailVerified: boolean;
   
   @Column({ name: 'email_verified_at', type: 'timestamptz', nullable: true })

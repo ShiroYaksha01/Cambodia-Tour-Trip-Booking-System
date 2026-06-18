@@ -15,12 +15,6 @@ const routes: RouteRecordRaw[] = [
     meta: { guestOnly: true },
   },
   {
-    path: "/verify-email",
-    name: "verify-email",
-    component: () => import("../views/auth/VerifyEmailPage.vue"),
-    meta: { guestOnly: true },
-  },
-  {
     path: "/register",
     name: "register",
     component: () => import("../views/auth/RegisterView.vue"),

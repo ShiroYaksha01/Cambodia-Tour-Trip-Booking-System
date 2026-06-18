@@ -149,12 +149,58 @@
         </div>
       </section>
     </main>
+
+    <InfoModal :show="showDetailModal" title="Transaction Details" :subtitle="detailId" @close="showDetailModal = false">
+      <div class="detail-section">
+        <div class="detail-row">
+          <span class="detail-label">Date</span>
+          <span class="detail-value">{{ detailDate }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Destination</span>
+          <span class="detail-value">{{ detailDestination }}</span>
+        </div>
+        <div class="divider" />
+        <div class="amount-row">
+          <span class="detail-label">Amount</span>
+          <span class="amount-value">${{ detailAmount }}</span>
+        </div>
+        <div class="divider" />
+        <div class="detail-row">
+          <span class="detail-label">Status</span>
+          <span :class="['status-badge', 'status-' + detailStatus.toLowerCase()]">{{ detailStatus }}</span>
+        </div>
+      </div>
+      <template #footer>
+        <button class="btn-secondary" @click="showDetailModal = false">Close</button>
+      </template>
+    </InfoModal>
+
+    <InfoModal :show="showPayoutModal" title="Request Payout" @close="showPayoutModal = false">
+      <div class="payout-content">
+        <div class="payout-icon">💸</div>
+        <p class="payout-text">Payout request prepared for <strong>${{ netPayout }}</strong>.</p>
+        <p class="payout-note">Admin will review the transfer before release.</p>
+      </div>
+      <template #footer>
+        <button class="btn-secondary" @click="showPayoutModal = false">OK</button>
+      </template>
+    </InfoModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from "vue";
 import { getProviderBookings } from "../../services/api";
+import InfoModal from "../../components/shared/InfoModal.vue";
+
+const showDetailModal = ref(false)
+const showPayoutModal = ref(false)
+const detailId = ref('')
+const detailDate = ref('')
+const detailDestination = ref('')
+const detailAmount = ref('')
+const detailStatus = ref('')
 
 const props = withDefaults(
   defineProps<{
@@ -347,11 +393,16 @@ function downloadCsv() {
 }
 
 function requestPayout() {
-  alert(`Payout request prepared for $${netPayout.value}. Admin will review the transfer before release.`);
+  showPayoutModal.value = true
 }
 
 function viewTransactionDetails(transaction: Transaction) {
-  alert(`${transaction.id}\n${transaction.date}\n${transaction.destination}\nAmount: $${transaction.amount}\nStatus: ${transaction.status}`);
+  detailId.value = transaction.id
+  detailDate.value = transaction.date
+  detailDestination.value = transaction.destination
+  detailAmount.value = transaction.amount
+  detailStatus.value = transaction.status
+  showDetailModal.value = true
 }
 </script>
 
@@ -956,5 +1007,113 @@ td {
   .stat-label {
     font-size: 0.875rem;
   }
+}
+
+/* Detail modal styles */
+.detail-section :deep(.detail-section) {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.detail-section :deep(.detail-row) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detail-section :deep(.detail-label) {
+  font-size: 0.82rem;
+  color: #71817d;
+  font-weight: 500;
+}
+
+.detail-section :deep(.detail-value) {
+  font-size: 0.9rem;
+  color: #1b3031;
+  font-weight: 600;
+  text-align: right;
+  max-width: 60%;
+}
+
+.detail-section :deep(.divider) {
+  height: 1px;
+  background: #edf0ef;
+  margin: 4px 0;
+}
+
+.detail-section :deep(.amount-row) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detail-section :deep(.amount-value) {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f6e70;
+}
+
+.detail-section :deep(.status-badge) {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.detail-section :deep(.status-released) {
+  background: #d9f1e4;
+  color: #15613c;
+}
+
+.detail-section :deep(.status-pending) {
+  background: #f7e7b4;
+  color: #815900;
+}
+
+.detail-section :deep(.status-processing) {
+  background: #fff4e6;
+  color: #9b6b1f;
+}
+
+.btn-secondary {
+  padding: 10px 24px;
+  border-radius: 10px;
+  border: 1px solid #d7dfdc;
+  background: #fff;
+  color: #0f6e70;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-secondary:hover {
+  background: #f0f3f2;
+}
+
+.payout-content {
+  text-align: center;
+  padding: 8px 0;
+}
+
+.payout-icon {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+}
+
+.payout-text {
+  font-size: 0.95rem;
+  color: #1b3031;
+  margin: 0 0 6px;
+  line-height: 1.5;
+}
+
+.payout-note {
+  font-size: 0.82rem;
+  color: #71817d;
+  margin: 0;
 }
 </style>

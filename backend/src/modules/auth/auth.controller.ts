@@ -71,14 +71,4 @@ export class AuthController {
   async resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto.email, dto.otp, dto.newPassword);
   }
-
-  @Post('verify-email')
-  async verifyRegistrationEmail(@Body() dto: VerifyOtpDto) {
-    return this.authService.verifyRegistrationEmail(dto.email, dto.otp);
-  }
-
-  @Post('resend-verification')
-  async resendVerification(@Body() dto: ForgotPasswordDto) {
-    return this.authService.resendVerificationOtp(dto.email);
-  }
 }

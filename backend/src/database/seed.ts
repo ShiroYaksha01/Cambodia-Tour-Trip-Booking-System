@@ -9,6 +9,7 @@ import { Transportation } from '../modules/services/entities/transportation.enti
 import { Accommodation } from '../modules/services/entities/accommodation.entity';
 import { TourPackage } from '../modules/services/entities/tour-package.entity';
 import { ServiceInventory } from '../modules/services/entities/service-inventory.entity';
+import { InventorySlot } from '../modules/services/entities/inventory-slot.entity';
 import { ServiceType, TransportType, BookingStatus, PaymentStatus } from '../shared/enums';
 
 type SeedUserInput = {
@@ -248,7 +249,38 @@ async function seed() {
       }
     }
 
-    // 4. Create Customers & Bookings
+    // 4. Create Inventory Slots (date-specific availability & pricing)
+    const allServices = await serviceRepo.find();
+    const slotRepo = dataSource.getRepository(InventorySlot);
+    const slotConfigs = [
+      { daysFromNow: 0, slots: 20, price: 45.00, status: 'peak_demand' as const, isPeak: true },
+      { daysFromNow: 1, slots: 15, price: 40.00, status: 'available' as const },
+      { daysFromNow: 2, slots: 8, price: 38.00, status: 'low_stock' as const },
+      { daysFromNow: 3, slots: 25, price: 42.00, status: 'available' as const },
+      { daysFromNow: 4, slots: 12, price: 44.00, status: 'available' as const },
+    ];
+
+    for (const svc of allServices) {
+      for (const cfg of slotConfigs) {
+        const d = new Date();
+        d.setDate(d.getDate() + cfg.daysFromNow);
+        const dateStr = d.toISOString().slice(0, 10);
+        const existing = await slotRepo.findOne({ where: { serviceId: svc.id, date: dateStr as any } });
+        if (!existing) {
+          await slotRepo.save(slotRepo.create({
+            serviceId: svc.id,
+            date: dateStr as any,
+            availableSlots: cfg.slots,
+            totalSlots: cfg.slots,
+            price: cfg.price,
+            status: cfg.status,
+            isPeakPeriod: cfg.isPeak,
+          }));
+        }
+      }
+    }
+
+    // 5. Create Customers & Bookings
     const customer = await upsertUser(dataSource, {
       role: UserRole.CUSTOMER,
       username: 'john_doe',
@@ -257,7 +289,6 @@ async function seed() {
       phoneNumber: '+85599000001',
     });
 
-    const allServices = await serviceRepo.find();
     const bookingRepo = dataSource.getRepository(Booking);
 
     if (allServices.length > 0) {
