@@ -1,39 +1,5 @@
 <template>
   <div class="provider-suite">
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <h2>Provider Suite</h2>
-        <p class="subtitle">HERITAGE MANAGEMENT</p>
-      </div>
-
-      <nav class="sidebar-nav">
-        <RouterLink class="nav-item" :to="{ name: 'provider-dashboard' }" exact-active-class="active">
-          <span class="icon">⚙️</span>
-          Command Center
-        </RouterLink>
-        <RouterLink class="nav-item" :to="{ name: 'provider-service' }" exact-active-class="active">
-          <span class="icon">🛠️</span>
-          Service Manager
-        </RouterLink>
-        <RouterLink class="nav-item" :to="{ name: 'provider-inventory' }" exact-active-class="active">
-          <span class="icon">📊</span>
-          Inventory & Pricing
-        </RouterLink>
-        <RouterLink class="nav-item" :to="{ name: 'provider-manifest' }" exact-active-class="active">
-          <span class="icon">👥</span>
-          Guest Manifest
-        </RouterLink>
-        <RouterLink class="nav-item" :to="{ name: 'provider-ledger' }" exact-active-class="active">
-          <span class="icon">💰</span>
-          Financial Ledger
-        </RouterLink>
-        <RouterLink class="nav-item" :to="{ name: 'provider-settings' }" exact-active-class="active">
-          <span class="icon">⚙️</span>
-          Settings
-        </RouterLink>
-      </nav>
-    </aside>
-
     <main class="main-content">
       <header class="header">
         <div class="header-left">
@@ -486,6 +452,7 @@ async function handleSaveService(formData: any) {
   border-bottom: 1px solid #f0f0f0;
   padding: 12px;
   align-items: center;
+  overflow: visible;
 }
 
 .service-manager-row {

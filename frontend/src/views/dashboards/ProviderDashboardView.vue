@@ -340,8 +340,6 @@ const openServiceDetail = (service: ServiceRow) => {
 };
 
 const closeServiceDetail = () => { selectedService.value = null; isEditingService.value = false; };
-const startEditing = () => { isEditingService.value = true; };
-const saveServiceChanges = () => { if (selectedService.value) { selectedService.value.availability = JSON.parse(JSON.stringify(editingAvailability.value)); isEditingService.value = false; } };
 
 const fallbackImage = "/angkor.png";
 

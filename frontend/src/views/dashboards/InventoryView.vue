@@ -1,45 +1,5 @@
 <template>
   <div class="inventory-shell">
-    <aside class="sidebar">
-      <div class="sidebar-brand">
-        <div class="brand-mark">🏛️</div>
-        <div>
-          <h1>Angkor Treasures</h1>
-          <p>VERIFIED PROVIDER</p>
-        </div>
-      </div>
-
-      <nav class="sidebar-nav">
-        <RouterLink class="nav-item" :to="{ name: 'provider-inventory' }" exact-active-class="active">
-          <span>🗓️</span>
-          Inventory
-        </RouterLink>
-        <RouterLink class="nav-item" :to="{ name: 'provider-manifest' }" exact-active-class="active">
-          <span>👥</span>
-          Manifest
-        </RouterLink>
-        <RouterLink class="nav-item" :to="{ name: 'provider-ledger' }" exact-active-class="active">
-          <span>💳</span>
-          Finance
-        </RouterLink>
-        <a href="#" class="nav-item" @click.prevent="showSupport">
-          <span>💬</span>
-          Messages
-        </a>
-        <RouterLink class="nav-item" :to="{ name: 'provider-settings' }" exact-active-class="active">
-          <span>⚙️</span>
-          Settings
-        </RouterLink>
-      </nav>
-
-      <button class="new-booking-btn" @click="router.push({ name: 'provider-service' })">New Booking</button>
-
-      <div class="sidebar-footer">
-        <button class="footer-link" @click="showSupport">Support</button>
-        <button class="footer-link" @click="logout">Logout</button>
-      </div>
-    </aside>
-
     <main class="inventory-main">
       <header class="topbar">
         <div class="topbar-title">Inventory & Pricing</div>
@@ -260,13 +220,11 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
 import {
   getProviderInventory,
   updateInventorySlot,
 } from "../../services/api";
 import { resolveImageUrl } from "../../utils/api";
-import { clearAuthData } from "../../utils/auth";
 
 const props = withDefaults(
   defineProps<{
@@ -276,8 +234,6 @@ const props = withDefaults(
     searchQuery: "",
   },
 );
-
-const router = useRouter();
 
 type InventoryDay = {
   id: string | null;
@@ -560,15 +516,6 @@ function exportMatrix() {
   link.download = "provider-inventory-matrix.csv";
   link.click();
   URL.revokeObjectURL(url);
-}
-
-function showSupport() {
-  alert("Support: hello@anajakktour.kh");
-}
-
-function logout() {
-  clearAuthData();
-  window.location.href = "/customer/homepage";
 }
 
 function applyPricing() {

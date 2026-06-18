@@ -1,6 +1,5 @@
 <template>
   <div class="manifest-container">
-    <!-- Content -->
     <main class="manifest-content">
       <!-- Left: Check-in Terminal -->
       <section class="check-in-section">
@@ -158,7 +157,7 @@ function mapBookingToGuest(booking: any): Guest {
     time: timeStr,
     status: mapped.status,
     statusClass: mapped.statusClass,
-    avatar: resolveImageUrl(booking.user?.profile_picture) || `https://picsum.photos/40/40?random=${Math.random()}`,
+    avatar: resolveImageUrl(booking.user?.profile_picture) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${booking.id}`,
     checked: bkStatus === "completed" || bkStatus === "completed_checkin",
   };
 }

@@ -163,11 +163,11 @@
                 <span v-for="language in previewLanguages" :key="language">{{ language }}</span>
               </div>
               <div class="preview-contact-actions">
-                <a href="https://www.facebook.com/" target="_blank" rel="noreferrer">
+                <a :href="facebookHref" target="_blank" rel="noreferrer">
                   <UserGroupIcon />
                   Facebook
                 </a>
-                <a href="https://web.telegram.org/a/" target="_blank" rel="noreferrer">
+                <a :href="telegramHref" target="_blank" rel="noreferrer">
                   <ChatBubbleLeftRightIcon />
                   Telegram
                 </a>
