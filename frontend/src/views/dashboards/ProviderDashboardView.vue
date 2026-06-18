@@ -19,12 +19,20 @@
           <div class="services-grid" :style="gridStyle">
             <div class="services-header" :style="rowGridStyle">
               <div class="header-cell">SERVICE TYPE</div>
-              <div v-for="day in activeCategoryData.days" :key="day.label" class="header-cell">
+              <div v-for="day in activeCategoryData.days" :key="day.raw.toISOString()" class="header-cell">
                 {{ day.label }} {{ day.date }}
               </div>
             </div>
 
-            <div class="service-row" :style="rowGridStyle" v-for="service in filteredServices.slice(0, 5)" :key="service.id" @click="openServiceDetail(service)" style="cursor: pointer;">
+            <div v-if="loading" class="service-row" :style="{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', display: 'block' }">
+              <div class="loading-spinner">Loading inventory...</div>
+            </div>
+
+            <div v-else-if="filteredServices.length === 0" class="service-row" :style="{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', display: 'block' }">
+              <p>No services found matching your criteria.</p>
+            </div>
+
+            <div v-else class="service-row" :style="rowGridStyle" v-for="service in filteredServices" :key="service.id" @click="openServiceDetail(service)" style="cursor: pointer;">
               <div class="service-info">
                 <img :src="serviceImageUrl(service.image)" :alt="service.name" class="service-image" @error="handleImageError">
                 <div class="service-details">
@@ -119,6 +127,7 @@ const capacity = ref(25);
 const seasonalSurchargeEnabled = ref(true);
 const pricingRuleEnabled = ref(true);
 const panelMessage = ref("");
+const loading = ref(true);
 
 const categoryData = ref<Record<CategoryKey, any>>({
   all: { title: "All Services", description: "Overview of all services and availability.", days: [], services: [], metrics: { occupancy: "0%", alerts: "0", revenue: "$0" }, capacityHelper: "Sets base capacity.", panelLabel: "Pricing Engine", panelBadge: "SMART RULE", primaryRule: { title: "+20% Seasonal Surcharge", description: "Holiday range" }, updateAction: "Update All" },
@@ -149,6 +158,7 @@ function mapServiceType(type: string): CategoryKey {
 }
 
 onMounted(async () => {
+  loading.value = true;
   try {
     const [statsRes, invRes] = await Promise.all([
       getProviderDashboardStats(),
@@ -185,7 +195,7 @@ onMounted(async () => {
 
     for (const cat of ['all', 'tours', 'stays', 'transport'] as CategoryKey[]) {
       allDates[cat].sort((a, b) => a.getTime() - b.getTime());
-      const days = allDates[cat].slice(0, 5).map(d => ({
+      const days = allDates[cat].map(d => ({
         label: DAY_NAMES[d.getDay()],
         date: String(d.getDate()).padStart(2, '0'),
         raw: d,
@@ -219,6 +229,8 @@ onMounted(async () => {
     }
   } catch (err) {
     console.error("Failed to fetch dashboard data", err);
+  } finally {
+    loading.value = false;
   }
 });
 
