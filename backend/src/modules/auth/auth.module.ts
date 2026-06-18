@@ -35,10 +35,11 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { UsersModule } from '../users/users.module';
 import { PasswordReset } from './entities/password-reset.entity';
+import { Provider } from '../providers/entities/provider.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([PasswordReset]),
+    TypeOrmModule.forFeature([PasswordReset, Provider]),
     forwardRef(() => UsersModule),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({

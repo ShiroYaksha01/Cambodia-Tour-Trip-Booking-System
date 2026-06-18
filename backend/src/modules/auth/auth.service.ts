@@ -9,6 +9,7 @@ import { Repository, LessThan } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
 import { PasswordReset } from './entities/password-reset.entity';
+import { Provider } from '../providers/entities/provider.entity';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +20,8 @@ export class AuthService {
     private jwtService: JwtService,
     @InjectRepository(PasswordReset)
     private passwordResetRepository: Repository<PasswordReset>,
+    @InjectRepository(Provider)
+    private providerRepository: Repository<Provider>,
     private configService: ConfigService,
   ) {
     this.transporter = nodemailer.createTransport({
@@ -74,7 +77,17 @@ export class AuthService {
       emailVerifiedAt: new Date(),
     };
 
-    await this.usersService.create(userToCreate);
+    const user = await this.usersService.create(userToCreate);
+
+    // If role is provider, create the provider profile record
+    if (role === 'provider') {
+      console.log(`Creating provider profile for user: ${user.id}`);
+      const provider = this.providerRepository.create({
+        userId: user.id,
+        companyName: username, // Use username as initial company name
+      });
+      await this.providerRepository.save(provider);
+    }
 
     try {
       console.log(`Attempting to send welcome email to: ${email}`);

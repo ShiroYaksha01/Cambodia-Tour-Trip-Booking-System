@@ -14,6 +14,7 @@ import { ServiceImage } from './entities/service-image.entity';
 import { ItineraryDay } from './entities/itinerary-day.entity';
 import { ItineraryActivity } from './entities/itinerary-activity.entity';
 import { Provider } from '../providers/entities/provider.entity';
+import { User } from '../users/entities/user.entity';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
@@ -29,6 +30,7 @@ import { AuthModule } from '../auth/auth.module';
       ItineraryDay,
       ItineraryActivity,
       Provider,
+      User,
     ]),
     AuthModule,
   ],
