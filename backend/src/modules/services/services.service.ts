@@ -11,6 +11,7 @@ import { TourPackage } from './entities/tour-package.entity';
 import { Accommodation } from './entities/accommodation.entity';
 import { Transportation } from './entities/transportation.entity';
 import { ServiceInventory } from './entities/service-inventory.entity';
+import { InventorySlot } from './entities/inventory-slot.entity';
 import { ServiceType } from '../../shared/enums';
 import { InventoryService } from './inventory.service';
 
@@ -29,6 +30,8 @@ export class ServicesService {
     private readonly transportationRepository: Repository<Transportation>,
     @InjectRepository(ServiceInventory)
     private readonly inventoryRepository: Repository<ServiceInventory>,
+    @InjectRepository(InventorySlot)
+    private readonly inventorySlotRepository: Repository<InventorySlot>,
     private readonly inventoryService: InventoryService,
     private readonly dataSource: DataSource,
   ) {}
@@ -360,9 +363,43 @@ export class ServicesService {
   }
 
   async checkAvailability(id: string, query: AvailabilityQueryDto) {
+    const { date, quantity } = query;
+    if (!date) {
+      return { serviceId: id, available: true, message: 'Select a date to check specific availability' };
+    }
+    
+    const dateObj = new Date(date);
+    dateObj.setHours(0, 0, 0, 0);
+
+    const service = await this.serviceRepository.findOne({ where: { id } });
+    if (!service) throw new NotFoundException('Service not found');
+
+    const slot = await this.inventorySlotRepository.findOne({
+      where: { serviceId: id, date: dateObj },
+    });
+
+    if (!slot) {
+      // If no specific slot exists, we assume base service capacity and price
+      // but usually we should have slots. For now fallback.
+      return {
+        serviceId: id,
+        date,
+        available: true,
+        remainingSlots: 99, // Fallback
+        price: Number(service.price),
+      };
+    }
+
+    const price = slot.markupPercentage > 0 
+      ? Number(slot.price) * (1 + slot.markupPercentage / 100) 
+      : Number(slot.price);
+
     return {
       serviceId: id,
-      available: true,
+      date,
+      available: slot.availableSlots >= (quantity || 1) && slot.status !== 'closed',
+      remainingSlots: slot.availableSlots,
+      price: price,
     };
   }
 }

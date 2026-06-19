@@ -6,6 +6,7 @@ import { Provider } from './entities/provider.entity';
 import { Booking } from '../bookings/entities/booking.entity';
 import { PaymentStatus } from '../../shared/enums';
 import { Service } from '../services/entities/service.entity';
+import { User } from '../users/entities/user.entity';
 
 type JwtUser = {
   userId: string;
@@ -21,20 +22,50 @@ export class ProviderBookingsService {
     private readonly bookingRepository: Repository<Booking>,
     @InjectRepository(Service)
     private readonly serviceRepository: Repository<Service>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
+
+  private async getOrCreateProvider(userId: string): Promise<Provider> {
+    let provider = await this.providerRepository.findOne({
+      where: { userId },
+      relations: ['services', 'services.inventory', 'user'],
+    });
+
+    if (!provider) {
+      console.log(`Provider profile missing for user ${userId}. Attempting auto-creation.`);
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+      if (!user) {
+        throw new NotFoundException('User not found.');
+      }
+
+      provider = this.providerRepository.create({
+        userId,
+        companyName: user.username || 'New Provider',
+      });
+      provider = await this.providerRepository.save(provider);
+      // Reload to get relations
+      const reloadedProvider = await this.providerRepository.findOne({
+        where: { id: provider.id },
+        relations: ['services', 'services.inventory', 'user'],
+      });
+      
+      if (!reloadedProvider) {
+        throw new NotFoundException('Failed to retrieve newly created provider profile.');
+      }
+      return reloadedProvider;
+    }
+
+    return provider;
+  }
+
 
   async findBookingsForProvider(user: JwtUser) {
     if (user.role !== 'provider') {
       throw new ForbiddenException('Only providers can access bookings.');
     }
 
-    const provider = await this.providerRepository.findOne({
-      where: { userId: user.userId },
-    });
-
-    if (!provider) {
-      throw new NotFoundException('Provider profile not found.');
-    }
+    const provider = await this.getOrCreateProvider(user.userId);
 
     const bookings = await this.bookingRepository
       .createQueryBuilder('booking')
@@ -68,14 +99,7 @@ export class ProviderBookingsService {
       throw new ForbiddenException('Only providers can access dashboard stats.');
     }
 
-    const provider = await this.providerRepository.findOne({
-      where: { userId: user.userId },
-      relations: ['services', 'services.inventory'],
-    });
-
-    if (!provider) {
-      throw new NotFoundException('Provider profile not found.');
-    }
+    const provider = await this.getOrCreateProvider(user.userId);
 
     const bookings = await this.bookingRepository.find({
       where: { providerId: provider.id },
@@ -118,13 +142,7 @@ export class ProviderBookingsService {
       throw new ForbiddenException('Only providers can check in guests.');
     }
 
-    const provider = await this.providerRepository.findOne({
-      where: { userId: user.userId },
-    });
-
-    if (!provider) {
-      throw new NotFoundException('Provider profile not found.');
-    }
+    const provider = await this.getOrCreateProvider(user.userId);
 
     const booking = await this.bookingRepository.findOne({
       where: { id: bookingId, providerId: provider.id },
@@ -147,13 +165,7 @@ export class ProviderBookingsService {
       throw new ForbiddenException('Only providers can access inventory matrix.');
     }
 
-    const provider = await this.providerRepository.findOne({
-      where: { userId: user.userId },
-    });
-
-    if (!provider) {
-      throw new NotFoundException('Provider profile not found.');
-    }
+    const provider = await this.getOrCreateProvider(user.userId);
 
     const services = await this.serviceRepository.find({
       where: { providerId: provider.id },

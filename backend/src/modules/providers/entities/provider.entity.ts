@@ -19,7 +19,7 @@ export class Provider {
   @Column({ name: 'user_id', type: 'uuid', unique: true })
   userId: string;
 
-  @OneToOne(() => User, (user) => user.provider)
+  @OneToOne(() => User, (user) => user.provider, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
 

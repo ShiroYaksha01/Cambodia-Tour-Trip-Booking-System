@@ -206,27 +206,39 @@ export class ProvidersService {
   }
 
   async getProviderProfile(userId: string) {
-    const provider = await this.providerRepository.findOne({
+    let provider = await this.providerRepository.findOne({
       where: { userId },
       relations: ['user'],
     });
 
     if (!provider) {
-      throw new NotFoundException('Provider profile not found');
+      console.log(`Provider profile missing for user ${userId}. Attempting auto-creation.`);
+      const user = await this.usersService.findById(userId);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      provider = this.providerRepository.create({
+        userId: user.id,
+        companyName: user.username || 'New Provider',
+      });
+      provider = await this.providerRepository.save(provider);
+      // Reload to get relations
+      const reloadedProvider = await this.providerRepository.findOne({
+        where: { id: provider.id },
+        relations: ['user'],
+      });
+      if (!reloadedProvider) {
+        throw new NotFoundException('Failed to retrieve newly created provider profile.');
+      }
+      return reloadedProvider;
     }
 
     return provider;
   }
 
   async updateProviderProfile(userId: string, updateDto: any) {
-    const provider = await this.providerRepository.findOne({
-      where: { userId },
-      relations: ['user'],
-    });
-
-    if (!provider) {
-      throw new NotFoundException('Provider profile not found');
-    }
+    const provider = await this.getProviderProfile(userId);
 
     // Update provider fields
     if (updateDto.companyName) provider.companyName = updateDto.companyName;

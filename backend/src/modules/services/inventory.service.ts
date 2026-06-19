@@ -5,6 +5,7 @@ import { InventorySlot } from './entities/inventory-slot.entity';
 import { Service } from './entities/service.entity';
 import { ServiceInventory } from './entities/service-inventory.entity';
 import { Provider } from '../providers/entities/provider.entity';
+import { User } from '../users/entities/user.entity';
 import {
   CreateInventorySlotDto,
   UpdateInventorySlotDto,
@@ -22,7 +23,33 @@ export class InventoryService {
     private serviceInventoryRepository: Repository<ServiceInventory>,
     @InjectRepository(Provider)
     private providerRepository: Repository<Provider>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
   ) {}
+
+  private async getOrCreateProvider(userId: string): Promise<Provider> {
+    let provider = await this.providerRepository.findOne({
+      where: { userId },
+    });
+
+    if (!provider) {
+      console.log(`Provider profile missing for user ${userId}. Attempting auto-creation.`);
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+      if (!user) {
+        throw new NotFoundException('User not found.');
+      }
+
+      provider = this.providerRepository.create({
+        userId,
+        companyName: user.username || 'New Provider',
+      });
+      const savedProvider = await this.providerRepository.save(provider);
+      return savedProvider;
+    }
+
+    return provider;
+  }
+
 
   /**
    * Create a single inventory slot for a specific date
@@ -324,10 +351,7 @@ export class InventoryService {
    * Get all services + inventory slots for the authenticated provider
    */
   async getProviderInventory(userId: string) {
-    const provider = await this.providerRepository.findOne({ where: { userId } });
-    if (!provider) {
-      throw new NotFoundException('Provider profile not found');
-    }
+    const provider = await this.getOrCreateProvider(userId);
 
     const services = await this.serviceRepository.find({
       where: { providerId: provider.id },
