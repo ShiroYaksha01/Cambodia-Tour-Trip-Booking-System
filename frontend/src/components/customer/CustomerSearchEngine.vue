@@ -112,7 +112,7 @@
       <CustomerServiceCard
         v-for="service in filteredServices"
         :key="service.id"
-        :tour="mapServiceToTour(service)"
+        :service="service"
         @book="handleBook"
         class="service-card-item"
       />
@@ -132,7 +132,7 @@ import { computed, defineComponent, onMounted, reactive, ref } from 'vue'
 import { fetchServices } from '../../services/api'
 import CustomerServiceCard, { type Tour } from './CustomerServiceCard.vue'
 import { useRouter } from 'vue-router'
-import { resolveImageUrl } from '../../utils/api'
+
 
 export default defineComponent({
   name: 'CustomerSearchEngine',
@@ -261,26 +261,6 @@ export default defineComponent({
       })
     })
 
-    function mapServiceToTour(service: any): Tour {
-      const rawImage = service.images?.find((img: any) => img.isCover)?.imageUrl
-        || service.images?.[0]?.imageUrl;
-
-      const coverImage = resolveImageUrl(rawImage)
-        || 'https://freedomdestinations.co.uk/wp-content/uploads/Angkor-Wat-Cambodia-4.jpg';
-
-      return {
-        id: service.id,
-        title: service.title,
-        location: service.location || 'Cambodia',
-        description: service.description || '',
-        image: coverImage,
-        rating: service.rating || 4.5,
-        reviews: Math.floor(Math.random() * 100) + 10, // Mock reviews for now
-        price: typeof service.price === 'string' ? parseFloat(service.price) : service.price,
-        duration: service.duration || 'Flexible',
-      }
-    }
-
     function handleBook(tour: Tour) {
       router.push({ name: 'booking-form', params: { id: tour.id } })
     }
@@ -312,7 +292,6 @@ export default defineComponent({
       handleSearch,
       filteredServices,
       hasSearched,
-      mapServiceToTour,
       handleBook,
       resetFilters,
       minDate,
