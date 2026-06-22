@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { hasAuthSession } from '../../utils/auth'
 import { resolveImageUrl } from '../../utils/api'
 import CustomerNavbar from '../../components/customer/CustomerNavbar.vue'
@@ -10,6 +10,7 @@ import CustomerHomePageSearch from '../../components/customer/CustomerHomePageSe
 import { fetchServices } from '../../services/api'
 
 const router = useRouter()
+const route = useRoute()
 
 const allServices = ref<any[]>([])
 const isLoading = ref(true)
@@ -19,10 +20,26 @@ const hasSearched = ref(false)
 const appliedFilters = ref<any>(null)
 
 const handleSearch = (filters: any) => {
-  hasSearched.value = true
-  activeTab.value = filters.type
-  appliedFilters.value = filters
+  // Instead of handling it here, push to URL so it's shareable and consistent
+  router.push({ name: 'customer-explore', query: filters })
 }
+
+const applyFiltersFromQuery = () => {
+  if (Object.keys(route.query).length > 0) {
+    hasSearched.value = true
+    const type = route.query.type as string || 'all'
+    activeTab.value = type
+    appliedFilters.value = { ...route.query }
+  } else {
+    hasSearched.value = false
+    activeTab.value = 'all'
+    appliedFilters.value = null
+  }
+}
+
+watch(() => route.query, () => {
+  applyFiltersFromQuery()
+})
 
 const filteredServices = computed(() => {
   let list = allServices.value
@@ -67,27 +84,6 @@ const filteredServices = computed(() => {
   return list
 })
 
-function mapServiceToTour(service: any) {
-  const rawImage = service.coverImage
-    || service.images?.find((img: any) => img.isCover)?.imageUrl
-    || service.images?.[0]?.imageUrl;
-  
-  const coverImage = resolveImageUrl(rawImage)
-    || 'https://freedomdestinations.co.uk/wp-content/uploads/Angkor-Wat-Cambodia-4.jpg';
-
-  return {
-    id: service.id,
-    title: service.title,
-    location: service.location || 'Cambodia',
-    description: service.description || '',
-    image: coverImage,
-    rating: service.rating || 4.5,
-    reviews: Math.floor(Math.random() * 100) + 10,
-    price: typeof service.price === 'string' ? parseFloat(service.price) : service.price,
-    duration: service.duration || 'Flexible',
-  }
-}
-
 function handleBook(tour: any) {
   if (!hasAuthSession()) {
     router.push({ name: 'login', query: { redirect: router.currentRoute.value.fullPath } })
@@ -104,7 +100,22 @@ function goToDetail(service: any) {
   else router.push({ name: 'service-detail', params: { id: service.id } })
 }
 
+const goToProviderDetail = (tour: any) => {
+  const providerId = tour.provider?.id || tour.providerId || tour.provider_id;
+
+  if (!providerId) {
+    console.error("Provider ID not found in tour:", tour);
+    return;
+  }
+
+  router.push({
+    name: "provider-detail",
+    params: { id: providerId },
+  });
+};
+
 onMounted(async () => {
+  applyFiltersFromQuery()
   try {
     const data = await fetchServices()
     allServices.value = Array.isArray(data) ? data : []
@@ -161,9 +172,10 @@ onMounted(async () => {
           <CustomerServiceCard
             v-for="service in filteredServices"
             :key="service.id"
-            :tour="mapServiceToTour(service)"
+            :service="service"
             @click="goToDetail(service)"
             @book="handleBook"
+            @provider-detail="goToProviderDetail"
           />
         </div>
 
@@ -171,7 +183,7 @@ onMounted(async () => {
           <div class="text-6xl mb-4">🔍</div>
           <h3 class="text-xl font-bold text-gray-900">No results found</h3>
           <p class="text-gray-500 mt-2 max-w-sm mx-auto">Try adjusting your filters or searching in a different province to find what you're looking for.</p>
-          <button @click="appliedFilters = null" class="mt-6 text-emerald-600 font-bold hover:underline">
+          <button @click="router.push({ name: 'customer-explore' })" class="mt-6 text-emerald-600 font-bold hover:underline">
             Clear all filters
           </button>
         </div>

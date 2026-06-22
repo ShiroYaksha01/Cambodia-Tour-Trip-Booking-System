@@ -51,63 +51,9 @@ const scrollToBottom = () => {
   })
 }
 
-function mapServiceToTour(service: any) {
-  const rawImage = service.coverImage
-    || service.images?.find((img: any) => img.isCover)?.imageUrl
-    || service.images?.[0]?.imageUrl;
-  
-  const coverImage = resolveImageUrl(rawImage)
-    || 'https://freedomdestinations.co.uk/wp-content/uploads/Angkor-Wat-Cambodia-4.jpg';
-
-  return {
-    id: service.id,
-    title: service.title,
-    location: service.location || 'Cambodia',
-    description: service.description || '',
-    image: coverImage,
-    rating: service.rating || 4.5,
-    reviews: Math.floor(Math.random() * 100) + 10,
-    price: typeof service.price === 'string' ? parseFloat(service.price) : service.price,
-    duration: service.duration || 'Flexible',
-    provider: service.provider,
-    providerId: service.provider?.id || service.providerId || service.provider_id
-  }
-}
-
 function handleSearch(filters: any) {
-  console.log("Applying filters:", filters)
-  displayedServices.value = allServices.value.filter(service => {
-    // Skip type filtering if 'all' is selected
-    if (filters.type !== 'all' && service.serviceType !== filters.type) return false
-
-    // Tab-specific filters
-    if (filters.type === 'all') {
-      if (filters.title && !service.title.toLowerCase().includes(filters.title.toLowerCase())) return false
-      return true
-    }
-
-    if (filters.type === 'tour') {
-      if (filters.location && !service.location?.toLowerCase().includes(filters.location.toLowerCase())) return false
-      if (filters.title && !service.title.toLowerCase().includes(filters.title.toLowerCase())) return false
-      if (filters.date && service.tourPackage?.travelDate) {
-        const serviceDate = new Date(service.tourPackage.travelDate).toISOString().split('T')[0]
-        if (serviceDate !== filters.date) return false
-      }
-    } else if (filters.type === 'accommodation') {
-      if (filters.location && !service.location?.toLowerCase().includes(filters.location.toLowerCase())) return false
-      // Simple capacity check (mocking rooms/people logic)
-      if (filters.travelers && service.accommodation?.totalRooms < Math.ceil(filters.travelers / 2)) return false
-    } else if (filters.type === 'transportation') {
-      if (filters.from && !service.transportation?.departurePoint?.toLowerCase().includes(filters.from.toLowerCase())) return false
-      if (filters.to && !service.transportation?.destination?.toLowerCase().includes(filters.to.toLowerCase())) return false
-      if (filters.date && service.transportation?.departureTime) {
-        const serviceDate = new Date(service.transportation.departureTime).toISOString().split('T')[0]
-        if (serviceDate !== filters.date) return false
-      }
-    }
-
-    return true
-  })
+  console.log("Redirecting to explore with filters:", filters)
+  router.push({ name: 'customer-explore', query: filters })
 }
 
 onMounted(async () => {
@@ -220,7 +166,7 @@ onMounted(async () => {
           <CustomerServiceCard
             v-for="service in displayedServices"
             :key="service.id"
-            :tour="mapServiceToTour(service)"
+            :service="service"
             @click="goToDetail(service)"
             @book="handleBook"
             @provider-detail="goToProviderDetail"

@@ -11,13 +11,6 @@
         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
       />
 
-      <!-- Rating badge -->
-      <div class="absolute top-3 right-3 flex items-center gap-1
-                  bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-sm">
-        <span class="text-gold text-xs">★</span>
-        <span class="text-xs font-semibold text-gray-800 dark:text-gray-200">{{ tour.rating }}</span>
-        <span class="text-xs text-gray-400 dark:text-gray-400">({{ tour.reviews }} reviews)</span>
-      </div>
 
       <!-- Duration badge -->
       <div
@@ -81,6 +74,9 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
+import { resolveImageUrl } from '../../utils/api';
+
 export interface Tour {
   id: string | number;
   title: string;
@@ -102,7 +98,31 @@ export interface Tour {
   };
 }
 
-defineProps<{ tour: Tour }>();
+const props = defineProps<{ service: any }>();
+
+const tour = computed<Tour>(() => {
+  const service = props.service;
+  const rawImage = service.coverImage
+    || service.images?.find((img: any) => img.isCover)?.imageUrl
+    || service.images?.[0]?.imageUrl;
+  
+  const coverImage = resolveImageUrl(rawImage)
+    || 'https://freedomdestinations.co.uk/wp-content/uploads/Angkor-Wat-Cambodia-4.jpg';
+
+  return {
+    id: service.id,
+    title: service.title,
+    location: service.location || 'Cambodia',
+    description: service.description || '',
+    image: coverImage,
+    rating: service.rating || 4.5,
+    reviews: Math.floor(Math.random() * 100) + 10,
+    price: typeof service.price === 'string' ? parseFloat(service.price) : service.price,
+    duration: service.duration || 'Flexible',
+    provider: service.provider,
+    providerId: service.provider?.id || service.providerId || service.provider_id
+  };
+});
 
 defineEmits<{
   book: [tour: Tour];
