@@ -2,7 +2,6 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { hasAuthSession } from '../../utils/auth'
-import { resolveImageUrl } from '../../utils/api'
 import CustomerNavbar from '../../components/customer/CustomerNavbar.vue'
 import CustomerFooter from '../../components/customer/CustomerFooter.vue'
 import CustomerServiceCard from '../../components/customer/CustomerServiceCard.vue'

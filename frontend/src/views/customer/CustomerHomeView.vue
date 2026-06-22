@@ -8,7 +8,6 @@ import { fetchServices } from '../../services/api'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { hasAuthSession } from '../../utils/auth'
-import { resolveImageUrl } from '../../utils/api'
 
 const router = useRouter()
 const allServices = ref<any[]>([])
